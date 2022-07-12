@@ -3,6 +3,7 @@ package com.alhambra;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.ActionBar;
+import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -69,23 +70,30 @@ public class MainActivity extends AppCompatActivity {
         final Tree<View> treeModel = m_treeView.getModel();
         for(Integer i : m_dataset.getIDs())
         {
-            //Create the text view to show the ID
-            TextView textView = new TextView(this);
+            //Inflate the layout
+            View preview = getLayoutInflater().inflate(R.layout.preview_key_entry, null);
+            preview.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            //Configure the text
+            TextView textView = preview.findViewById(R.id.preview_key_entry_name);
             textView.setText(i.toString());
-            textView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+            //Configure the preview image
+            ImageView imageView = preview.findViewById(R.id.preview_key_entry_drawable);
+            imageView.setImageDrawable(m_dataset.getDataFromID(i).getImage());
 
             //Put that in the tree view and set all the interactive listeners
-            Tree<View> idTree = new Tree<>(textView);
-            textView.setOnClickListener(new View.OnClickListener() {
+            Tree<View> idTree = new Tree<>(preview);
+            preview.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    setMainTextID(i);
+                    setMainEntryID(i);
                 }
             });
             treeModel.addChild(idTree, -1);
             m_datasetEntries.put(i, idTree);
         }
-        setMainTextID(0);
+        setMainEntryID(0);
 
         //Instantiate the client network interface
         m_socket = new SocketManager("192.168.2.132", 8080);
@@ -109,12 +117,30 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void setMainTextID(Integer i)
+    /** Set the main entry ID. This function will change what is rendered in the main view
+     * with the data that has ID == i
+     * @param i the ID to check*/
+    private void setMainEntryID(Integer i)
     {
-        Dataset.Data data = m_dataset.getDataFromID(i);
+        //If the ID is not valid, nothing to do
+        if(!m_dataset.isIDValid(i))
+            return;
 
+        //Remove the highlight around the previous preview selected
+        if(m_currentSelection != null)
+        {
+            Tree<View> previous = m_datasetEntries.get(m_currentSelection);
+            previous.value.setBackgroundResource(0);
+        }
+
+        //Select the new one
+        Dataset.Data data = m_dataset.getDataFromID(i);
         m_currentSelection = i;
         m_mainImageView.setImageDrawable(data.getImage());
         m_mainTextView.setText(data.getText());
+
+        //And highlight its entry
+        Tree<View> current = m_datasetEntries.get(i);
+        current.value.setBackgroundResource(R.drawable.round_rectangle_background);
     }
 }
