@@ -1,0 +1,15 @@
+# This file contains the list of spot areas created
+# For each spot area there are two associated files: textN.txt and 
+# imgN.txt been N the index value
+# 
+# index  (rgba)        Layer   ID
+    0      -            -       -  # General info about the room
+    1   (0,0,11,255)    2       11
+    2   (0,0,12,255)    2       12
+    3   (112,0,12,255)  0       112 # Contained in 2
+    4   (0,12,12,255)   1       12 # Contained in 2   
+    5   (0,0,13,255)    2       13
+    6   (113,0,13,255)  0       113 # Contained in 5  
+    7   (34,0,0,255)    0       34
+    8   (14,0,0,255)    0       14
+    9   (0,14,0,255)    1       14               

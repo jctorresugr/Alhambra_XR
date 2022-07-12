@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="TreeView">
+        <attr name="leftOffsetPerLevel" format="dimension"/>
+        <attr name="topOffsetPerChild"  format="dimension"/>
+        <attr name="strokeWidth"        format="dimension"/>
+        <attr name="extendWidth"        format="dimension"/>
+        <attr name="extendHeight"       format="dimension"/>
+        <attr name="inExtendSrc"        format="reference"/>
+        <attr name="notExtendSrc"       format="reference"/>
+    </declare-styleable>
+</resources>
