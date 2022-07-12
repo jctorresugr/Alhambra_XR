@@ -3,6 +3,7 @@ package com.alhambra;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.ActionBar;
+import android.content.res.AssetManager;
 import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,6 +17,13 @@ import com.alhambra.network.SocketManager;
 import com.sereno.Tree;
 import com.sereno.view.TreeView;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
@@ -23,6 +31,9 @@ public class MainActivity extends AppCompatActivity {
 
     /** The TAG to use for logging information*/
     public static String TAG = "Alhambra";
+
+    /** The user-defined configuration of this application*/
+    private Configuration m_config = null;
 
     /** The client socket manager*/
     private SocketManager m_socket = null;
@@ -47,16 +58,52 @@ public class MainActivity extends AppCompatActivity {
     /** The text of the selected entry*/
     TextView m_mainTextView = null;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState)
+    /** Init the layout of the application*/
+    private void initLayout()
     {
-        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         m_treeView      = findViewById(R.id.previewLayout);
         m_mainImageView = findViewById(R.id.mainImageEntry);
         m_mainTextView  = findViewById(R.id.mainTextEntry);
+    }
 
+    private void initConfiguration()
+    {
+        File configFile = new File(getExternalFilesDir(null), "config.json");
+        if(!configFile.exists())
+        {
+            Log.i(TAG, "Creating a default config.json in " + getExternalFilesDir(null).getAbsolutePath()+"config.json");
+
+            //Duplicate Assets/config.json to externalDir/config.json
+            try {
+                //Read the original file
+                InputStream is = getAssets().open("config.json");
+                ByteArrayOutputStream data = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                for (int length; (length = is.read(buffer)) != -1; ) {
+                    data.write(buffer, 0, length);
+                }
+                is.close();
+
+                //Write to destination
+                configFile.createNewFile();
+                FileOutputStream outputStream = new FileOutputStream(configFile);
+                outputStream.write(data.toByteArray());
+                outputStream.close();
+            }
+            catch(IOException e) {
+                Log.e(TAG, "Could not duplicate the config.json file... Revert to hard-coded default configuration.");
+                m_config = new Configuration();
+                return;
+            }
+        }
+
+        m_config = new Configuration(configFile);
+    }
+
+    private void initDataset()
+    {
         //Read the whole dataset
         try {
             m_dataset = new Dataset(getAssets(), "SpotList.txt");
@@ -94,9 +141,14 @@ public class MainActivity extends AppCompatActivity {
             m_datasetEntries.put(i, idTree);
         }
         setMainEntryID(0);
+    }
+
+    private void initNetwork()
+    {
+        Log.i(TAG, "Trying to connect to " + m_config.getServerIP() + ":" + m_config.getServerPort());
 
         //Instantiate the client network interface
-        m_socket = new SocketManager("192.168.2.132", 8080);
+        m_socket = new SocketManager(m_config.getServerIP(), m_config.getServerPort());
         m_socket.addListener(new SocketManager.ISocketManagerListener() {
             @Override
             public void onDisconnection(SocketManager socket) {
@@ -115,6 +167,16 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, "Reconnected");
             }
         });
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        initLayout();
+        initConfiguration();
+        initDataset();
+        initNetwork();
     }
 
     /** Set the main entry ID. This function will change what is rendered in the main view
