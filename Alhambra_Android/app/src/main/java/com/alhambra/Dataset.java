@@ -1,6 +1,7 @@
 package com.alhambra;
 
 import android.content.res.AssetManager;
+import android.graphics.drawable.Drawable;
 
 import com.sereno.CSVReader;
 
@@ -31,17 +32,22 @@ public class Dataset
         /** The text associated with this chunk of data*/
         private String m_text = "";
 
+        /** The image associated with this chunk of data*/
+        private Drawable m_drawable = null;
+
         /** Constructor
          * @param id  The ID of this chunk of data
          * @param layout The layout ID to which this chunk of data belongs to
          * @param color  The color representing this chunk of data
-         * @param text The text associated with this chunk of data*/
-        public Data(int id, int layout, int color, String text)
+         * @param text The text associated with this chunk of data
+         * @param img The image drawable describing this data chunk*/
+        public Data(int id, int layout, int color, String text, Drawable img)
         {
-            m_id     = id;
-            m_layout = layout;
-            m_color  = color;
-            m_text   = text;
+            m_id       = id;
+            m_layout   = layout;
+            m_color    = color;
+            m_text     = text;
+            m_drawable = img;
         }
 
         /** Get the ID of this chunk of data*/
@@ -55,6 +61,9 @@ public class Dataset
 
         /** Get the text associated with this chunk of data*/
         public String getText() {return m_text;}
+
+        /** Get the image drawable describing this data chunk*/
+        public Drawable getImage() {return m_drawable;}
     }
 
     /** All the stored chunks of data
@@ -78,6 +87,8 @@ public class Dataset
         InputStream dataset = assetManager.open(assetHeader);
 
         List<String[]> csvData = CSVReader.read(dataset);
+        dataset.close();
+
         if(csvData.size() == 0)
             return;
 
@@ -92,16 +103,23 @@ public class Dataset
 
             if(i != 0)
             {
-                //Get ID and read the text associated to it
+                //Get ID...
                 int id         = Integer.parseInt(row[0]);
                 if(m_data.containsKey(id))
                     throw new IllegalArgumentException("The ID " + id + " is duplicated in the dataset");
+
+                //...and read the text associated to it
                 InputStream textStream = assetManager.open("text"+row[0]+".txt");
                 ByteArrayOutputStream text = new ByteArrayOutputStream();
                 byte[] buffer = new byte[1024];
                 for (int length; (length = textStream.read(buffer)) != -1; ) {
                     text.write(buffer, 0, length);
                 }
+                textStream.close();
+                //...and read the image associated to it
+                InputStream imgStream = assetManager.open("img"+row[0]+".png");
+                Drawable img = Drawable.createFromStream(imgStream, null);
+                imgStream.close();
 
                 //Check if this chunk is the default entry describing the whole dataset
                 //If it is, then it is associated with no layout (layout == -1) and its color is set to transparency (color == 0x00000000)
@@ -114,13 +132,17 @@ public class Dataset
                         break;
                     }
                 }
+
+                //If default: No color and no layout and add the data chunk
                 if(isDefault)
                 {
                     if(m_defaultData != null)
                         throw new IllegalArgumentException("The dataset contains multiple default data entry");
-                    m_defaultData = new Data(id, -1, 0x00, text.toString("UTF-8"));
+                    m_defaultData = new Data(id, -1, 0x00, text.toString("UTF-8"), img);
                     m_data.put(id, m_defaultData);
                 }
+
+                //Else, read color + layout and add the data chunk
                 else
                 {
                     //Get the layout
@@ -138,7 +160,7 @@ public class Dataset
                         colorRGBA += Math.max(0, Math.min(255, Integer.parseInt(colorArray[j]))) << (byte)(4*j);
 
                     //Save the content
-                    Data data = new Data(id, layout, colorRGBA, text.toString("UTF-8"));
+                    Data data = new Data(id, layout, colorRGBA, text.toString("UTF-8"), img);
                     m_data.put(id, data);
                     if(m_layouts.containsKey(layout))
                         m_layouts.get(layout).add(data);

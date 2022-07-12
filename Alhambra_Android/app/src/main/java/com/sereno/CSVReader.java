@@ -27,7 +27,8 @@ public class CSVReader
     public static List<String[]> read(InputStream inputStream, final char separator, final char delimiter) throws IOException
     {
         List<String[]> resultList = new ArrayList<>();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        BufferedReader reader     = new BufferedReader(new InputStreamReader(inputStream));
+
         String csvLine;
         final char LF = '\n';
         final char CR = '\r';

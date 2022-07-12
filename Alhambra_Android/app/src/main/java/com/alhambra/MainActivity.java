@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -34,8 +35,15 @@ public class MainActivity extends AppCompatActivity {
     /** The current selected entry*/
     private Integer m_currentSelection = null;
 
+    /*--------------------------------------*/
+    /*-------The Widgets of this View-------*/
+    /*--------------------------------------*/
 
+    /** The preview tree*/
     TreeView m_treeView     = null;
+    /** The image of the selected entry*/
+    ImageView m_mainImageView = null;
+    /** The text of the selected entry*/
     TextView m_mainTextView = null;
 
     @Override
@@ -44,8 +52,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        m_treeView     = findViewById(R.id.previewLayout);
-        m_mainTextView = findViewById(R.id.mainTextEntry);
+        m_treeView      = findViewById(R.id.previewLayout);
+        m_mainImageView = findViewById(R.id.mainImageEntry);
+        m_mainTextView  = findViewById(R.id.mainTextEntry);
 
         //Read the whole dataset
         try {
@@ -102,7 +111,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void setMainTextID(Integer i)
     {
+        Dataset.Data data = m_dataset.getDataFromID(i);
+
         m_currentSelection = i;
-        m_mainTextView.setText(m_dataset.getDataFromID(i).getText());
+        m_mainImageView.setImageDrawable(data.getImage());
+        m_mainTextView.setText(data.getText());
     }
 }
