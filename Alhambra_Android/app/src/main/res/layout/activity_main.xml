@@ -16,12 +16,12 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:background="@color/treeColor"
-        android:minWidth="192dp"
         android:id="@+id/scrollPreviewLayout">
         <com.sereno.view.TreeView
             android:id="@+id/previewLayout"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
+            android:padding="5dp"
             app:topOffsetPerChild="10px"
             app:leftOffsetPerLevel="25px"
             app:strokeWidth="3px"
@@ -46,7 +46,7 @@
             android:orientation="horizontal">
 
             <ImageButton
-                android:id="@+id/previousTimeButton"
+                android:id="@+id/previousEntryButton"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:scaleType="fitCenter"
@@ -69,7 +69,7 @@
                 android:layout_gravity="center"
                 android:text="@string/next"/>
             <ImageButton
-                android:id="@+id/nextTimeButton"
+                android:id="@+id/nextEntryButton"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:scaleType="fitCenter"
@@ -79,6 +79,7 @@
 
     <!-- The main part of the view displaying information of the selected entry -->
     <ScrollView
+        android:paddingStart="5dp"
         android:layout_below="@id/layoutControl"
         android:layout_toEndOf="@id/scrollPreviewLayout"
         android:layout_width="wrap_content"

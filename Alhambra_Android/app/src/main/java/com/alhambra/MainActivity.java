@@ -2,15 +2,12 @@ package com.alhambra;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.ActionBar;
-import android.content.res.AssetManager;
-import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.alhambra.network.SocketManager;
@@ -22,12 +19,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity
+{
 
     /** The TAG to use for logging information*/
     public static String TAG = "Alhambra";
@@ -35,11 +31,15 @@ public class MainActivity extends AppCompatActivity {
     /** The user-defined configuration of this application*/
     private Configuration m_config = null;
 
+    /** The dataset*/
+    private Dataset m_dataset = null;
+
     /** The client socket manager*/
     private SocketManager m_socket = null;
 
-    /** The dataset*/
-    private Dataset m_dataset = null;
+    /*--------------------------------------*/
+    /*----The Widgets about the Preview-----*/
+    /*--------------------------------------*/
 
     /** All the entries shown in the Previous tree object*/
     private HashMap<Integer, Tree<View>> m_datasetEntries = new HashMap<>();
@@ -48,15 +48,23 @@ public class MainActivity extends AppCompatActivity {
     private Integer m_currentSelection = null;
 
     /*--------------------------------------*/
-    /*-------The Widgets of this View-------*/
+    /*------The Pre-Registered Widgets------*/
     /*--------------------------------------*/
 
     /** The preview tree*/
     TreeView m_treeView     = null;
+
     /** The image of the selected entry*/
     ImageView m_mainImageView = null;
+
     /** The text of the selected entry*/
     TextView m_mainTextView = null;
+
+    /** The button to show the previous entry*/
+    ImageButton m_previousBtn = null;
+
+    /** The button to show the next entry*/
+    ImageButton m_nextBtn     = null;
 
     /*--------------------------------------*/
     /*-----Initialization of everything-----*/
@@ -70,6 +78,19 @@ public class MainActivity extends AppCompatActivity {
         m_treeView      = findViewById(R.id.previewLayout);
         m_mainImageView = findViewById(R.id.mainImageEntry);
         m_mainTextView  = findViewById(R.id.mainTextEntry);
+        m_previousBtn   = findViewById(R.id.previousEntryButton);
+        m_nextBtn       = findViewById(R.id.nextEntryButton);
+
+        //Listeners
+        m_previousBtn.setOnClickListener(view -> {
+            if(m_currentSelection != null)
+                setMainEntryID(m_currentSelection-1);
+        });
+
+        m_nextBtn.setOnClickListener(view -> {
+            if(m_currentSelection != null)
+                setMainEntryID(m_currentSelection+1);
+        });
     }
 
     /** Read the configuration file "config.json"*/
@@ -92,7 +113,8 @@ public class MainActivity extends AppCompatActivity {
                 is.close();
 
                 //Write to destination
-                configFile.createNewFile();
+                if(!configFile.createNewFile())
+                    throw new IOException("Cannot create the new file " + configFile.getAbsolutePath());
                 FileOutputStream outputStream = new FileOutputStream(configFile);
                 outputStream.write(data.toByteArray());
                 outputStream.close();
@@ -137,12 +159,7 @@ public class MainActivity extends AppCompatActivity {
 
             //Put that in the tree view and set all the interactive listeners
             Tree<View> idTree = new Tree<>(preview);
-            preview.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    setMainEntryID(i);
-                }
-            });
+            preview.setOnClickListener(view -> setMainEntryID(i));
             treeModel.addChild(idTree, -1);
             m_datasetEntries.put(i, idTree);
         }
@@ -164,9 +181,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onRead(SocketManager socket, String jsonMsg) {
-                Log.i(TAG, "Message read: " + jsonMsg);
-                Log.i(TAG, "Sending 'test'");
-                socket.push("test".getBytes(StandardCharsets.UTF_8));
+                socket.push("test".getBytes(StandardCharsets.UTF_8)); //This is to test the client socket. This is to be deleted later TODO
             }
 
             @Override
@@ -199,7 +214,8 @@ public class MainActivity extends AppCompatActivity {
         if(m_currentSelection != null)
         {
             Tree<View> previous = m_datasetEntries.get(m_currentSelection);
-            previous.value.setBackgroundResource(0);
+            if(previous != null) //Should not happen
+                previous.value.setBackgroundResource(0);
         }
 
         //Select the new one
@@ -210,6 +226,7 @@ public class MainActivity extends AppCompatActivity {
 
         //And highlight its entry
         Tree<View> current = m_datasetEntries.get(i);
-        current.value.setBackgroundResource(R.drawable.round_rectangle_background);
+        if(current != null) //Should not happen
+            current.value.setBackgroundResource(R.drawable.round_rectangle_background);
     }
 }
