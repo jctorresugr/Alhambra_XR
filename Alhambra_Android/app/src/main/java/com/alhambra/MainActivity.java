@@ -58,6 +58,10 @@ public class MainActivity extends AppCompatActivity {
     /** The text of the selected entry*/
     TextView m_mainTextView = null;
 
+    /*--------------------------------------*/
+    /*-----Initialization of everything-----*/
+    /*--------------------------------------*/
+
     /** Init the layout of the application*/
     private void initLayout()
     {
@@ -68,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
         m_mainTextView  = findViewById(R.id.mainTextEntry);
     }
 
+    /** Read the configuration file "config.json"*/
     private void initConfiguration()
     {
         File configFile = new File(getExternalFilesDir(null), "config.json");
@@ -102,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
         m_config = new Configuration(configFile);
     }
 
+    /** Read and initialize all components linked to the dataset to be used*/
     private void initDataset()
     {
         //Read the whole dataset
@@ -143,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
         setMainEntryID(0);
     }
 
+    /** Initialize the network communication*/
     private void initNetwork()
     {
         Log.i(TAG, "Trying to connect to " + m_config.getServerIP() + ":" + m_config.getServerPort());
