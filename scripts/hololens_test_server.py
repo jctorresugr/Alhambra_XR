@@ -17,7 +17,21 @@ print("server started and listening")
 (clientsocket, address) = self.accept()
 print(f"connected to: {address}")
 
+data = """{
+        'action': 'selection',
+        'data': {
+                'ids': [1,5,7]
+            }
+        }"""
+
+packer = struct.Struct(f">I{len(data)}s")
+packet = packer.pack(len(data), data.encode())
+
+clientsocket.send(packet)
+
 while True:
+    time.sleep(1.0)
+    continue
     data   = "{'x': 42}"
     packer = struct.Struct(f">I{len(data)}s")
     packet = packer.pack(len(data), data.encode())

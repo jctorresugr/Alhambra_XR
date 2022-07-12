@@ -10,21 +10,24 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.alhambra.network.SelectionMessage;
 import com.alhambra.network.SocketManager;
+
 import com.sereno.Tree;
 import com.sereno.view.TreeView;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity
 {
-
     /** The TAG to use for logging information*/
     public static String TAG = "Alhambra";
 
@@ -46,6 +49,9 @@ public class MainActivity extends AppCompatActivity
 
     /** The current selected entry*/
     private Integer m_currentSelection = null;
+
+    /** The current group of selection*/
+    private int[] m_currentGroup = new int[0];
 
     /*--------------------------------------*/
     /*------The Pre-Registered Widgets------*/
@@ -84,12 +90,12 @@ public class MainActivity extends AppCompatActivity
         //Listeners
         m_previousBtn.setOnClickListener(view -> {
             if(m_currentSelection != null)
-                setMainEntryID(m_currentSelection-1);
+                setMainEntryID(findPreviousID());
         });
 
         m_nextBtn.setOnClickListener(view -> {
             if(m_currentSelection != null)
-                setMainEntryID(m_currentSelection+1);
+                setMainEntryID(findNextID());
         });
     }
 
@@ -181,7 +187,24 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onRead(SocketManager socket, String jsonMsg) {
-                socket.push("test".getBytes(StandardCharsets.UTF_8)); //This is to test the client socket. This is to be deleted later TODO
+                try {
+                    final JSONObject reader = new JSONObject(jsonMsg);
+
+                    //Determine the action to do
+                    String action = reader.getString("action");
+                    if(action.equals("selection"))
+                    {
+                        final SelectionMessage selection = new SelectionMessage(reader.getJSONObject("data"));
+                        MainActivity.this.runOnUiThread(() -> {
+                            setCurrentGroupSelection(selection.getIDs());
+                        });
+                    }
+                }
+                catch(JSONException e)
+                {
+                    Log.e(TAG, "Issue with the JSON object received through the network: " + e.toString());
+                    return;
+                }
             }
 
             @Override
@@ -207,7 +230,7 @@ public class MainActivity extends AppCompatActivity
     private void setMainEntryID(Integer i)
     {
         //If the ID is not valid, nothing to do
-        if(!m_dataset.isIDValid(i))
+        if(!m_dataset.isIDValid(i) || isEntryGreyed(i))
             return;
 
         //Remove the highlight around the previous preview selected
@@ -215,7 +238,7 @@ public class MainActivity extends AppCompatActivity
         {
             Tree<View> previous = m_datasetEntries.get(m_currentSelection);
             if(previous != null) //Should not happen
-                previous.value.setBackgroundResource(0);
+                previous.value.setBackgroundResource(isEntryGreyed(m_currentSelection) ? R.color.dark : 0);
         }
 
         //Select the new one
@@ -228,5 +251,66 @@ public class MainActivity extends AppCompatActivity
         Tree<View> current = m_datasetEntries.get(i);
         if(current != null) //Should not happen
             current.value.setBackgroundResource(R.drawable.round_rectangle_background);
+    }
+
+    /** Set the current selection group (with IDs) to browse in the interface
+     * Usually, this selection group comes from a selection on the hololens that contains, for a single position, multiple data
+     * @param selections the new selection group. If selections.length == 0, there is no more group*/
+    private void setCurrentGroupSelection(int[] selections)
+    {
+        m_currentGroup = selections;
+
+        //Reset the background to all preview entries
+        if(m_currentGroup.length == 0)
+        {
+            for(Tree<View> view : m_datasetEntries.values())
+                view.value.setBackgroundResource(0);
+            setMainEntryID(m_currentSelection); //Redo the background
+            return;
+        }
+
+        //Grey out all the data that are not part of group selection
+        for(Integer dataID : m_dataset.getIDs())
+        {
+            Tree<View> view = m_datasetEntries.get(dataID);
+            view.value.setBackgroundResource(isEntryGreyed(dataID) ? R.color.dark : 0);
+        }
+
+        //Set the selection to the first group
+        setMainEntryID(m_currentGroup[0]);
+    }
+
+    private boolean isEntryGreyed(int entry)
+    {
+        if(m_currentGroup.length == 0)
+            return false;
+
+        for(int i : m_currentGroup)
+            if(i == entry)
+                return false;
+        return true;
+    }
+
+    /** Find the next ID to select based on m_currentSelection and m_currentGroup
+     * @return -1 if there is nothing to select next, the next ID to select otherwise*/
+    private int findNextID()
+    {
+        for(int i = 0; i < m_currentGroup.length-1; i++)
+            if(m_currentGroup[i] == m_currentSelection)
+                return (m_dataset.isIDValid(m_currentGroup[i+1]) ? m_currentGroup[i+1] : -1);
+
+
+        return (m_dataset.isIDValid(m_currentSelection+1) ? m_currentSelection+1 : -1);
+    }
+
+    /** Find the previous ID to select based on m_currentSelection and m_currentGroup
+     * @return -1 if there is nothing to select before, the previous ID to select otherwise*/
+    private int findPreviousID()
+    {
+        for(int i = 1; i < m_currentGroup.length; i++)
+            if(m_currentGroup[i] == m_currentSelection)
+                return (m_dataset.isIDValid(m_currentGroup[i-1]) ? m_currentGroup[i-1] : -1);
+
+        return (m_dataset.isIDValid(m_currentSelection-1) ? m_currentSelection-1 : -1);
     }
 }
