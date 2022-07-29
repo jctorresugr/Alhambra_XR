@@ -28,7 +28,7 @@ public class mouseIsOver : MonoBehaviour
     // Mouse Over
     void OnMouseOver()
     {
-        //   if (Input.GetMouseButtonDown(0))
+   /*     //   if (Input.GetMouseButtonDown(0))
         //   {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
@@ -73,15 +73,15 @@ public class mouseIsOver : MonoBehaviour
                              {
                                  Modelo.GetComponent<Renderer>().material.SetTexture("_DecalTex", null);
                              }
-                         }*/
+                         }* /
 
 
             }
-        }
+        }*/
     }
     void OnMouseExit()
             {
-                Debug.Log(" Exit");
+           //     Debug.Log(" Exit");
                 gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_Layer", 4);
     }
      //   }

@@ -67,6 +67,9 @@ Shader "Custom/BlinkSurface"
  //           d = 0.3 * (_SinTime[3] * _SinTime[3]);
             if (_Layer < 4 && ((indexArray[_Layer])*255 == _ID)) { o.Albedo = c.rgb + 0.6 * (_SinTime[3] * _SinTime[3]) * _Color; }
 
+//            if ((indexArray[0]) * 255 >0) { o.Albedo = c.rgb + 0.6 * (_SinTime[3] * _SinTime[3]) * _Color; }  // Debuging 
+
+
             // Metallic and smoothness come from slider variables
             o.Metallic = _Metallic;
             o.Smoothness = _Glossiness;
