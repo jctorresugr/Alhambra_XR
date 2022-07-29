@@ -1,28 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_gravity="fill_horizontal"
     android:columnCount="4"
     android:rowCount="3"
+    android:stretchMode="columnWidth"
+    android:scrollbars="vertical"
     tools:context=".MainActivity">
 
     <!-- Previews -->
     <ScrollView
-        android:layout_row="0"
-        android:layout_column="0"
-        android:layout_rowSpan="3"
-        android:layout_columnSpan="1"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
         android:background="@color/treeColor"
-        android:minWidth="192dp"
-        android:layout_rowWeight="1"
-        android:layout_columnWeight="0">
+        android:id="@+id/scrollPreviewLayout">
         <com.sereno.view.TreeView
             android:id="@+id/previewLayout"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
+            android:padding="5dp"
             app:topOffsetPerChild="10px"
             app:leftOffsetPerLevel="25px"
             app:strokeWidth="3px"
@@ -36,10 +35,10 @@
 
     <!-- Next / Previous buttons -->
     <LinearLayout
-        android:layout_row="0"
-        android:layout_rowSpan="1"
-        android:layout_column="1"
-        android:layout_columnSpan="2"
+        android:id="@+id/layoutControl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/scrollPreviewLayout"
         android:orientation="horizontal">
         <LinearLayout
             android:layout_width="wrap_content"
@@ -47,7 +46,7 @@
             android:orientation="horizontal">
 
             <ImageButton
-                android:id="@+id/previousTimeButton"
+                android:id="@+id/previousEntryButton"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:scaleType="fitCenter"
@@ -70,7 +69,7 @@
                 android:layout_gravity="center"
                 android:text="@string/next"/>
             <ImageButton
-                android:id="@+id/nextTimeButton"
+                android:id="@+id/nextEntryButton"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:scaleType="fitCenter"
@@ -78,17 +77,33 @@
         </LinearLayout>
     </LinearLayout>
 
+    <!-- The main part of the view displaying information of the selected entry -->
     <ScrollView
-        android:layout_row="1"
-        android:layout_rowSpan="2"
-        android:layout_column="1"
-        android:layout_columnSpan="2"
-        android:orientation="horizontal">
-        <TextView
-            android:id="@+id/mainTextEntry"
+        android:paddingStart="5dp"
+        android:layout_below="@id/layoutControl"
+        android:layout_toEndOf="@id/scrollPreviewLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_rowWeight="0"
+        android:fillViewport="true">
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:ellipsize="none"
-            android:scrollHorizontally="false"/>
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/mainImageEntry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <TextView
+                android:id="@+id/mainTextEntry"
+                android:padding="0dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="none"
+                android:scrollHorizontally="false"/>
+        </LinearLayout>
     </ScrollView>
-</GridLayout>
+</RelativeLayout>
