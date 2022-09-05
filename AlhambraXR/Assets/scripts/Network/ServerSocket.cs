@@ -269,6 +269,25 @@ public class ServerSocket: IClientListener
     /// </summary>
     public bool Closed { get => m_closed; }
 
+    public static String DeviceServerAddress
+    {
+        get
+        {
+            IPHostEntry HostEntry = Dns.GetHostEntry((Dns.GetHostName()));
+            if (HostEntry.AddressList.Length > 0)
+            {
+                foreach (IPAddress ip in HostEntry.AddressList)
+                {
+                    if (ip.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        return ip.ToString();
+                    }
+                }
+            }
+            return "";
+        }
+    }
+
     public String ServerAddress
     {
         get => ((IPEndPoint)m_socket.LocalEndPoint).Address.ToString();

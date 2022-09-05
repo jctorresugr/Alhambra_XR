@@ -62,15 +62,18 @@ public class Main : MonoBehaviour, IAlhambraServerListener
         m_enableRandomText = false;
     }
 
-    // Start is called before the first frame update
     private void Start()
     {}
 
-    // Update is called once per frame
     private void Update()
     {
         HandleIPTxt();
         HandleRandomText();
+    }
+
+    private void OnDestroy()
+    {
+        m_server.Close();
     }
 
 
@@ -90,7 +93,7 @@ public class Main : MonoBehaviour, IAlhambraServerListener
             if (m_enableIPTexts)
             {
                 IPHeaderText.text = "Headset IP address:";
-                IPValueText.text  = $"{m_server.ServerAddress}:{AlhambraServer.SERVER_PORT}";
+                IPValueText.text  = $"{ServerSocket.DeviceServerAddress}:{AlhambraServer.SERVER_PORT}";
             }
             m_updateIPTexts = false;
         }

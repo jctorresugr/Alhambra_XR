@@ -135,8 +135,6 @@ GameObject:
   - component: {fileID: 95457124}
   - component: {fileID: 95457123}
   - component: {fileID: 95457122}
-  - component: {fileID: 95457127}
-  - component: {fileID: 95457126}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
@@ -220,56 +218,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &95457126
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 95457121}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 03daa81ea5f685f4ebf6e32038d058ca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  hostTransform: {fileID: 95457125}
-  manipulationType: 2
-  twoHandedManipulationType: 5
-  allowFarManipulation: 1
-  oneHandRotationModeNear: 6
-  oneHandRotationModeFar: 6
-  releaseBehavior: 3
-  constraintOnRotation: 0
-  useLocalSpaceForConstraint: 0
-  constraintOnMovement: 0
-  smoothingActive: 1
-  smoothingAmountOneHandManip: 0.001
-  onManipulationStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  onManipulationEnded:
-    m_PersistentCalls:
-      m_Calls: []
-  onHoverEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  onHoverExited:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!114 &95457127
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 95457121}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5afd5316c63705643b3daba5a6e923bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTetherWhenManipulating: 1
-  IsBoundsHandles: 0
 --- !u!1 &109801032
 GameObject:
   m_ObjectHideFlags: 0
@@ -719,7 +667,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 1}
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -1010,7 +958,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83d9acc7968244a8886f3af591305bcb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  activeProfile: {fileID: 11400000, guid: 9e055db2696a7644babd9c7155793811, type: 2}
+  activeProfile: {fileID: 11400000, guid: 7e7c962b9eb9dfa44993d5b2f2576752, type: 2}
 --- !u!4 &1899459447
 Transform:
   m_ObjectHideFlags: 0
@@ -1144,7 +1092,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 543450652189954332}
-  - component: {fileID: 919132148517882791}
   m_Layer: 0
   m_Name: cuartoDoradoExportedChisel
   m_TagString: Untagged
@@ -1152,25 +1099,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &919132148517882791
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919132148517882790}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b55691ad5b034fe6966763a6e23818d2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  trackedTargetType: 5
-  trackedHandedness: 3
-  trackedHandJoint: 2
-  transformOverride: {fileID: 0}
-  additionalOffset: {x: 0, y: 0, z: 0}
-  additionalRotation: {x: 0, y: 0, z: 0}
-  updateSolvers: 1
 --- !u!23 &2107253901622483557
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1246,10 +1174,7 @@ GameObject:
   - component: {fileID: 2647323849785615412}
   - component: {fileID: 2107253901622483557}
   - component: {fileID: 7568032346716495948}
-  - component: {fileID: 7568032346716495952}
-  - component: {fileID: 7568032346716495949}
   - component: {fileID: 7568032346716495950}
-  - component: {fileID: 7568032346716495951}
   m_Layer: 0
   m_Name: CuartoDoradoSTa
   m_TagString: Untagged
@@ -1264,32 +1189,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7568032346716495947}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ed6aaab21e1c6114fa9a3e4e96fe2acd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Imagen: {fileID: 2800000, guid: 2cd5673e93f5f044caecb50a1f00db2e, type: 3}
   tex12: {fileID: 2800000, guid: 518edd7307a29ff438d9c73c7eb60949, type: 3}
---- !u!114 &7568032346716495949
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7568032346716495947}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b55691ad5b034fe6966763a6e23818d2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  trackedTargetType: 5
-  trackedHandedness: 3
-  trackedHandJoint: 2
-  transformOverride: {fileID: 0}
-  additionalOffset: {x: 0, y: 0, z: 0}
-  additionalRotation: {x: 0, y: 0, z: 0}
-  updateSolvers: 1
 --- !u!64 &7568032346716495950
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -1304,29 +1210,3 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -8928330671938589098, guid: 2b5a093cd52a2a44f96eeecfb7917753, type: 3}
---- !u!114 &7568032346716495951
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7568032346716495947}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2d3772ce68d77cc49ae3cd582f0f2022, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  indexTexture: {fileID: 2800000, guid: 2cd5673e93f5f044caecb50a1f00db2e, type: 3}
---- !u!114 &7568032346716495952
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7568032346716495947}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 630b74018eba06c41b696dd0822884d5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  indexTexture: {fileID: 2800000, guid: 2cd5673e93f5f044caecb50a1f00db2e, type: 3}
