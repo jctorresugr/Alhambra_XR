@@ -93,6 +93,12 @@ public class Tree<T>
         }
     }
 
+    public void clear()
+    {
+        while(m_leaves.size() > 0)
+            removeChild(m_leaves.get(m_leaves.size() - 1));
+    }
+
     /** Should this leaf be extended?
      * @return true if should be extended, false otherwise*/
     public boolean getExtend()

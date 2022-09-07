@@ -11,99 +11,21 @@
     android:scrollbars="vertical"
     tools:context=".MainActivity">
 
-    <!-- Previews -->
-    <ScrollView
-        android:layout_width="wrap_content"
+
+    <!-- Tabs buttons -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:tabMode="fixed"
+        app:tabGravity="fill"/>
+
+    <!-- Tabs contents -->
+    <com.alhambra.fragment.PageViewer
+        android:id="@+id/viewpager"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/treeColor"
-        android:id="@+id/scrollPreviewLayout">
-        <com.sereno.view.TreeView
-            android:id="@+id/previewLayout"
-            android:layout_height="wrap_content"
-            android:layout_width="match_parent"
-            android:padding="5dp"
-            app:topOffsetPerChild="10px"
-            app:leftOffsetPerLevel="25px"
-            app:strokeWidth="3px"
-            app:extendHeight="64px"
-            app:extendWidth="64px"
-            app:inExtendSrc="@drawable/in_expend"
-            app:notExtendSrc="@drawable/not_expend"
-            android:textAlignment="center"
-            />
-    </ScrollView>
+        android:layout_below="@id/tabs"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-    <!-- Next / Previous buttons -->
-    <LinearLayout
-        android:id="@+id/layoutControl"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toEndOf="@id/scrollPreviewLayout"
-        android:orientation="horizontal">
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/previousEntryButton"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/previous"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="@string/previous"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginStart="20dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="@string/next"/>
-            <ImageButton
-                android:id="@+id/nextEntryButton"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/next" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- The main part of the view displaying information of the selected entry -->
-    <ScrollView
-        android:paddingStart="5dp"
-        android:layout_below="@id/layoutControl"
-        android:layout_toEndOf="@id/scrollPreviewLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_rowWeight="0"
-        android:fillViewport="true">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <ImageView
-                android:id="@+id/mainImageEntry"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-
-            <TextView
-                android:id="@+id/mainTextEntry"
-                android:padding="0dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ellipsize="none"
-                android:scrollHorizontally="false"/>
-        </LinearLayout>
-    </ScrollView>
 </RelativeLayout>

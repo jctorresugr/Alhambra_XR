@@ -9,4 +9,11 @@
         <attr name="inExtendSrc"        format="reference"/>
         <attr name="notExtendSrc"       format="reference"/>
     </declare-styleable>
+
+    <declare-styleable name="ColorPickerView">
+        <attr name="circleRadius"      format="dimension"/>
+        <attr name="pickerSpace"       format="dimension"/>
+        <attr name="pickerHueHeight"   format="dimension"/>
+        <attr name="sliderHeight"      format="dimension"/>
+    </declare-styleable>
 </resources>
