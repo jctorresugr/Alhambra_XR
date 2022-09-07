@@ -2,4 +2,6 @@
     <string name="app_name">Alhambra</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
 </resources>

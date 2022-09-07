@@ -2,6 +2,7 @@ package com.alhambra.fragment;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -77,6 +78,23 @@ public class AnnotationFragment extends AlhambraFragment
         m_ctx = getContext();
         initLayout(v);
         return v;
+    }
+
+    public boolean startNewAnnotation(int width, int height, byte[] argbImg)
+    {
+        if(argbImg.length < 4*width*height)
+            return false;
+
+        //Need to convert the byte array to the int array...
+        int[] argb8888Colors = new int[width*height];
+        for(int i = 0; i < width*height; i++)
+            argb8888Colors[i] = (argbImg[4*i+0] << 24) +
+                                (argbImg[4*i+1] << 16) +
+                                (argbImg[4*i+2] << 8)  +
+                                (argbImg[4*i+3]);
+
+        m_canvas.getModel().setBackground(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888));
+        return true;
     }
 
     /** Function to enable or disable the swipping based on a motion event

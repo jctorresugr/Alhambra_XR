@@ -9,14 +9,31 @@
     <com.sereno.view.AnnotationCanvasView
         android:id="@+id/annotationCanvas"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 
-    <com.sereno.view.ColorPickerView
-        android:layout_height="100dp"
-        android:layout_width="100dp"
-        android:id="@+id/colorPicker"
-        android:layout_toEndOf="@id/annotationCanvas"
-        app:circleRadius="5dp"
-        app:pickerHueHeight="15dp"
-        app:pickerSpace="5dp"/>
+        <com.sereno.view.ColorPickerView
+            android:layout_height="100dp"
+            android:layout_width="100dp"
+            android:id="@+id/colorPicker"
+            android:layout_toEndOf="@id/annotationCanvas"
+            app:circleRadius="5dp"
+            app:pickerHueHeight="15dp"
+            app:pickerSpace="5dp"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="end"
+            android:layout_alignBottom="@id/annotationCanvas"
+            android:layout_toEndOf="@id/annotationCanvas">
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/confirm"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/cancel"/>
+    </LinearLayout>
 </RelativeLayout>

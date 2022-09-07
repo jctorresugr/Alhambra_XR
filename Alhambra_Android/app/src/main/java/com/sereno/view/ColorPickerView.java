@@ -116,7 +116,7 @@ public class ColorPickerView extends View implements ColorPickerData.IColorPicke
 
                 int intColor = hsv.toRGB().toARGB8888();
                 m_paint.setColor(intColor);
-                canvas.drawRect(i+handlerWidth/2.0f, j, i+handlerWidth/2.0f+Math.min(3.0f, pickerWidth-i-1), j+Math.min(3.0f, pickerHeight-j-1), m_paint);
+                canvas.drawRect(i+handlerWidth/2.0f, j, i+handlerWidth/2.0f+Math.min(3, pickerWidth-i-1), j+Math.min(3, pickerHeight-j-1), m_paint);
             }
         }
 
@@ -124,11 +124,11 @@ public class ColorPickerView extends View implements ColorPickerData.IColorPicke
         int rgbHandler = hsvRGBClone.toRGB().toARGB8888();
 
         //Draw the value slider
-        for(int i = pickerWidth-1; i >= 0; i--)
+        for(int i = pickerWidth-1; i >= 0; i-=2)
         {
             hsvRGBClone.h = 360.0f*((float)i)/(pickerWidth-1);
             m_paint.setColor(hsvRGBClone.toRGB().toARGB8888());
-            canvas.drawLine(i+handlerWidth/2.0f, pickerHeight+m_pickerSpace, i+handlerWidth/2.0f, pickerHeight+m_pickerSpace+m_hueHeight, m_paint);
+            canvas.drawRect(i+handlerWidth/2.0f, pickerHeight+m_pickerSpace, i+handlerWidth/2.0f+Math.min(2, pickerWidth-i-1), pickerHeight+m_pickerSpace+m_hueHeight, m_paint);
         }
 
         //Draw the handler

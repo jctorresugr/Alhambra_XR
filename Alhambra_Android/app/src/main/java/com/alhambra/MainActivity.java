@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 
 import com.alhambra.fragment.AlhambraFragment;
@@ -11,6 +12,7 @@ import com.alhambra.fragment.AnnotationFragment;
 import com.alhambra.fragment.PageViewer;
 import com.alhambra.fragment.PreviewFragment;
 import com.alhambra.fragment.ViewPagerAdapter;
+import com.alhambra.network.AnnotationMessage;
 import com.alhambra.network.SelectionMessage;
 import com.alhambra.network.SocketManager;
 import com.google.android.material.tabs.TabLayout;
@@ -128,6 +130,12 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
                     {
                         final SelectionMessage selection = new SelectionMessage(reader.getJSONObject("data"));
                         MainActivity.this.runOnUiThread(() -> m_previewFragment.setCurrentGroupSelection(selection.getIDs()));
+                    }
+
+                    else if(action.equals("annotation"))
+                    {
+                        final AnnotationMessage annotation = new AnnotationMessage(reader.getJSONObject("data"));
+                        MainActivity.this.runOnUiThread(() -> m_annotationFragment.startNewAnnotation(annotation.getWidth(), annotation.getHeight(), annotation.getBitmap()));
                     }
                 }
                 catch(JSONException e)
