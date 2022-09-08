@@ -8,8 +8,8 @@ public class AlhambraFragment extends Fragment
 {
     public interface IFragmentListener
     {
-        void onEnableSwipping(Fragment fragment);
-        void onDisableSwipping(Fragment fragment);
+        void onEnableSwiping(Fragment fragment);
+        void onDisableSwiping(Fragment fragment);
     }
 
     public AlhambraFragment()
@@ -34,15 +34,15 @@ public class AlhambraFragment extends Fragment
         m_listeners.remove(l);
     }
 
-    public void callOnEnableSwipping()
+    public void callOnEnableSwiping()
     {
         for(IFragmentListener l : m_listeners)
-            l.onEnableSwipping(this);
+            l.onEnableSwiping(this);
     }
 
-    public void callOnDisableSwipping()
+    public void callOnDisableSwiping()
     {
         for(IFragmentListener l : m_listeners)
-            l.onDisableSwipping(this);
+            l.onDisableSwiping(this);
     }
 }

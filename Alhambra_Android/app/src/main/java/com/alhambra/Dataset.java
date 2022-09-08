@@ -9,13 +9,33 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /** Class parsing the whole dataset for later uses*/
 public class Dataset
 {
+    /** Basic listener to monitor changes in the dataset status*/
+    public interface IDatasetListener
+    {
+        /** Function called when the main entry ID of the dataset has been changed
+         * @param dataset the dataset calling this function
+         * @param id the new entry ID*/
+        void onSetMainEntryID(Dataset dataset, int id);
+
+        /** Function called when the active highlighting selection of the dataset has been changed
+         * @param dataset the dataset calling this function
+         * @param selections the new IDs to highlight. If selections.length == 0, then there is nothing to highlight*/
+        void onSetSelection(Dataset dataset, int[] selections);
+    }
+
     /** This class describes the chunk of data as saved in the database
      * Each chunk of data is readonly once it is created.*/
     public static class Data
@@ -69,15 +89,24 @@ public class Dataset
     /** All the stored chunks of data
      * Key: ID
      * Value: Data*/
-    HashMap<Integer, Data> m_data = new HashMap<>();
+    private HashMap<Integer, Data> m_data = new HashMap<>();
 
     /** The HashMap of all available Layout and their underlying data. We prefer to pre-compute this list for fast access
      * Key: Layout ID
      * Value: List of Data chunk*/
-    HashMap<Integer, List<Data>> m_layouts = new HashMap<>();
+    private HashMap<Integer, List<Data>> m_layouts = new HashMap<>();
 
     /** The general default data*/
-    Data m_defaultData = null;
+    private Data m_defaultData = null;
+
+    /** The listeners to notify changes*/
+    private ArrayList<IDatasetListener> m_listeners = new ArrayList<IDatasetListener>();
+
+    /** The current main entry to consider*/
+    private int m_currentEntryID = 0;
+
+    /** The current selections to consider*/
+    private int[] m_currentSelection = new int[0];
 
     /** Constructor. Read, from the asset manager, the dataset described by assetHeader
      * @param assetManager the asset manager to read text data directly stored in the "assets" directory
@@ -173,6 +202,23 @@ public class Dataset
                 }
             }
         }
+
+        if(getIDs().size() > 0)
+            m_currentEntryID = getIDs().iterator().next();
+    }
+
+    /** @brief Add a new listener
+     * @param l the new listener*/
+    public void addListener(IDatasetListener l)
+    {
+        m_listeners.add(l);
+    }
+
+    /** @brief Remove an old listener
+     * @param l the listener to remove*/
+    public void removeListener(IDatasetListener l)
+    {
+        m_listeners.remove(l);
     }
 
     /** Get the datachunk at ID==id
@@ -210,4 +256,49 @@ public class Dataset
     /** Get all the different layouts stored in this dataset
      * @return the list of layout IDs*/
     public Set<Integer> getLayouts() {return m_layouts.keySet();}
+
+    /** Set the current entry to consider
+     * @param id the new entry ID to consider. If the ID is invalid, this function does nothing
+     * @return true if the ID is valid, false otherwise*/
+    public boolean setMainEntryID(int id)
+    {
+        if(isIDValid(id))
+        {
+            m_currentEntryID = id;
+            for(IDatasetListener l : m_listeners)
+                l.onSetMainEntryID(this, id);
+            return true;
+        }
+        return false;
+    }
+
+    /** Get the current entry to consider
+     * @return the current entry ID. Use getDataFromID() to get the actual data*/
+    public int getMainEntryID()
+    {
+        return m_currentEntryID;
+    }
+
+    /** Set the current selection to highlight
+     * @param selections the new entry IDs to highlight. Its size can be 0 (hence, nothing particular is to highlight).
+     *                   If one of the ID is invalid, this function does nothing
+     * @return true if all the IDs are valid, false otherwise*/
+    public boolean setCurrentSelection(int[] selections)
+    {
+        for(int id : selections)
+            if(!isIDValid(id))
+                return false;
+
+        m_currentSelection = selections;
+        for(IDatasetListener l : m_listeners)
+            l.onSetSelection(this, selections);
+        return true;
+    }
+
+    /** Get the current selected entries
+     * @return the selected entry IDs. Use getDataFromID() to get the actual data*/
+    public int[] getCurrentSelection()
+    {
+        return m_currentSelection;
+    }
 }

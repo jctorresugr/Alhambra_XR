@@ -40,12 +40,12 @@ public class AnnotationFragment extends AlhambraFragment
         m_currentStrokeColor = m_colorPicker.getModel().getColor().toRGB().toARGB8888();
 
         m_canvas.setOnTouchListener((view, motionEvent) -> {
-            onTouchSwippingEvent(motionEvent);
+            onTouchSwipingEvent(motionEvent);
             return false;
         });
 
         m_colorPicker.setOnTouchListener((view, motionEvent) -> {
-            onTouchSwippingEvent(motionEvent);
+            onTouchSwipingEvent(motionEvent);
             return false;
         });
 
@@ -61,14 +61,7 @@ public class AnnotationFragment extends AlhambraFragment
             }
         });
 
-        m_colorPicker.getModel().addListener(new ColorPickerData.IColorPickerDataListener()
-        {
-            @Override
-            public void onSetColor(ColorPickerData data, int color)
-            {
-                m_currentStrokeColor = color;
-            }
-        });
+        m_colorPicker.getModel().addListener((data, color) -> m_currentStrokeColor = color);
     }
 
     @Override
@@ -80,6 +73,10 @@ public class AnnotationFragment extends AlhambraFragment
         return v;
     }
 
+    /** Start a new annotation
+     * @param width the width of the background to annotate
+     * @param height the height of the background to annotate
+     * @param argbImg the ARGB8888 image to annotate*/
     public boolean startNewAnnotation(int width, int height, byte[] argbImg)
     {
         if(argbImg.length < 4*width*height)
@@ -97,13 +94,13 @@ public class AnnotationFragment extends AlhambraFragment
         return true;
     }
 
-    /** Function to enable or disable the swipping based on a motion event
+    /** Function to enable or disable the swiping based on a motion event
      * @param motionEvent the motion event received*/
-    private void onTouchSwippingEvent(MotionEvent motionEvent)
+    private void onTouchSwipingEvent(MotionEvent motionEvent)
     {
         if(motionEvent.getAction() == MotionEvent.ACTION_DOWN)
-            callOnDisableSwipping();
+            callOnDisableSwiping();
         else if(motionEvent.getAction() == MotionEvent.ACTION_UP)
-            callOnEnableSwipping();
+            callOnEnableSwiping();
     }
 }

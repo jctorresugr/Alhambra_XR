@@ -4,7 +4,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import android.os.Bundle;
-import android.util.Base64;
 import android.util.Log;
 
 import com.alhambra.fragment.AlhambraFragment;
@@ -129,7 +128,7 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
                     if(action.equals("selection"))
                     {
                         final SelectionMessage selection = new SelectionMessage(reader.getJSONObject("data"));
-                        MainActivity.this.runOnUiThread(() -> m_previewFragment.setCurrentGroupSelection(selection.getIDs()));
+                        MainActivity.this.runOnUiThread(() -> m_dataset.setCurrentSelection(selection.getIDs()));
                     }
 
                     else if(action.equals("annotation"))
@@ -176,9 +175,7 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
         tabLayout.setupWithViewPager(m_viewPager);
 
         //Set the dataset on the UI thread for redoing all the widgets of the PreviewFragment
-        this.runOnUiThread(() -> {
-            m_previewFragment.setDataset(m_dataset);
-        });
+        this.runOnUiThread(() -> m_previewFragment.setDataset(m_dataset));
     }
 
     @Override
@@ -192,13 +189,13 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
     }
 
     @Override
-    public void onEnableSwipping(Fragment fragment)
+    public void onEnableSwiping(Fragment fragment)
     {
         m_viewPager.setPagingEnabled(true);
     }
 
     @Override
-    public void onDisableSwipping(Fragment fragment)
+    public void onDisableSwiping(Fragment fragment)
     {
         m_viewPager.setPagingEnabled(false);
     }
