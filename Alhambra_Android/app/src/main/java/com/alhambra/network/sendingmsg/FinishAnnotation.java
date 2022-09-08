@@ -19,7 +19,7 @@ public class FinishAnnotation
         List<Point> points = stroke.getPoints();
 
         res.append(SendingMessage.generateIncr(incr)).append("{\n");
-        res.append(SendingMessage.generateIncr(incr+4)).append("'point': [");
+        res.append(SendingMessage.generateIncr(incr+4)).append("\"point\": [");
         for(int i = 0; i < points.size()-1; i++)
             res.append(points.get(i).x).append(", ").append(points.get(i).y).append(", ");
         res.append(points.get(points.size()-1).x).append(", ").append(points.get(points.size()-1).y).append("]\n");
@@ -34,13 +34,16 @@ public class FinishAnnotation
      * @return the JSON string. Starting and ending brackets are included.*/
     private static String generateStrokesJSON(List<AnnotationStroke> strokes, int incr)
     {
-        StringBuilder res = new StringBuilder("[\n");
-        for(int i = 0; i < strokes.size()-1; i++) {
-            res.append(generateStrokeObjectJSON(strokes.get(i), incr+4)).append("\n");
-        }
+        StringBuilder res = new StringBuilder("[");
+
         if(strokes.size() > 0)
+        {
+            res.append("\n");
+            for(int i = 0; i < strokes.size()-1; i++)
+                res.append(generateStrokeObjectJSON(strokes.get(i), incr+4)).append(",\n");
             res.append(generateStrokeObjectJSON(strokes.get(strokes.size()-1), incr+4));
-        res.append(SendingMessage.generateIncr(incr)).append("\n");
+            res.append(SendingMessage.generateIncr(incr)).append("\n");
+        }
         res.append("]");
         return res.toString();
     }
@@ -52,10 +55,10 @@ public class FinishAnnotation
     public static String generateJSON(boolean confirm, List<AnnotationStroke> strokes)
     {
         return "{\n" +
-                "   'action': 'finishAnnotation',\n" +
-                "   'data': {\n" +
-                "       'confirm': " + (confirm ? "true" : "false") + "\n," +
-                "       'strokes': " + generateStrokesJSON(strokes, 8) + "\n" +
+                "   \"action\": \"finishAnnotation\",\n" +
+                "   \"data\": {\n" +
+                "       \"confirm\": " + (confirm ? "true" : "false") + ",\n" +
+                "       \"strokes\": " + generateStrokesJSON(strokes, 8) + "\n" +
                 "   }\n" +
                 "}";
     }

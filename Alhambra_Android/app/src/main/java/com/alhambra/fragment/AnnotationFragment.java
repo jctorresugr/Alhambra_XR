@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import com.alhambra.R;
 import com.sereno.view.AnnotationCanvasData;
@@ -47,6 +48,9 @@ public class AnnotationFragment extends AlhambraFragment
     /** The color picker view*/
     private ColorPickerView m_colorPicker = null;
 
+    private Button m_confirmBtn = null;
+    private Button m_cancelBtn  = null;
+
     /** Default constructor */
     public AnnotationFragment() { super(); }
 
@@ -55,6 +59,8 @@ public class AnnotationFragment extends AlhambraFragment
     {
         m_canvas             = v.findViewById(R.id.annotationCanvas);
         m_colorPicker        = v.findViewById(R.id.colorPicker);
+        m_confirmBtn         = v.findViewById(R.id.confirmAnnotation);
+        m_cancelBtn          = v.findViewById(R.id.cancelAnnotation);
         m_currentStrokeColor = m_colorPicker.getModel().getColor().toRGB().toARGB8888();
 
         m_canvas.setOnTouchListener((view, motionEvent) -> {
@@ -78,7 +84,18 @@ public class AnnotationFragment extends AlhambraFragment
             public void onSetBackground(AnnotationCanvasData data, Bitmap background) {}
         });
 
+        m_confirmBtn.setOnClickListener(view -> {
+            for(IAnnotationFragmentListener l : m_listeners)
+                l.onConfirmAnnotation(AnnotationFragment.this);
+        });
+        m_cancelBtn.setOnClickListener(view -> {
+            for(IAnnotationFragmentListener l : m_listeners)
+                l.onCancelAnnotation(AnnotationFragment.this);
+        });
+
         m_colorPicker.getModel().addListener((data, color) -> m_currentStrokeColor = color);
+        m_confirmBtn.setVisibility(View.GONE);
+        m_cancelBtn.setVisibility(View.GONE);
     }
 
     /** @brief Add a new listener
@@ -123,6 +140,8 @@ public class AnnotationFragment extends AlhambraFragment
 
         m_canvas.getModel().setBackground(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888));
         m_canvas.getModel().clearStrokes();
+        m_confirmBtn.setVisibility(View.VISIBLE);
+        m_cancelBtn.setVisibility(View.VISIBLE);
         return true;
     }
 

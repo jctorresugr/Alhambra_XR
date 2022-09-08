@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import com.alhambra.fragment.AlhambraFragment;
 import com.alhambra.fragment.AnnotationFragment;
@@ -30,7 +31,13 @@ import java.io.InputStream;
 public class MainActivity extends AppCompatActivity implements AlhambraFragment.IFragmentListener, AnnotationFragment.IAnnotationFragmentListener
 {
     /** The TAG to use for logging information*/
-    public static String TAG = "Alhambra";
+    public static final String TAG = "Alhambra";
+
+    /** The ID of the preview fragment tab*/
+    public static final int PREVIEW_FRAGMENT_TAB = 0;
+
+    /** The ID of the annotation fragment tab*/
+    public static final int ANNOTATION_FRAGMENT_TAB = 1;
 
     /** The user-defined configuration of this application*/
     private Configuration m_config = null;
@@ -43,6 +50,9 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
 
     /** The view pager handling all our fragments*/
     private PageViewer      m_viewPager;
+
+    /** The TabLayout handling all our fragments (preview and annotation)*/
+    private TabLayout m_tabLayout;
 
     /** The preview tab*/
     private PreviewFragment m_previewFragment = null;
@@ -130,13 +140,21 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
                     if(action.equals("selection"))
                     {
                         final SelectionMessage selection = new SelectionMessage(reader.getJSONObject("data"));
-                        MainActivity.this.runOnUiThread(() -> m_dataset.setCurrentSelection(selection.getIDs()));
+                        MainActivity.this.runOnUiThread(() -> {
+                            m_dataset.setCurrentSelection(selection.getIDs());
+                            m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
+                        });
                     }
 
+                    //Start an annotation
                     else if(action.equals("annotation"))
                     {
                         final AnnotationMessage annotation = new AnnotationMessage(reader.getJSONObject("data"));
-                        MainActivity.this.runOnUiThread(() -> m_annotationFragment.startNewAnnotation(annotation.getWidth(), annotation.getHeight(), annotation.getBitmap()));
+                        MainActivity.this.runOnUiThread(() -> {
+                            m_tabLayout.getTabAt(ANNOTATION_FRAGMENT_TAB).view.setVisibility(View.VISIBLE);
+                            m_viewPager.setCurrentItem(ANNOTATION_FRAGMENT_TAB);
+                            m_annotationFragment.startNewAnnotation(annotation.getWidth(), annotation.getHeight(), annotation.getBitmap());
+                        });
                     }
                 }
                 catch(JSONException e)
@@ -169,12 +187,15 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
         //Add "Datasets" tab
         m_annotationFragment = new AnnotationFragment();
         m_annotationFragment.addListener((AlhambraFragment.IFragmentListener)this);
+        m_annotationFragment.addListener((AnnotationFragment.IAnnotationFragmentListener)this);
         adapter.addFragment(m_annotationFragment, "Annotation");
 
         //Link the PageViewer with the adapter, and link the TabLayout with the PageViewer
         m_viewPager.setAdapter(adapter);
-        TabLayout tabLayout = (TabLayout)findViewById(R.id.tabs);
-        tabLayout.setupWithViewPager(m_viewPager);
+        m_tabLayout = (TabLayout)findViewById(R.id.tabs);
+        m_tabLayout.setupWithViewPager(m_viewPager);
+
+        m_tabLayout.getTabAt(ANNOTATION_FRAGMENT_TAB).view.setVisibility(View.GONE);
 
         //Set the dataset on the UI thread for redoing all the widgets of the PreviewFragment
         this.runOnUiThread(() -> m_previewFragment.setDataset(m_dataset));
@@ -206,12 +227,19 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
     public void onConfirmAnnotation(AnnotationFragment frag)
     {
         m_socket.push(FinishAnnotation.generateJSON(true, frag.getStrokes()));
+        runOnUiThread(() -> {
+            m_tabLayout.getTabAt(ANNOTATION_FRAGMENT_TAB).view.setVisibility(View.GONE);
+            m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
+        });
     }
 
     @Override
     public void onCancelAnnotation(AnnotationFragment frag)
     {
         m_socket.push(FinishAnnotation.generateJSON(false, frag.getStrokes()));
-
+        runOnUiThread(() -> {
+            m_tabLayout.getTabAt(ANNOTATION_FRAGMENT_TAB).view.setVisibility(View.GONE);
+            m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
+        });
     }
 }

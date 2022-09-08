@@ -7,6 +7,7 @@ import struct
 import matplotlib.image as mpimage
 import base64
 import numpy as np
+import json
 
 def sendJSON(clientsocket, data):
     packer = struct.Struct(f">I{len(data)}s")
@@ -55,5 +56,14 @@ data = """{
 sendJSON(clientsocket, data);
 
 while True:
+    data = clientsocket.recv(4096)
+    size   = struct.unpack(">I", data[:4])[0]
+    string = data[4:4+size].decode()
+
+    try:
+        print(json.loads(string))
+    except JSONDecodeError as e:
+        print(e.message)
+
     time.sleep(1.0)
     continue
