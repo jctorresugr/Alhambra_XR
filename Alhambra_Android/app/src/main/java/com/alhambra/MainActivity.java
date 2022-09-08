@@ -11,9 +11,10 @@ import com.alhambra.fragment.AnnotationFragment;
 import com.alhambra.fragment.PageViewer;
 import com.alhambra.fragment.PreviewFragment;
 import com.alhambra.fragment.ViewPagerAdapter;
-import com.alhambra.network.AnnotationMessage;
-import com.alhambra.network.SelectionMessage;
+import com.alhambra.network.receivingmsg.AnnotationMessage;
+import com.alhambra.network.receivingmsg.SelectionMessage;
 import com.alhambra.network.SocketManager;
+import com.alhambra.network.sendingmsg.FinishAnnotation;
 import com.google.android.material.tabs.TabLayout;
 
 import org.json.JSONException;
@@ -25,7 +26,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class MainActivity extends AppCompatActivity implements AlhambraFragment.IFragmentListener
+/** The Main Activity of this application. This is the first thing that is suppose to start*/
+public class MainActivity extends AppCompatActivity implements AlhambraFragment.IFragmentListener, AnnotationFragment.IAnnotationFragmentListener
 {
     /** The TAG to use for logging information*/
     public static String TAG = "Alhambra";
@@ -166,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
 
         //Add "Datasets" tab
         m_annotationFragment = new AnnotationFragment();
-        m_annotationFragment.addListener(this);
+        m_annotationFragment.addListener((AlhambraFragment.IFragmentListener)this);
         adapter.addFragment(m_annotationFragment, "Annotation");
 
         //Link the PageViewer with the adapter, and link the TabLayout with the PageViewer
@@ -198,5 +200,18 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
     public void onDisableSwiping(Fragment fragment)
     {
         m_viewPager.setPagingEnabled(false);
+    }
+
+    @Override
+    public void onConfirmAnnotation(AnnotationFragment frag)
+    {
+        m_socket.push(FinishAnnotation.generateJSON(true, frag.getStrokes()));
+    }
+
+    @Override
+    public void onCancelAnnotation(AnnotationFragment frag)
+    {
+        m_socket.push(FinishAnnotation.generateJSON(false, frag.getStrokes()));
+
     }
 }

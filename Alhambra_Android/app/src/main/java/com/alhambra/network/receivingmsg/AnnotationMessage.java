@@ -1,4 +1,4 @@
-package com.alhambra.network;
+package com.alhambra.network.receivingmsg;
 
 import android.util.Base64;
 

@@ -2,7 +2,6 @@ package com.alhambra.fragment;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -10,23 +9,42 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.alhambra.R;
-import com.sereno.color.Color;
 import com.sereno.view.AnnotationCanvasData;
 import com.sereno.view.AnnotationCanvasView;
 import com.sereno.view.AnnotationStroke;
-import com.sereno.view.ColorPickerData;
 import com.sereno.view.ColorPickerView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import androidx.annotation.NonNull;
 
+/** The fragment specialized with the management of annotations*/
 public class AnnotationFragment extends AlhambraFragment
 {
+    /** Interface used to catch events from the annotation fragment*/
+    public interface IAnnotationFragmentListener
+    {
+        /** Method called to confirm the current annotation task*/
+        void onConfirmAnnotation(AnnotationFragment frag);
+
+        /** Method called to cancel the current annotation task*/
+        void onCancelAnnotation(AnnotationFragment frag);
+    }
+
+    /** The list of registered listeners*/
+    private ArrayList<IAnnotationFragmentListener> m_listeners = new ArrayList<>();
+
     /** The context associated with this fragment*/
     private Context m_ctx = null;
 
+    /** The current ARGB8888 color to use for strokes*/
     private int m_currentStrokeColor = 0;
 
+    /** The canvas view */
     private AnnotationCanvasView m_canvas = null;
+
+    /** The color picker view*/
     private ColorPickerView m_colorPicker = null;
 
     /** Default constructor */
@@ -51,17 +69,30 @@ public class AnnotationFragment extends AlhambraFragment
 
         m_canvas.getModel().addListener(new AnnotationCanvasData.IAnnotationDataListener() {
             @Override
-            public void onAddStroke(AnnotationCanvasData data, AnnotationStroke stroke) {
-                stroke.setColor(m_currentStrokeColor);
-            }
+            public void onAddStroke(AnnotationCanvasData data, AnnotationStroke stroke) { stroke.setColor(m_currentStrokeColor); }
 
             @Override
-            public void onSetBackground(AnnotationCanvasData data, Bitmap background) {
+            public void onClearStrokes(AnnotationCanvasData data, List<AnnotationStroke> strokes) {}
 
-            }
+            @Override
+            public void onSetBackground(AnnotationCanvasData data, Bitmap background) {}
         });
 
         m_colorPicker.getModel().addListener((data, color) -> m_currentStrokeColor = color);
+    }
+
+    /** @brief Add a new listener
+     * @param l the new listener*/
+    public void addListener(IAnnotationFragmentListener l)
+    {
+        m_listeners.add(l);
+    }
+
+    /** @brief Remove an old listener
+     * @param l the listener to remove*/
+    public void removeListener(IAnnotationFragmentListener l)
+    {
+        m_listeners.remove(l);
     }
 
     @Override
@@ -91,7 +122,15 @@ public class AnnotationFragment extends AlhambraFragment
                                 (argbImg[4*i+3]);
 
         m_canvas.getModel().setBackground(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888));
+        m_canvas.getModel().clearStrokes();
         return true;
+    }
+
+    /** Get the strokes of the current annotation
+     * @return the strokes*/
+    public List<AnnotationStroke> getStrokes()
+    {
+        return m_canvas.getModel().getStrokes();
     }
 
     /** Function to enable or disable the swiping based on a motion event

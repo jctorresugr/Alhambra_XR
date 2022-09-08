@@ -13,6 +13,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import androidx.annotation.Nullable;
 
@@ -216,6 +217,14 @@ public class AnnotationCanvasView extends View implements AnnotationCanvasData.I
     public void onAddStroke(AnnotationCanvasData data, AnnotationStroke stroke)
     {
         stroke.addListener(this);
+        invalidate();
+    }
+
+    @Override
+    public void onClearStrokes(AnnotationCanvasData data, List<AnnotationStroke> strokes)
+    {
+        for(AnnotationStroke s : strokes)
+            s.removeListener(this);
         invalidate();
     }
 

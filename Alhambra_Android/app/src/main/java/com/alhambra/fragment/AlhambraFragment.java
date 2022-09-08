@@ -4,11 +4,18 @@ import androidx.fragment.app.Fragment;
 
 import java.util.ArrayList;
 
-public class AlhambraFragment extends Fragment
+/** The common abstract class for all the fragment of the application*/
+public abstract class AlhambraFragment extends Fragment
 {
+    /** The listener associated with this fragment*/
     public interface IFragmentListener
     {
+        /** Method called when the swiping of the tabs should be enabled
+         * @param fragment the fragment calling this method*/
         void onEnableSwiping(Fragment fragment);
+
+        /** Method called when the swiping of the tabs should be disabled
+         * @param fragment the fragment calling this method*/
         void onDisableSwiping(Fragment fragment);
     }
 
@@ -18,7 +25,7 @@ public class AlhambraFragment extends Fragment
     }
 
     /** The list of registered listeners*/
-    protected ArrayList<IFragmentListener> m_listeners = new ArrayList<>();
+    private ArrayList<IFragmentListener> m_listeners = new ArrayList<>();
 
     /** @brief Add a new listener
      * @param l the new listener*/
@@ -34,13 +41,15 @@ public class AlhambraFragment extends Fragment
         m_listeners.remove(l);
     }
 
-    public void callOnEnableSwiping()
+    /** Method used by children classes to call "onEnableSwiping" on all the listeners of this fragment*/
+    protected void callOnEnableSwiping()
     {
         for(IFragmentListener l : m_listeners)
             l.onEnableSwiping(this);
     }
 
-    public void callOnDisableSwiping()
+    /** Method used by children classes to call "onDisableSwiping" on all the listeners of this fragment*/
+    protected void callOnDisableSwiping()
     {
         for(IFragmentListener l : m_listeners)
             l.onDisableSwiping(this);

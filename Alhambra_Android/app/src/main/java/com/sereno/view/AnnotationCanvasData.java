@@ -3,6 +3,7 @@ package com.sereno.view;
 import android.graphics.Bitmap;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class AnnotationCanvasData
 {
@@ -13,6 +14,11 @@ public class AnnotationCanvasData
          * @param data the AnnotationData firing this call
          * @param stroke  the stroke added*/
         void onAddStroke(AnnotationCanvasData data, AnnotationStroke stroke);
+
+        /** Method called when all the strokes are erased
+         * @param  data the AnnotationData firing this call
+         * @param strokes the old strokes getting cleared. You may want to remove some registered listeners*/
+        void onClearStrokes(AnnotationCanvasData data, List<AnnotationStroke> strokes);
 
         /** Method called when a new background is set
          * @param data the AnnotationData firing this call
@@ -84,7 +90,13 @@ public class AnnotationCanvasData
         return m_strokes;
     }
 
-
+    /** Clear all the registered strokes*/
+    public void clearStrokes()
+    {
+        for(int i = 0; i < m_listeners.size(); i++)
+            m_listeners.get(i).onClearStrokes(this, m_strokes);
+        m_strokes.clear();
+    }
 
     /** Get the current background of the canvas
      * @return the current image background*/

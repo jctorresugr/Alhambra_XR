@@ -10,6 +10,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 
@@ -305,6 +308,17 @@ public class SocketManager
         m_queueSendBuf.add(data);
     }
 
+    /** Push a new string to send via the network. This method will generate (1) a 4-bytes integer to state the size of the string, and (2) the string in itself using a default UTF-8 conversion
+     * @param str the string to send*/
+    public synchronized void push(String str)
+    {
+        ByteBuffer buf = ByteBuffer.allocate(4 + str.length());
+        buf.order(ByteOrder.BIG_ENDIAN);
+        buf.putInt(str.length());
+        buf.put(str.getBytes(StandardCharsets.UTF_8));
+
+        push(buf.array());
+    }
 
     /** Check the writing part of the client
      * @return true if no error occurred, false otherwise*/
