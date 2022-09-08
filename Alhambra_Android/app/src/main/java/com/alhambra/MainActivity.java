@@ -154,6 +154,7 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
                             m_tabLayout.getTabAt(ANNOTATION_FRAGMENT_TAB).view.setVisibility(View.VISIBLE);
                             m_viewPager.setCurrentItem(ANNOTATION_FRAGMENT_TAB);
                             m_annotationFragment.startNewAnnotation(annotation.getWidth(), annotation.getHeight(), annotation.getBitmap());
+                            m_viewPager.setPagingEnabled(true);
                         });
                     }
                 }
@@ -195,11 +196,20 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
         m_tabLayout = (TabLayout)findViewById(R.id.tabs);
         m_tabLayout.setupWithViewPager(m_viewPager);
 
-        m_tabLayout.getTabAt(ANNOTATION_FRAGMENT_TAB).view.setVisibility(View.GONE);
+        disableAnnotationTab();
 
         //Set the dataset on the UI thread for redoing all the widgets of the PreviewFragment
         this.runOnUiThread(() -> m_previewFragment.setDataset(m_dataset));
     }
+
+    /** Disable the annotation tab. This will lock the application in the preview tab (works because we only have two tabs here)*/
+    private void disableAnnotationTab()
+    {
+        m_tabLayout.getTabAt(ANNOTATION_FRAGMENT_TAB).view.setVisibility(View.GONE);
+        m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
+        m_viewPager.setPagingEnabled(false);
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -227,19 +237,14 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
     public void onConfirmAnnotation(AnnotationFragment frag)
     {
         m_socket.push(FinishAnnotation.generateJSON(true, frag.getStrokes()));
-        runOnUiThread(() -> {
-            m_tabLayout.getTabAt(ANNOTATION_FRAGMENT_TAB).view.setVisibility(View.GONE);
-            m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
-        });
+        runOnUiThread(this::disableAnnotationTab);
     }
 
     @Override
     public void onCancelAnnotation(AnnotationFragment frag)
     {
         m_socket.push(FinishAnnotation.generateJSON(false, frag.getStrokes()));
-        runOnUiThread(() -> {
-            m_tabLayout.getTabAt(ANNOTATION_FRAGMENT_TAB).view.setVisibility(View.GONE);
-            m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
-        });
+        runOnUiThread(this::disableAnnotationTab);
+
     }
 }

@@ -9,8 +9,8 @@ import java.util.List;
 
 public class ViewPagerAdapter extends FragmentPagerAdapter
 {
-    private final List<Fragment> m_fragmentList      = new ArrayList<>();
-    private final List<String>   m_fragmentTitleList = new ArrayList<>();
+    private final List<AlhambraFragment> m_fragmentList      = new ArrayList<>();
+    private final List<String>           m_fragmentTitleList = new ArrayList<>();
 
     public ViewPagerAdapter(FragmentManager manager)
     {
@@ -29,7 +29,7 @@ public class ViewPagerAdapter extends FragmentPagerAdapter
         return m_fragmentList.size();
     }
 
-    public void addFragment(Fragment fragment, String title)
+    public void addFragment(AlhambraFragment fragment, String title)
     {
         m_fragmentList.add(fragment);
         m_fragmentTitleList.add(title);
