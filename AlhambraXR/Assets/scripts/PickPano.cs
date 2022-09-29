@@ -1,11 +1,8 @@
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
-using Microsoft.MixedReality.Toolkit.Utilities;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class pickPano : MonoBehaviour, IMixedRealityInputActionHandler, IMixedRealityPointerHandler
+public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, IMixedRealityPointerHandler
 {
     public Texture2D Image;
     public Texture2D Tex12;
