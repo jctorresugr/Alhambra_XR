@@ -2,16 +2,14 @@ Shader "Custom/BlinkSurface"
 {
     Properties
     {
-        _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Albedo (RGB)", 2D) = "white" {}
+        _Color      ("Color", Color) = (1,1,1,1)
+        _MainTex    ("Albedo (RGB)", 2D) = "white" {}
         _Glossiness ("Smoothness", Range(0,1)) = 0.5
-        _Metallic ("Metallic", Range(0,1)) = 0.0
+        _Metallic   ("Metallic", Range(0,1)) = 0.0
 
-//        _MainTex("Texture", 2D) = "white" {}
-        _IndexTex("Texture", 2D) = "white" {}
-//        _Color("Main Color", Color) = (1,1,1,1)
-        _ID("ID",Int) = 254
-        _Layer("Layer", Int) = 0
+        _IndexTex   ("Texture", 2D) = "white" {}
+        _ID         ("ID",Int) = 254
+        _Layer      ("Layer", Int) = 0
     }
     SubShader
     {
@@ -26,12 +24,10 @@ Shader "Custom/BlinkSurface"
         #pragma target 3.0
 
         sampler2D _MainTex;
-
- //       float4 _MainTex_ST;
  //       float4 _Color;
 
         sampler2D _IndexTex;
-        float4 _IndexTex_ST;
+        float4    _IndexTex_ST;
 //        float4 _Index;
 
         fixed _Layer;
@@ -50,7 +46,7 @@ Shader "Custom/BlinkSurface"
         // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
         // #pragma instancing_options assumeuniformscaling
         UNITY_INSTANCING_BUFFER_START(Props)
-            // put more per-instance properties here
+        // put more per-instance properties here
         UNITY_INSTANCING_BUFFER_END(Props)
 
         void surf (Input IN, inout SurfaceOutputStandard o)
@@ -61,19 +57,15 @@ Shader "Custom/BlinkSurface"
 
             // sample the texture
             fixed4 index = tex2D(_IndexTex, IN.uv_MainTex);
-   //         fixed4 col = tex2D(_MainTex, i.uv);
-
             fixed indexArray[4] = { index.r, index.g, index.b, index.a };
- //           d = 0.3 * (_SinTime[3] * _SinTime[3]);
             if (_Layer < 4 && ((indexArray[_Layer])*255 == _ID)) { o.Albedo = c.rgb + 0.6 * (_SinTime[3] * _SinTime[3]) * _Color; }
 
-//            if ((indexArray[0]) * 255 >0) { o.Albedo = c.rgb + 0.6 * (_SinTime[3] * _SinTime[3]) * _Color; }  // Debuging 
-
+            //if ((indexArray[3]) * 255 >0) { o.Albedo = c.rgb + 0.6 * (_SinTime[3] * _SinTime[3]) * _Color; }  // Debuging 
 
             // Metallic and smoothness come from slider variables
-            o.Metallic = _Metallic;
+            o.Metallic   = _Metallic;
             o.Smoothness = _Glossiness;
-            o.Alpha = c.a;
+            o.Alpha      = c.a;
         }
         ENDCG
     }
