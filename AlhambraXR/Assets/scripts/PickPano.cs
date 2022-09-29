@@ -1,5 +1,6 @@
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
+using Microsoft.MixedReality.Toolkit.Physics;
 using UnityEngine;
 
 public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, IMixedRealityPointerHandler
@@ -28,7 +29,9 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, IMixedRe
             {
                 Color? c = FindLayersAt(inputSource.Pointers[0]);
                 if(c != null)
+                { 
                     SetShaderLayerParams(c.Value);
+                }
             }
         }
     }
@@ -47,8 +50,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, IMixedRe
     {
         //Get the general ray information
         Vector3 position = pointer.Position; //Pointer 0 is the default one (straight line)
-        Quaternion rot = pointer.Rotation;
-        Ray ray = new Ray(position, rot * Vector3.forward);
+        RayStep rayStep = pointer.Rays[0];
+        Ray ray = new Ray(rayStep.Origin, rayStep.Direction);
 
         //Collide the ray with the world, and check that we hit the correct gameObject
         RaycastHit hit;
@@ -56,12 +59,22 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, IMixedRe
         {
             if (hit.transform.name == gameObject.name)
             {
+                //Check that we have a mesh collider
+                MeshCollider meshCollider = hit.collider as MeshCollider;
+                if (meshCollider == null)
+                {
+                    Debug.Log("Issue with mesh colliders... Return.");
+                    return null;
+                }
+
                 //Get the position of the hit
                 Vector2 point = hit.textureCoord;
                 Debug.Log("u " + point.x + " v " + point.y);
+                GameObject.Find("Origin").transform.position = hit.point;
+
 
                 //Get the corresponding Layer information using the Image that encodes up to 4 layers
-                Color c = Image.GetPixel(Mathf.FloorToInt(point.x * Image.width), Mathf.FloorToInt(point.y * Image.height));
+                Color c = Image.GetPixel((int)(point.x * Image.width), (int)(point.y * Image.height));
                 return c;
             }
         }
@@ -109,15 +122,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, IMixedRe
     {}
 
     public void OnPointerDown(MixedRealityPointerEventData eventData)
-    {
-    }
+    {}
 
     public void OnPointerDragged(MixedRealityPointerEventData eventData)
-    {
-        Debug.Log(eventData.InputSource.SourceType);
-        if (eventData.InputSource.SourceType == InputSourceType.Hand)
-            Debug.Log(eventData.selectedObject.name);
-    }
+    {}
 
     public void OnPointerUp(MixedRealityPointerEventData eventData)
     {}

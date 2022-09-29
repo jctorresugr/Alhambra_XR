@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 
+
+using System.Threading;
 #if WINDOWS_UWP
 using Windows.System.Threading;
-using System.Threading;
-#else
-using System.Threading;
-using UnityEngine;
 #endif
+using UnityEngine;
 
 
 /// <summary>

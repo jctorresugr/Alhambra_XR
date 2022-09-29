@@ -8,20 +8,18 @@ Shader "Custom/BlinkSurface"
         _Metallic   ("Metallic", Range(0,1)) = 0.0
 
         _IndexTex   ("Texture", 2D) = "white" {}
-        _ID         ("ID",Int) = 254
+        _ID         ("ID",Int)     = 254
         _Layer      ("Layer", Int) = 0
     }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
-        LOD 200
-
         CGPROGRAM
-        // Physically based Standard lighting model, and enable shadows on all light types
-        #pragma surface surf Standard fullforwardshadows
+        // Physically based Standard lighting model
+        #pragma surface surf Standard
 
         // Use shader model 3.0 target, to get nicer looking lighting
-        #pragma target 3.0
+        //#pragma target 3.0
 
         sampler2D _MainTex;
  //       float4 _Color;
@@ -30,8 +28,8 @@ Shader "Custom/BlinkSurface"
         float4    _IndexTex_ST;
 //        float4 _Index;
 
-        fixed _Layer;
-        fixed _ID;
+        int _Layer;
+        int _ID;
 
         struct Input
         {
