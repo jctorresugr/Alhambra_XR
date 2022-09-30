@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text;
 
 #if WINDOWS_UWP
 using Windows.System.Threading;
@@ -174,6 +175,23 @@ public class ServerSocket: IClientListener
         lock(this)
             foreach (Client c in m_clients.Values)
                 c.EnqueueData(d);
+    }
+
+    /// <summary>
+    /// Send a string data to all clients. The byte array data sent is constructed as follow:
+    /// 4 bytes: Size of the string (big endian)
+    /// n bytes: the ASCII byte caracters of the string
+    /// </summary>
+    /// <param name="s">The string to send.</param>
+    public void SendASCIIStringToClients(String s)
+    {
+        byte[] data = new byte[4 + s.Length];
+        Encoding.ASCII.GetBytes(s, 0, s.Length, data, 0);
+        data[3] = (byte)(s.Length >> 24);
+        data[2] = (byte)(s.Length >> 16);
+        data[1] = (byte)(s.Length >> 8);
+        data[0] = (byte)s.Length;
+        SendDataToClients(data);
     }
 
     /// <summary>

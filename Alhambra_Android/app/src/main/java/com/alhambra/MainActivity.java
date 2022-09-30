@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 /** The Main Activity of this application. This is the first thing that is suppose to start*/
 public class MainActivity extends AppCompatActivity implements AlhambraFragment.IFragmentListener, AnnotationFragment.IAnnotationFragmentListener
@@ -140,8 +141,19 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
                     if(action.equals("selection"))
                     {
                         final SelectionMessage selection = new SelectionMessage(reader.getJSONObject("data"));
-                        MainActivity.this.runOnUiThread(() -> {
-                            m_dataset.setCurrentSelection(selection.getIDs());
+                        MainActivity.this.runOnUiThread(() ->
+                        {
+                            ArrayList<Integer> indexes = new ArrayList<>();
+                            for(SelectionMessage.PairLayoutID id: selection.getIDs())
+                            {
+                                int index = m_dataset.getIndexFromID(id.layout, id.id);
+                                if(index != -1)
+                                    indexes.add(index);
+                            }
+                            int[] indexArr = new int[indexes.size()];
+                            for(int i = 0; i < indexes.size(); i++)
+                                indexArr[i] = indexes.get(i);
+                            m_dataset.setCurrentSelection(indexArr);
                             m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
                         });
                     }

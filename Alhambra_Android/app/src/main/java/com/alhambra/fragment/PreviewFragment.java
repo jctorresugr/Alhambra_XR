@@ -80,7 +80,7 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
 
         //Populate the preview tree
         final Tree<View> treeModel = m_treeView.getModel();
-        for(Integer i : m_dataset.getIDs())
+        for(Integer i : m_dataset.getIndexes())
         {
             //Inflate the layout
             View preview = inflater.inflate(R.layout.preview_key_entry, null);
@@ -92,15 +92,15 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
 
             //Configure the preview image
             ImageView imageView = preview.findViewById(R.id.preview_key_entry_drawable);
-            imageView.setImageDrawable(m_dataset.getDataFromID(i).getImage());
+            imageView.setImageDrawable(m_dataset.getDataFromIndex(i).getImage());
 
             //Put that in the tree view and set all the interactive listeners
             Tree<View> idTree = new Tree<>(preview);
-            preview.setOnClickListener(view -> m_dataset.setMainEntryID(i));
+            preview.setOnClickListener(view -> m_dataset.setMainEntryIndex(i));
             treeModel.addChild(idTree, -1);
             m_datasetEntries.put(i, idTree);
         }
-        onSetMainEntryID(d, d.getMainEntryID());
+        onSetMainEntryIndex(d, d.getMainEntryIndex());
         onSetSelection(d, d.getCurrentSelection());
     }
 
@@ -116,12 +116,12 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         //Listeners
         m_previousBtn.setOnClickListener(view -> {
             if(m_currentSelection != null)
-                m_dataset.setMainEntryID(findPreviousID());
+                m_dataset.setMainEntryIndex(findPreviousID());
         });
 
         m_nextBtn.setOnClickListener(view -> {
             if(m_currentSelection != null)
-                m_dataset.setMainEntryID(findNextID());
+                m_dataset.setMainEntryIndex(findNextID());
         });
 
         setDataset(m_dataset);
@@ -159,10 +159,10 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         int[] currentGroup = m_dataset.getCurrentSelection();
         for(int i = 0; i < currentGroup.length-1; i++)
             if(currentGroup[i] == m_currentSelection)
-                return (m_dataset.isIDValid(currentGroup[i+1]) ? currentGroup[i+1] : -1);
+                return (m_dataset.isIndexValid(currentGroup[i+1]) ? currentGroup[i+1] : -1);
 
 
-        return (m_dataset.isIDValid(m_currentSelection+1) ? m_currentSelection+1 : -1);
+        return (m_dataset.isIndexValid(m_currentSelection+1) ? m_currentSelection+1 : -1);
     }
 
     /** Find the previous ID to select based on m_currentSelection and m_currentGroup
@@ -175,13 +175,13 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         int[] currentGroup = m_dataset.getCurrentSelection();
         for(int i = 1; i < currentGroup.length; i++)
             if(currentGroup[i] == m_currentSelection)
-                return (m_dataset.isIDValid(currentGroup[i-1]) ? currentGroup[i-1] : -1);
+                return (m_dataset.isIndexValid(currentGroup[i-1]) ? currentGroup[i-1] : -1);
 
-        return (m_dataset.isIDValid(m_currentSelection-1) ? m_currentSelection-1 : -1);
+        return (m_dataset.isIndexValid(m_currentSelection-1) ? m_currentSelection-1 : -1);
     }
 
     @Override
-    public void onSetMainEntryID(Dataset d, int i)
+    public void onSetMainEntryIndex(Dataset d, int i)
     {
         //Nothing to be done, UI-wise
         if(m_ctx == null)
@@ -200,7 +200,7 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         }
 
         //Select the new one
-        Dataset.Data data  = m_dataset.getDataFromID(i);
+        Dataset.Data data  = m_dataset.getDataFromIndex(i);
         m_currentSelection = i;
         m_mainImageView.setImageDrawable(data.getImage());
         m_mainTextView.setText(data.getText());
@@ -222,18 +222,18 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         {
             for(Tree<View> view : m_datasetEntries.values())
                 view.value.setBackgroundResource(0);
-            onSetMainEntryID(d, m_currentSelection); //Redo the background
+            onSetMainEntryIndex(d, m_currentSelection); //Redo the background
             return;
         }
 
         //Grey out all the data that are not part of group selection
-        for(Integer dataID : m_dataset.getIDs())
+        for(Integer dataID : m_dataset.getIndexes())
         {
             Tree<View> view = m_datasetEntries.get(dataID);
             view.value.setBackgroundResource(isEntryGreyed(dataID) ? R.color.dark : 0);
         }
 
         //Set the selection to the first group
-        m_dataset.setMainEntryID(selections[0]);
+        m_dataset.setMainEntryIndex(selections[0]);
     }
 }

@@ -27,8 +27,8 @@ public class Dataset
     {
         /** Function called when the main entry ID of the dataset has been changed
          * @param dataset the dataset calling this function
-         * @param id the new entry ID*/
-        void onSetMainEntryID(Dataset dataset, int id);
+         * @param index the new entry Index*/
+        void onSetMainEntryIndex(Dataset dataset, int id);
 
         /** Function called when the active highlighting selection of the dataset has been changed
          * @param dataset the dataset calling this function
@@ -40,6 +40,9 @@ public class Dataset
      * Each chunk of data is readonly once it is created.*/
     public static class Data
     {
+        /** The index of this chunk of data*/
+        private int    m_index = 0;
+
         /** The ID of this chunk of data*/
         private int    m_id = 0;
 
@@ -56,19 +59,24 @@ public class Dataset
         private Drawable m_drawable = null;
 
         /** Constructor
+         * @param index the Index of this chunk of data
          * @param id  The ID of this chunk of data
          * @param layout The layout ID to which this chunk of data belongs to
          * @param color  The color representing this chunk of data
          * @param text The text associated with this chunk of data
          * @param img The image drawable describing this data chunk*/
-        public Data(int id, int layout, int color, String text, Drawable img)
+        public Data(int index, int id, int layout, int color, String text, Drawable img)
         {
+            m_index    = index;
             m_id       = id;
             m_layout   = layout;
             m_color    = color;
             m_text     = text;
             m_drawable = img;
         }
+
+        /** Get the index of this chunk of data*/
+        public int getIndex() {return m_index;}
 
         /** Get the ID of this chunk of data*/
         public int getID() {return m_id;}
@@ -103,7 +111,7 @@ public class Dataset
     private ArrayList<IDatasetListener> m_listeners = new ArrayList<IDatasetListener>();
 
     /** The current main entry to consider*/
-    private int m_currentEntryID = 0;
+    private int m_currentEntryIndex = 0;
 
     /** The current selections to consider*/
     private int[] m_currentSelection = new int[0];
@@ -132,10 +140,11 @@ public class Dataset
 
             if(i != 0)
             {
+
                 //Get ID...
-                int id         = Integer.parseInt(row[0]);
-                if(m_data.containsKey(id))
-                    throw new IllegalArgumentException("The ID " + id + " is duplicated in the dataset");
+                int index = Integer.parseInt(row[0]);
+                if(m_data.containsKey(index))
+                    throw new IllegalArgumentException("The Index " + index + " is duplicated in the dataset");
 
                 //...and read the text associated to it
                 InputStream textStream = assetManager.open("text"+row[0]+".txt");
@@ -167,21 +176,22 @@ public class Dataset
                 {
                     if(m_defaultData != null)
                         throw new IllegalArgumentException("The dataset contains multiple default data entry");
-                    m_defaultData = new Data(id, -1, 0x00, text.toString("UTF-8"), img);
-                    m_data.put(id, m_defaultData);
+                    m_defaultData = new Data(index, -1, -1, 0x00, text.toString("UTF-8"), img);
+                    m_data.put(index, m_defaultData);
                 }
 
                 //Else, read color + layout and add the data chunk
                 else
                 {
-                    //Get the layout
+                    //Get the IDs
                     int layout = Integer.parseInt(row[2]);
+                    int id     = Integer.parseInt(row[3]);
 
                     //Get the color as RGBA following the format (r,g,b,a)
                     if(row[1].charAt(0) != '(' && row[1].charAt(row[1].length()-1) != ')')
                         throw new IllegalArgumentException("One color entry is invalid");
                     String colorStr    = row[1].substring(1, row[1].length()-1);
-                    String[] colorArray = colorStr.split(";");
+                    String[] colorArray = colorStr.split(",");
                     if(colorArray.length != 4)
                         throw new IllegalArgumentException("One color entry is invalid");
                     int colorRGBA = 0;
@@ -189,8 +199,8 @@ public class Dataset
                         colorRGBA += Math.max(0, Math.min(255, Integer.parseInt(colorArray[j]))) << (byte)(4*j);
 
                     //Save the content
-                    Data data = new Data(id, layout, colorRGBA, text.toString("UTF-8"), img);
-                    m_data.put(id, data);
+                    Data data = new Data(index, id, layout, colorRGBA, text.toString("UTF-8"), img);
+                    m_data.put(index, data);
                     if(m_layouts.containsKey(layout))
                         m_layouts.get(layout).add(data);
                     else
@@ -203,8 +213,8 @@ public class Dataset
             }
         }
 
-        if(getIDs().size() > 0)
-            m_currentEntryID = getIDs().iterator().next();
+        if(getIndexes().size() > 0)
+            m_currentEntryIndex = getIndexes().iterator().next();
     }
 
     /** @brief Add a new listener
@@ -222,11 +232,11 @@ public class Dataset
     }
 
     /** Get the datachunk at ID==id
-     * @param id the id to look for
-     * @return the data that contains this, normally, unique ID. See isIDValid before calling this function to check that the ID is a valid one*/
-    public Data getDataFromID(int id)
+     * @param index the index to look for
+     * @return the data that contains this, normally, unique ID. See isIndexValid before calling this function to check that the ID is a valid one*/
+    public Data getDataFromIndex(int index)
     {
-        return m_data.get(id);
+        return m_data.get(index);
     }
 
     /** Get all the data contained in layout == layout
@@ -239,10 +249,18 @@ public class Dataset
         return new ArrayList<>();
     }
 
-    /** Is the ID "id" available in the dataset?
-     * @param id the ID to look for
+    public int getIndexFromID(int layout, int id)
+    {
+        for(Data d : m_data.values())
+            if(d.getLayout() == layout && d.getID() == id)
+                return d.getIndex();
+        return -1;
+    }
+
+    /** Is the Index "id" available in the dataset?
+     * @param index the index to look for
      * @return true if yes, false otherwise*/
-    public boolean isIDValid(int id) {return m_data.containsKey(id);}
+    public boolean isIndexValid(int index) {return m_data.containsKey(index);}
 
     /** Is the Layout "layout" registered in the dataset?
      * @param layout the layout to look for
@@ -251,42 +269,54 @@ public class Dataset
 
     /** Get all the different datachunks' IDs
      * @return the list of IDs stored in this dataset*/
-    public Set<Integer> getIDs() {return m_data.keySet();}
+    public Set<Integer> getIndexes() {return m_data.keySet();}
 
     /** Get all the different layouts stored in this dataset
      * @return the list of layout IDs*/
     public Set<Integer> getLayouts() {return m_layouts.keySet();}
 
     /** Set the current entry to consider
-     * @param id the new entry ID to consider. If the ID is invalid, this function does nothing
-     * @return true if the ID is valid, false otherwise*/
-    public boolean setMainEntryID(int id)
+     * @param layout the layout ID of the new entry to consider.
+     * @param id the data ID inside the layout of the new entry to consider
+     * @return true if the pair of (layout, id) is valid, false otherwise*/
+    public boolean setMainEntryID(int layout, int id)
     {
-        if(isIDValid(id))
+        for(Data d : m_data.values())
+            if(d.getLayout() == layout && d.getID() == id)
+                return setMainEntryIndex(d.getIndex());
+        return false;
+    }
+
+    /** Set the current entry to consider
+     * @param index the new entry Index to consider. If the Index is invalid, this function does nothing
+     * @return true if the index is valid, false otherwise*/
+    public boolean setMainEntryIndex(int index)
+    {
+        if(isIndexValid(index))
         {
-            m_currentEntryID = id;
+            m_currentEntryIndex = index;
             for(IDatasetListener l : m_listeners)
-                l.onSetMainEntryID(this, id);
+                l.onSetMainEntryIndex(this, index);
             return true;
         }
         return false;
     }
 
     /** Get the current entry to consider
-     * @return the current entry ID. Use getDataFromID() to get the actual data*/
-    public int getMainEntryID()
+     * @return the current entry Index. Use getDataFromID() to get the actual data*/
+    public int getMainEntryIndex()
     {
-        return m_currentEntryID;
+        return m_currentEntryIndex;
     }
 
     /** Set the current selection to highlight
-     * @param selections the new entry IDs to highlight. Its size can be 0 (hence, nothing particular is to highlight).
-     *                   If one of the ID is invalid, this function does nothing
+     * @param selections the new entry Indexes to highlight. Its size can be 0 (hence, nothing particular is to highlight).
+     *                   If one of the Index is invalid, this function does nothing
      * @return true if all the IDs are valid, false otherwise*/
     public boolean setCurrentSelection(int[] selections)
     {
         for(int id : selections)
-            if(!isIDValid(id))
+            if(!isIndexValid(id))
                 return false;
 
         m_currentSelection = selections;

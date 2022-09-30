@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class Main : MonoBehaviour, IAlhambraServerListener
+public class Main : MonoBehaviour, IAlhambraServerListener, PickPano.IPickPanoListener
 {
     /// <summary>
     /// The server application
@@ -34,6 +34,11 @@ public class Main : MonoBehaviour, IAlhambraServerListener
     private bool m_updateRandomText = false;
 
     /// <summary>
+    /// The MonoBehaviour script handling the panel picking of the Alhambra model
+    /// </summary>
+    public PickPano m_pickPanoModel;
+
+    /// <summary>
     /// The IP header text being displayed
     /// </summary>
     public UnityEngine.UI.Text IPHeaderText;
@@ -53,6 +58,7 @@ public class Main : MonoBehaviour, IAlhambraServerListener
     {
         m_server.Launch();
         m_server.AddListener(this);
+        m_pickPanoModel.AddListener(this);
 
         //Default text helpful to bind headset to tablet
         m_updateIPTexts = true;
@@ -132,5 +138,10 @@ public class Main : MonoBehaviour, IAlhambraServerListener
             this.m_updateIPTexts = true;
             this.m_enableIPTexts = false;
         }
+    }
+
+    public void OnSelection(PickPano pano, Color c)
+    {
+        m_server.SendASCIIStringToClients(JSONMessage.SelectionToJSON(c));
     }
 }
