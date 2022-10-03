@@ -13,13 +13,16 @@ using System.Threading;
 using System.Threading;
 #endif
 
+/// <summary>
+/// The interface containing methods to call on events for ServerSocket objects
+/// </summary>
 public interface IServerSocketListener
 {
     /// <summary>
-    /// Function called when a new client is connected to the server. Listen to this client if you are interested in the data they sent
+    /// Function called when a new client is connected to the server. Listen to this client if you are interested in the data it is sending, or when this client is closing
     /// </summary>
     /// <param name="s">The server socket accepting a new client</param>
-    /// <param name="c">The client</param>
+    /// <param name="c">The new accepted client</param>
     public void OnAcceptClient(ServerSocket s, Client c);
 }
 
@@ -287,6 +290,9 @@ public class ServerSocket: IClientListener
     /// </summary>
     public bool Closed { get => m_closed; }
 
+    /// <summary>
+    /// Get the first available IP address to join this server.
+    /// </summary>
     public static String DeviceServerAddress
     {
         get
@@ -306,9 +312,26 @@ public class ServerSocket: IClientListener
         }
     }
 
-    public String ServerAddress
+    /// <summary>
+    /// Get the list of all available IP address to join this serer
+    /// </summary>
+    public static List<String> DeviceServerAddresses
     {
-        get => ((IPEndPoint)m_socket.LocalEndPoint).Address.ToString();
+        get
+        {
+            List<String> ret = new List<String>();
+            IPHostEntry HostEntry = Dns.GetHostEntry((Dns.GetHostName()));
+            if (HostEntry.AddressList.Length > 0)
+            {
+                foreach (IPAddress ip in HostEntry.AddressList)
+                {
+                    if (ip.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        ret.Add(ip.ToString());
+                    }
+                }
+            }
+            return ret;
+        }
     }
-
 }

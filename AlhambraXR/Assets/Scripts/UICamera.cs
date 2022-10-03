@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// The purpose of this class is to have a steady UI canvas that follows the head of the user
+/// </summary>
 public class UICamera : MonoBehaviour
 {
     void Start()

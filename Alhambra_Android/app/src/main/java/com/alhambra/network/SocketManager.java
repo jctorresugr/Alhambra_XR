@@ -65,6 +65,7 @@ public class SocketManager
     public static final int FAIL_CONNECT_SLEEP = 200;
     /** How many milliseconds the thread has to sleep before resending data ?*/
     public static final int THREAD_SLEEP       = 1000/90;
+    /** How many milliseconds the thread has to sleep before reading again potential incoming data ?*/
     public static final int READ_TIMEOUT       = 0;
 
 

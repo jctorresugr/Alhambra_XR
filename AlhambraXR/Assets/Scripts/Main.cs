@@ -1,6 +1,9 @@
 using System;
 using UnityEngine;
 
+/// <summary>
+/// The equivalent of the "Main" specifically designed to work with Unity
+/// </summary>
 public class Main : MonoBehaviour, IAlhambraServerListener, PickPano.IPickPanoListener
 {
     /// <summary>

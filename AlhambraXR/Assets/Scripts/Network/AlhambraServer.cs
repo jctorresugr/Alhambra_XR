@@ -21,6 +21,9 @@ public enum ConnectionStatus
     DISCONNECTED
 }
 
+/// <summary>
+/// The interface containing methods to call on events for AlhambraServer objects
+/// </summary>
 public interface IAlhambraServerListener
 {
     /// <summary>
@@ -35,7 +38,7 @@ public interface IAlhambraServerListener
 /// <summary>
 /// The Alhambra server.
 /// This server handles only one tablet at a time. 
-/// If multiple attempts of connection happens, this server only keeps the last one
+/// If multiple attempts of connection happens, this server only keeps the last one and closes the old one
 /// </summary>
 public class AlhambraServer : ServerSocket, IServerSocketListener
 {
@@ -49,8 +52,14 @@ public class AlhambraServer : ServerSocket, IServerSocketListener
     /// </summary>
     public static readonly uint SERVER_PORT = 8080;
 
+    /// <summary>
+    /// The listeners to notify on specific events
+    /// </summary>
     private List<IAlhambraServerListener> m_listeners = new List<IAlhambraServerListener>();
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
     public AlhambraServer() : base(AlhambraServer.SERVER_PORT)
     {
         AddListener(this);

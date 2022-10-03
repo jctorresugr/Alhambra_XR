@@ -26,12 +26,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
     /// The image containing the layer information
     /// </summary>
     public Texture2D Image;
-
-    /// <summary>
-    /// 
-    /// </summary>
-    public Texture2D Tex12;
-
+    
     /// <summary>
     /// The listeners objects listening for selection events
     /// </summary>
@@ -64,11 +59,19 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
         }
     }
 
+    /// <summary>
+    /// Add a new listener to notify events
+    /// </summary>
+    /// <param name="l">The new listener to notify on events</param>
     public void AddListener(IPickPanoListener l)
     {
         m_listeners.Add(l);
     }
 
+    /// <summary>
+    /// Remove an already registered listener
+    /// </summary>
+    /// <param name="l">The listener to unregister</param>
     public void RemoveListener(IPickPanoListener l)
     {
         m_listeners.Remove(l);
@@ -155,20 +158,13 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
         }
         else gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_Layer", 4);
 
-        if (ir == 120)
-        {
-            gameObject.GetComponent<Renderer>().material.SetTexture("_DecalTex", Tex12);
-        }
-        else
-        {
-            gameObject.GetComponent<Renderer>().material.SetTexture("_DecalTex", null);
-        }
         return ret;
     }
 
     /*********************************************/
     /* IMixedRealityInputActionHandler interface */
     /*********************************************/
+
     public void OnActionStarted(BaseInputEventData eventData)
     {
         if(eventData.InputSource.SourceType == InputSourceType.Hand && eventData.MixedRealityInputAction.Description == "Select")

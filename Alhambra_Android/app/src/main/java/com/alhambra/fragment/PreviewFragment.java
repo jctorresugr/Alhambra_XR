@@ -106,7 +106,8 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         onSetSelection(d, d.getCurrentSelection());
     }
 
-    /** Init the layout of the application*/
+    /** Init the layout of the application
+     * @param v the inflated view of this Fragment*/
     private void initLayout(View v)
     {
         //Find all the widgets of this fragment
