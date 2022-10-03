@@ -17,10 +17,10 @@ public class JSONMessage
         int cr = (int)(c.r * 255);
         int cg = (int)(c.g * 255);
         int cb = (int)(c.b * 255);
-
-        String crS = (cr > 0 ? $"{{\"layout\": 0, \"id\": {cr.ToString()}}}, " : "");
-        String cgS = (cg > 0 ? $"{{\"layout\": 1, \"id\": {cg.ToString()}}}, " : "");
-        String cbS = (cb > 0 ? $"{{\"layout\": 2, \"id\": {cb.ToString()}}}"   : "");
+        
+        String crS = (cr > 0 ? $"{{\"layout\": 0, \"id\": {cr.ToString()}}}{(cg > 0 || cb > 0 ? "," : "")}" : "");
+        String cgS = (cg > 0 ? $"{{\"layout\": 1, \"id\": {cg.ToString()}}}{(cb > 0           ? "," : "")}" : "");
+        String cbS = (cb > 0 ? $"{{\"layout\": 2, \"id\": {cb.ToString()}}}"                                : "");
 
         return
              "{" +

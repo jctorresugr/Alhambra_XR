@@ -26,8 +26,15 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
     /// The image containing the layer information
     /// </summary>
     public Texture2D Image;
+
+    /// <summary>
+    /// 
+    /// </summary>
     public Texture2D Tex12;
 
+    /// <summary>
+    /// The listeners objects listening for selection events
+    /// </summary>
     private HashSet<IPickPanoListener> m_listeners = new HashSet<IPickPanoListener>();
 
     void Start()
