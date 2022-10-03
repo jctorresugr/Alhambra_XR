@@ -90,10 +90,11 @@ public class Client
     /// <param name="s">The socket associated with the remote client</param>
     public Client(Socket s)
     {
-        m_socket                = s;
-        m_socket.NoDelay        = true;
-        m_socket.Blocking       = false;
-        m_writeThread           = new Thread(WriteThread);
+        m_socket          = s;
+        m_socket.NoDelay  = true;
+        m_socket.Blocking = false;
+        m_writeThread     = new Thread(WriteThread);
+        m_writeThread.Start();
     }
 
     /// <summary>

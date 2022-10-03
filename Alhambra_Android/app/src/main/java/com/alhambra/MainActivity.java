@@ -143,6 +143,7 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
                         final SelectionMessage selection = new SelectionMessage(reader.getJSONObject("data"));
                         MainActivity.this.runOnUiThread(() ->
                         {
+                            //Get the relevant IDs (and discard the default ones)
                             ArrayList<Integer> indexes = new ArrayList<>();
                             for(SelectionMessage.PairLayoutID id: selection.getIDs())
                             {
@@ -153,6 +154,8 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
                             int[] indexArr = new int[indexes.size()];
                             for(int i = 0; i < indexes.size(); i++)
                                 indexArr[i] = indexes.get(i);
+
+                            //Set the current selection and jump to the preview fragment on the tablet to highlight that the action is made
                             m_dataset.setCurrentSelection(indexArr);
                             m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
                         });
@@ -221,7 +224,6 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
         m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
         m_viewPager.setPagingEnabled(false);
     }
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState)

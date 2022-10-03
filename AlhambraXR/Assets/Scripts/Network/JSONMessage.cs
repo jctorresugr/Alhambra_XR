@@ -18,9 +18,9 @@ public class JSONMessage
         int cg = (int)(c.g * 255);
         int cb = (int)(c.b * 255);
 
-        String crS = (cr > 0 ? $"{{\"layout\": 0, \"id\": cr.ToString()}}, " : "");
-        String cgS = (cg > 0 ? $"{{\"layout\": 1, \"id\": cg.ToString()}}, " : "");
-        String cbS = (cb > 0 ? $"{{\"layout\": 2, \"id\": cg.ToString()}}"   : "");
+        String crS = (cr > 0 ? $"{{\"layout\": 0, \"id\": {cr.ToString()}}}, " : "");
+        String cgS = (cg > 0 ? $"{{\"layout\": 1, \"id\": {cg.ToString()}}}, " : "");
+        String cbS = (cb > 0 ? $"{{\"layout\": 2, \"id\": {cb.ToString()}}}"   : "");
 
         return
              "{" +

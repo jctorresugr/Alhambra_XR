@@ -8,6 +8,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -59,7 +60,7 @@ public class SocketManager
 
 
     /** The connection timeout in milliseconds*/
-    public static final int CONNECT_TIMEOUT    = 100;
+    public static final int CONNECT_TIMEOUT    = 200;
     /** How many milliseconds the thread has to sleep before reattempting to connect ?*/
     public static final int FAIL_CONNECT_SLEEP = 200;
     /** How many milliseconds the thread has to sleep before resending data ?*/
@@ -282,7 +283,7 @@ public class SocketManager
             if(m_input != null || m_output != null || m_socket.isConnected())
                 close();
 
-            m_socket.connect(new InetSocketAddress(m_serverIP, m_serverPort), CONNECT_TIMEOUT);
+            m_socket.connect(new InetSocketAddress(InetAddress.getByName(m_serverIP), m_serverPort), CONNECT_TIMEOUT);
             m_socket.setSoTimeout(READ_TIMEOUT);
             m_output = new DataOutputStream(m_socket.getOutputStream());
             m_input  = m_socket.getInputStream();

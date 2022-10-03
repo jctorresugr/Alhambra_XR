@@ -186,11 +186,11 @@ public class ServerSocket: IClientListener
     public void SendASCIIStringToClients(String s)
     {
         byte[] data = new byte[4 + s.Length];
-        Encoding.ASCII.GetBytes(s, 0, s.Length, data, 0);
-        data[3] = (byte)(s.Length >> 24);
-        data[2] = (byte)(s.Length >> 16);
-        data[1] = (byte)(s.Length >> 8);
-        data[0] = (byte)s.Length;
+        Encoding.ASCII.GetBytes(s, 0, s.Length, data, 4);
+        data[0] = (byte)(s.Length >> 24);
+        data[1] = (byte)(s.Length >> 16);
+        data[2] = (byte)(s.Length >> 8);
+        data[3] = (byte)s.Length;
         SendDataToClients(data);
     }
 

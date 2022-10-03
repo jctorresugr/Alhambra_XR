@@ -25,14 +25,14 @@ public class Dataset
     /** Basic listener to monitor changes in the dataset status*/
     public interface IDatasetListener
     {
-        /** Function called when the main entry ID of the dataset has been changed
+        /** Function called when the main entry index of the dataset has been changed
          * @param dataset the dataset calling this function
          * @param index the new entry Index*/
-        void onSetMainEntryIndex(Dataset dataset, int id);
+        void onSetMainEntryIndex(Dataset dataset, int index);
 
         /** Function called when the active highlighting selection of the dataset has been changed
          * @param dataset the dataset calling this function
-         * @param selections the new IDs to highlight. If selections.length == 0, then there is nothing to highlight*/
+         * @param selections the new indexes to highlight. If selections.length == 0, then there is nothing to highlight*/
         void onSetSelection(Dataset dataset, int[] selections);
     }
 
@@ -249,6 +249,10 @@ public class Dataset
         return new ArrayList<>();
     }
 
+    /** Get the index of a dataset from its ID information.
+     * @param layout the layout where the data chunk is in
+     * @param id the ID of this data chunk INSIDE this layout
+     * @return -1 if the data is not found, the index otherwise*/
     public int getIndexFromID(int layout, int id)
     {
         for(Data d : m_data.values())

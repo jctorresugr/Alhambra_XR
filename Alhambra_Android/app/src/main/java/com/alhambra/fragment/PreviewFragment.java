@@ -21,10 +21,6 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
     /** The dataset associated with this application*/
     private Dataset m_dataset = null;
 
-    /*--------------------------------------*/
-    /*----The Widgets about the Preview-----*/
-    /*--------------------------------------*/
-
     /** All the entries shown in the Previous tree object*/
     private HashMap<Integer, Tree<View>> m_datasetEntries = new HashMap<>();
 
@@ -53,6 +49,7 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
     /** The button to show the next entry*/
     ImageButton m_nextBtn     = null;
 
+    /** Default constructor*/
     public PreviewFragment()
     {
         super();
@@ -76,6 +73,9 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         m_treeView.getModel().clear();
         m_datasetEntries.clear();
 
+        /*--------------------------------------*/
+        /*Create as many preview as data chunks-*/
+        /*--------------------------------------*/
         LayoutInflater inflater = LayoutInflater.from(m_ctx);
 
         //Populate the preview tree
@@ -100,6 +100,8 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
             treeModel.addChild(idTree, -1);
             m_datasetEntries.put(i, idTree);
         }
+
+        //Setup the view based on the model information
         onSetMainEntryIndex(d, d.getMainEntryIndex());
         onSetSelection(d, d.getCurrentSelection());
     }
@@ -107,13 +109,14 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
     /** Init the layout of the application*/
     private void initLayout(View v)
     {
+        //Find all the widgets of this fragment
         m_treeView      = v.findViewById(R.id.previewLayout);
         m_mainImageView = v.findViewById(R.id.mainImageEntry);
         m_mainTextView  = v.findViewById(R.id.mainTextEntry);
         m_previousBtn   = v.findViewById(R.id.previousEntryButton);
         m_nextBtn       = v.findViewById(R.id.nextEntryButton);
 
-        //Listeners
+        //Initialize Listeners
         m_previousBtn.setOnClickListener(view -> {
             if(m_currentSelection != null)
                 m_dataset.setMainEntryIndex(findPreviousID());
@@ -124,6 +127,7 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
                 m_dataset.setMainEntryIndex(findNextID());
         });
 
+        //Reinit the dataset if needed
         setDataset(m_dataset);
     }
 
@@ -214,6 +218,7 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
     @Override
     public void onSetSelection(Dataset d, int[] selections)
     {
+        //Nothing to be done UI-wise
         if(m_ctx == null)
             return;
 

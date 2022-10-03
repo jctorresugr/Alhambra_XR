@@ -11,19 +11,27 @@ import com.alhambra.Dataset;
 /** The class representing the "selection" action received from the server*/
 public class SelectionMessage
 {
+    /** Class containing ID information per data chunk*/
     public static class PairLayoutID
     {
+        /** The layout ID where the data is in*/
         public int layout;
+
+        /** The ID of the data INSIDE this layout*/
         public int id;
+
+        /** Constructor. Initialize the class with default values
+         * @param _layout the layout ID where this data chunk belongs to
+         * @param _id the ID of this data chunk INSIDE this layout*/
         public PairLayoutID(int _layout, int _id)
         {
-            layout = layout;
+            layout = _layout;
             id     = _id;
         }
     }
 
     /** The IDs selected*/
-    private PairLayoutID[] m_ids;
+    private final PairLayoutID[] m_ids;
 
     /** Constructor
      * @param data the JSONObject representing the "data" entry of the received JSON object from the network*/
@@ -34,7 +42,7 @@ public class SelectionMessage
         for(int i = 0; i < idsArr.length(); i++)
         {
             JSONObject pairArr = idsArr.getJSONObject(i);
-            m_ids[i] = new PairLayoutID(pairArr.getInt("layout"), pairArr.getInt("layout"));
+            m_ids[i] = new PairLayoutID(pairArr.getInt("layout"), pairArr.getInt("id"));
         }
     }
 

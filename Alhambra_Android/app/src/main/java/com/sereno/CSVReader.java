@@ -57,6 +57,9 @@ public class CSVReader
                     isEscaped = !isEscaped;
                 }
 
+                else if(c == '#' && !(quoteOpened || isEscaped))
+                    break; //Break comments
+
                 else
                 {
                     if(isEscaped)

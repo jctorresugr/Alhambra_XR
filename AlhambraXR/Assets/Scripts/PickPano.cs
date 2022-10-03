@@ -33,14 +33,12 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
     void Start()
     {
         PointerUtils.SetHandRayPointerBehavior(PointerBehavior.AlwaysOn, Microsoft.MixedReality.Toolkit.Utilities.Handedness.Right);
-        CoreServices.InputSystem?.RegisterHandler<IMixedRealityInputActionHandler>(this);
-        CoreServices.InputSystem?.RegisterHandler<IMixedRealityPointerHandler>(this);
+        //CoreServices.InputSystem?.RegisterHandler<IMixedRealityInputActionHandler>(this);
     }
 
     void OnDestroy()
     {
-        CoreServices.InputSystem?.UnregisterHandler<IMixedRealityInputActionHandler>(this);
-        CoreServices.InputSystem?.UnregisterHandler<IMixedRealityPointerHandler>(this);
+        //CoreServices.InputSystem?.UnregisterHandler<IMixedRealityInputActionHandler>(this);
     }
 
     void Update()
