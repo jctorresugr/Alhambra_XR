@@ -10,7 +10,6 @@ public class ReceivedMessage<T> : CommonMessage
     /// <summary>
     /// The data of the message
     /// </summary>
-    [SerializeField]
     public T data;
 
     /// <summary>
