@@ -4,4 +4,5 @@
     <string name="previous">Previous</string>
     <string name="confirm">Confirm</string>
     <string name="cancel">Cancel</string>
+    <string name="quitSelection">Quit Selection</string>
 </resources>

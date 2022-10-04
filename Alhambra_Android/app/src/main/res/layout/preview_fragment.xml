@@ -34,10 +34,10 @@
             />
     </ScrollView>
 
-    <!-- Next / Previous buttons -->
+    <!-- Next / Previous / quit selection buttons -->
     <LinearLayout
         android:id="@+id/layoutControl"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_toEndOf="@id/scrollPreviewLayout"
         android:orientation="horizontal">
@@ -76,6 +76,20 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/next" />
         </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:gravity="center|end"
+            android:layout_gravity="center|end">
+            <Button
+                android:id="@+id/quitSelection"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/quitSelection"/>
+        </LinearLayout>
+
     </LinearLayout>
 
     <!-- The main part of the view displaying information of the selected entry -->

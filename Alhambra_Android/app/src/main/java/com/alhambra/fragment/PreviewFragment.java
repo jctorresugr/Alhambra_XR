@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -35,19 +36,22 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
     private Integer m_currentSelection = null;
 
     /** The preview tree*/
-    TreeView m_treeView     = null;
+    private TreeView m_treeView     = null;
 
     /** The image of the selected entry*/
-    ImageView m_mainImageView = null;
+    private ImageView m_mainImageView = null;
 
     /** The text of the selected entry*/
-    TextView m_mainTextView = null;
+    private TextView m_mainTextView = null;
 
     /** The button to show the previous entry*/
-    ImageButton m_previousBtn = null;
+    private ImageButton m_previousBtn = null;
 
     /** The button to show the next entry*/
-    ImageButton m_nextBtn     = null;
+    private ImageButton m_nextBtn     = null;
+
+    /** The button to quit the selection */
+    private Button m_quitSelectionBtn = null;
 
     /** Default constructor*/
     public PreviewFragment()
@@ -111,11 +115,12 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
     private void initLayout(View v)
     {
         //Find all the widgets of this fragment
-        m_treeView      = v.findViewById(R.id.previewLayout);
-        m_mainImageView = v.findViewById(R.id.mainImageEntry);
-        m_mainTextView  = v.findViewById(R.id.mainTextEntry);
-        m_previousBtn   = v.findViewById(R.id.previousEntryButton);
-        m_nextBtn       = v.findViewById(R.id.nextEntryButton);
+        m_treeView         = v.findViewById(R.id.previewLayout);
+        m_mainImageView    = v.findViewById(R.id.mainImageEntry);
+        m_mainTextView     = v.findViewById(R.id.mainTextEntry);
+        m_previousBtn      = v.findViewById(R.id.previousEntryButton);
+        m_nextBtn          = v.findViewById(R.id.nextEntryButton);
+        m_quitSelectionBtn = v.findViewById(R.id.quitSelection);
 
         //Initialize Listeners
         m_previousBtn.setOnClickListener(view -> {
@@ -126,6 +131,11 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         m_nextBtn.setOnClickListener(view -> {
             if(m_currentSelection != null)
                 m_dataset.setMainEntryIndex(findNextID());
+        });
+
+        m_quitSelectionBtn.setOnClickListener(view -> {
+            if(m_currentSelection != null)
+                m_dataset.setCurrentSelection(new int[0]);
         });
 
         //Reinit the dataset if needed
@@ -229,8 +239,10 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
             for(Tree<View> view : m_datasetEntries.values())
                 view.value.setBackgroundResource(0);
             onSetMainEntryIndex(d, m_currentSelection); //Redo the background
+            m_quitSelectionBtn.setVisibility(View.GONE);
             return;
         }
+        m_quitSelectionBtn.setVisibility(View.VISIBLE);
 
         //Grey out all the data that are not part of group selection
         for(Integer dataID : m_dataset.getIndexes())
