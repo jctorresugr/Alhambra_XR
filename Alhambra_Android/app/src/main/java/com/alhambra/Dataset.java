@@ -46,8 +46,8 @@ public class Dataset
         /** The ID of this chunk of data*/
         private int    m_id = 0;
 
-        /** The layout ID to which this chunk of data belongs to*/
-        private int    m_layout = 0;
+        /** The layer ID to which this chunk of data belongs to*/
+        private int    m_layer = 0;
 
         /** The color representing this chunk of data*/
         private int    m_color = 0;
@@ -60,16 +60,16 @@ public class Dataset
 
         /** Constructor
          * @param index the Index of this chunk of data
-         * @param id  The ID of this chunk of data
-         * @param layout The layout ID to which this chunk of data belongs to
+         * @param id  The ID of this chunk of data inside its layer
+         * @param layer The layer ID to which this chunk of data belongs to
          * @param color  The color representing this chunk of data
          * @param text The text associated with this chunk of data
          * @param img The image drawable describing this data chunk*/
-        public Data(int index, int id, int layout, int color, String text, Drawable img)
+        public Data(int index, int layer, int id, int color, String text, Drawable img)
         {
             m_index    = index;
+            m_layer    = layer;
             m_id       = id;
-            m_layout   = layout;
             m_color    = color;
             m_text     = text;
             m_drawable = img;
@@ -81,8 +81,8 @@ public class Dataset
         /** Get the ID of this chunk of data*/
         public int getID() {return m_id;}
 
-        /** Get the layout ID to which this chunk of data belongs to*/
-        public int getLayout() {return m_layout;}
+        /** Get the layer ID to which this chunk of data belongs to*/
+        public int getLayer() {return m_layer;}
 
         /** Get the color representing this chunk of data*/
         public int getColor() {return m_color;}
@@ -99,10 +99,10 @@ public class Dataset
      * Value: Data*/
     private HashMap<Integer, Data> m_data = new HashMap<>();
 
-    /** The HashMap of all available Layout and their underlying data. We prefer to pre-compute this list for fast access
-     * Key: Layout ID
+    /** The HashMap of all available Layers and their underlying data. We prefer to pre-compute this list for fast access
+     * Key: Layer ID
      * Value: List of Data chunk*/
-    private HashMap<Integer, List<Data>> m_layouts = new HashMap<>();
+    private HashMap<Integer, List<Data>> m_layers = new HashMap<>();
 
     /** The general default data*/
     private Data m_defaultData = null;
@@ -160,7 +160,7 @@ public class Dataset
                 imgStream.close();
 
                 //Check if this chunk is the default entry describing the whole dataset
-                //If it is, then it is associated with no layout (layout == -1) and its color is set to transparency (color == 0x00000000)
+                //If it is, then it is associated with no layer (layer == -1) and its color is set to transparency (color == 0x00000000)
                 boolean isDefault = true;
                 for(int j = 1; j < 4; j++)
                 {
@@ -171,7 +171,7 @@ public class Dataset
                     }
                 }
 
-                //If default: No color and no layout and add the data chunk
+                //If default: No color and no layer and add the data chunk
                 if(isDefault)
                 {
                     if(m_defaultData != null)
@@ -180,12 +180,12 @@ public class Dataset
                     m_data.put(index, m_defaultData);
                 }
 
-                //Else, read color + layout and add the data chunk
+                //Else, read color + layer and add the data chunk
                 else
                 {
                     //Get the IDs
-                    int layout = Integer.parseInt(row[2]);
-                    int id     = Integer.parseInt(row[3]);
+                    int layer = Integer.parseInt(row[2]);
+                    int id    = Integer.parseInt(row[3]);
 
                     //Get the color as RGBA following the format (r,g,b,a)
                     if(row[1].charAt(0) != '(' && row[1].charAt(row[1].length()-1) != ')')
@@ -199,15 +199,15 @@ public class Dataset
                         colorRGBA += Math.max(0, Math.min(255, Integer.parseInt(colorArray[j]))) << (byte)(4*j);
 
                     //Save the content
-                    Data data = new Data(index, id, layout, colorRGBA, text.toString("UTF-8"), img);
+                    Data data = new Data(index, layer, id, colorRGBA, text.toString("UTF-8"), img);
                     m_data.put(index, data);
-                    if(m_layouts.containsKey(layout))
-                        m_layouts.get(layout).add(data);
+                    if(m_layers.containsKey(layer))
+                        m_layers.get(layer).add(data);
                     else
                     {
                         ArrayList<Data> arr = new ArrayList<>();
                         arr.add(data);
-                        m_layouts.put(layout, arr);
+                        m_layers.put(layer, arr);
                     }
                 }
             }
@@ -239,24 +239,24 @@ public class Dataset
         return m_data.get(index);
     }
 
-    /** Get all the data contained in layout == layout
-     * @param layout the layout to look for
-     * @return the list of of data this layout contains. An empty list is returned if the layout is not found (see also isLayoutValid and getLayouts)*/
-    public List<Data> getDataAtLayout(int layout)
+    /** Get all the data contained in layer == layer
+     * @param layer the layer to look for
+     * @return the list of of data this layer contains. An empty list is returned if the layer is not found (see also isLayerValid and getLayers)*/
+    public List<Data> getDataAtLayer(int layer)
     {
-        if(m_layouts.containsKey(layout))
-            return m_layouts.get(layout);
+        if(m_layers.containsKey(layer))
+            return m_layers.get(layer);
         return new ArrayList<>();
     }
 
     /** Get the index of a dataset from its ID information.
-     * @param layout the layout where the data chunk is in
-     * @param id the ID of this data chunk INSIDE this layout
+     * @param layer the layer where the data chunk is in
+     * @param id the ID of this data chunk INSIDE this layer
      * @return -1 if the data is not found, the index otherwise*/
-    public int getIndexFromID(int layout, int id)
+    public int getIndexFromID(int layer, int id)
     {
         for(Data d : m_data.values())
-            if(d.getLayout() == layout && d.getID() == id)
+            if(d.getLayer() == layer && d.getID() == id)
                 return d.getIndex();
         return -1;
     }
@@ -266,27 +266,27 @@ public class Dataset
      * @return true if yes, false otherwise*/
     public boolean isIndexValid(int index) {return m_data.containsKey(index);}
 
-    /** Is the Layout "layout" registered in the dataset?
-     * @param layout the layout to look for
+    /** Is the Layer "layer" registered in the dataset?
+     * @param layer the layer to look for
      * @return true if yes, false otherwise*/
-    public boolean isLayoutValid(int layout) {return m_layouts.containsKey(layout);}
+    public boolean isLayerValid(int layer) {return m_layers.containsKey(layer);}
 
     /** Get all the different datachunks' IDs
      * @return the list of IDs stored in this dataset*/
     public Set<Integer> getIndexes() {return m_data.keySet();}
 
-    /** Get all the different layouts stored in this dataset
-     * @return the list of layout IDs*/
-    public Set<Integer> getLayouts() {return m_layouts.keySet();}
+    /** Get all the different layers stored in this dataset
+     * @return the list of layert IDs*/
+    public Set<Integer> getLayers() {return m_layers.keySet();}
 
     /** Set the current entry to consider
-     * @param layout the layout ID of the new entry to consider.
-     * @param id the data ID inside the layout of the new entry to consider
-     * @return true if the pair of (layout, id) is valid, false otherwise*/
-    public boolean setMainEntryID(int layout, int id)
+     * @param layer the layer ID of the new entry to consider.
+     * @param id the data ID inside the layer of the new entry to consider
+     * @return true if the pair of (layer, id) is valid, false otherwise*/
+    public boolean setMainEntryID(int layer, int id)
     {
         for(Data d : m_data.values())
-            if(d.getLayout() == layout && d.getID() == id)
+            if(d.getLayer() == layer && d.getID() == id)
                 return setMainEntryIndex(d.getIndex());
         return false;
     }

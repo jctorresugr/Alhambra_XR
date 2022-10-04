@@ -16,6 +16,7 @@ import com.alhambra.network.receivingmsg.AnnotationMessage;
 import com.alhambra.network.receivingmsg.SelectionMessage;
 import com.alhambra.network.SocketManager;
 import com.alhambra.network.sendingmsg.FinishAnnotation;
+import com.alhambra.network.sendingmsg.HighlightDataChunk;
 import com.google.android.material.tabs.TabLayout;
 
 import org.json.JSONException;
@@ -29,7 +30,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 /** The Main Activity of this application. This is the first thing that is suppose to start*/
-public class MainActivity extends AppCompatActivity implements AlhambraFragment.IFragmentListener, AnnotationFragment.IAnnotationFragmentListener
+public class MainActivity extends AppCompatActivity implements AlhambraFragment.IFragmentListener, PreviewFragment.IPreviewFragmentListener, AnnotationFragment.IAnnotationFragmentListener
 {
     /** The TAG to use for logging information*/
     public static final String TAG = "Alhambra";
@@ -145,9 +146,9 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
                         {
                             //Get the relevant IDs (and discard the default ones)
                             ArrayList<Integer> indexes = new ArrayList<>();
-                            for(SelectionMessage.PairLayoutID id: selection.getIDs())
+                            for(SelectionMessage.PairLayerID id: selection.getIDs())
                             {
-                                int index = m_dataset.getIndexFromID(id.layout, id.id);
+                                int index = m_dataset.getIndexFromID(id.layer, id.id);
                                 if(index != -1)
                                     indexes.add(index);
                             }
@@ -197,7 +198,8 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
 
         //Add "Datasets" tab
         m_previewFragment = new PreviewFragment();
-        m_previewFragment.addListener(this);
+        m_previewFragment.addListener((AlhambraFragment.IFragmentListener)this);
+        m_previewFragment.addListener((PreviewFragment.IPreviewFragmentListener)this);
         adapter.addFragment(m_previewFragment, "Datasets");
 
         //Add "Datasets" tab
@@ -245,6 +247,12 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
     public void onDisableSwiping(Fragment fragment)
     {
         m_viewPager.setPagingEnabled(false);
+    }
+
+    @Override
+    public void onHighlightDataChunk(PreviewFragment fragment, Dataset.Data data)
+    {
+        m_socket.push(HighlightDataChunk.generateJSON(data.getLayer(), data.getID()));
     }
 
     @Override

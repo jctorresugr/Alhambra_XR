@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// The equivalent of the "Main" specifically designed to work with Unity
 /// </summary>
-public class Main : MonoBehaviour, IAlhambraServerListener, PickPano.IPickPanoListener
+public class Main : MonoBehaviour, IAlhambraServerListener, PickPano.IPickPanoListener, IClientListener
 {
     /// <summary>
     /// The server application
@@ -65,7 +65,7 @@ public class Main : MonoBehaviour, IAlhambraServerListener, PickPano.IPickPanoLi
 
         //Default text helpful to bind headset to tablet
         m_updateIPTexts = true;
-        m_enableIPTexts = true;
+        m_enableIPTexts = !m_server.Connected;
         
         m_updateRandomText = true;
         m_enableRandomText = false;
@@ -140,11 +140,30 @@ public class Main : MonoBehaviour, IAlhambraServerListener, PickPano.IPickPanoLi
         {
             this.m_updateIPTexts = true;
             this.m_enableIPTexts = false;
+
+            server.TabletClient.AddListener(this);
         }
     }
 
     public void OnSelection(PickPano pano, Color c)
     {
         m_server.SendASCIIStringToClients(JSONMessage.SelectionToJSON(c));
+    }
+
+    public void OnClose(Client c)
+    {}
+
+    public void OnRead(Client c, string msg)
+    {
+        //Issue with the JSON utility of Unity: Need to deserialize once to know what to expect, and a second time to get the other attributes...
+        //This adds a subtential overhead, but it does not require installation of a third party library
+        CommonMessage commonMsg = CommonMessage.FromJSON(msg);
+
+        //Handle the highlight action type
+        if(commonMsg.action == "highlight")
+        {
+            ReceivedMessage<HighlightMessage> detailedMsg = ReceivedMessage<HighlightMessage>.FromJSON(msg);
+            m_pickPanoModel.HighlightDataChunk(detailedMsg.data.layer, detailedMsg.data.id);
+        }
     }
 }

@@ -15,15 +15,28 @@ import com.alhambra.R;
 import com.sereno.Tree;
 import com.sereno.view.TreeView;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class PreviewFragment extends AlhambraFragment implements Dataset.IDatasetListener
 {
+    /** Interface containing events fired from the PreviewFragment*/
+    public interface IPreviewFragmentListener
+    {
+        /** Highlight a particular data chunk
+         * @param fragment the fragment calling this event
+         * @param data the data chunk to highlight*/
+        void onHighlightDataChunk(PreviewFragment fragment, Dataset.Data data);
+    }
+
     /** The dataset associated with this application*/
     private Dataset m_dataset = null;
 
     /** All the entries shown in the Previous tree object*/
     private HashMap<Integer, Tree<View>> m_datasetEntries = new HashMap<>();
+
+    /** The listeners to fire events to*/
+    private ArrayList<IPreviewFragmentListener> m_listeners = new ArrayList<>();
 
     /** The context associated with this fragment*/
     private Context m_ctx = null;
@@ -37,6 +50,9 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
 
     /** The preview tree*/
     private TreeView m_treeView     = null;
+
+    /** The button user uses to highlight on the hololens a particular data chunk*/
+    private Button m_highlightBtn   = null;
 
     /** The image of the selected entry*/
     private ImageView m_mainImageView = null;
@@ -57,6 +73,20 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
     public PreviewFragment()
     {
         super();
+    }
+
+    /** Add a new listener
+     * @param l the new listener*/
+    public void addListener(IPreviewFragmentListener l)
+    {
+        m_listeners.add(l);
+    }
+
+    /** emove an old listener
+     * @param l the listener to remove*/
+    public void removeListener(IPreviewFragmentListener l)
+    {
+        m_listeners.remove(l);
     }
 
     /** Set the dataset to manipulate and render
@@ -120,7 +150,8 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         m_mainTextView     = v.findViewById(R.id.mainTextEntry);
         m_previousBtn      = v.findViewById(R.id.previousEntryButton);
         m_nextBtn          = v.findViewById(R.id.nextEntryButton);
-        m_quitSelectionBtn = v.findViewById(R.id.quitSelection);
+        m_quitSelectionBtn = v.findViewById(R.id.quitSelectionButton);
+        m_highlightBtn     = v.findViewById(R.id.highlightButton);
 
         //Initialize Listeners
         m_previousBtn.setOnClickListener(view -> {
@@ -136,6 +167,12 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         m_quitSelectionBtn.setOnClickListener(view -> {
             if(m_currentSelection != null)
                 m_dataset.setCurrentSelection(new int[0]);
+        });
+
+        m_highlightBtn.setOnClickListener(view -> {
+            if(m_dataset.getMainEntryIndex() != -1)
+                for(IPreviewFragmentListener l : m_listeners)
+                    l.onHighlightDataChunk(this, m_dataset.getDataFromIndex(m_dataset.getMainEntryIndex()));
         });
 
         //Reinit the dataset if needed
@@ -239,10 +276,10 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
             for(Tree<View> view : m_datasetEntries.values())
                 view.value.setBackgroundResource(0);
             onSetMainEntryIndex(d, m_currentSelection); //Redo the background
-            m_quitSelectionBtn.setVisibility(View.GONE);
+            m_quitSelectionBtn.setVisibility(View.GONE); //Hide the quit selection, as there is no selection
             return;
         }
-        m_quitSelectionBtn.setVisibility(View.VISIBLE);
+        m_quitSelectionBtn.setVisibility(View.VISIBLE); //Show the quit selection button
 
         //Grey out all the data that are not part of group selection
         for(Integer dataID : m_dataset.getIndexes())

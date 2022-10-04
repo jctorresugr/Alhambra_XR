@@ -32,6 +32,15 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
     /// </summary>
     private HashSet<IPickPanoListener> m_listeners = new HashSet<IPickPanoListener>();
 
+    /// <summary>
+    /// Should we browse with the hand?
+    /// </summary>
+    private bool m_browseWithHands = true;
+
+    private int  m_newLayer       = -1;
+    private int  m_newID           = -1;
+    private bool m_updateHighlight = false;
+
     void Start()
     {
         PointerUtils.SetHandRayPointerBehavior(PointerBehavior.AlwaysOn, Microsoft.MixedReality.Toolkit.Utilities.Handedness.Right);
@@ -45,17 +54,28 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
 
     void Update()
     {
-        foreach(var inputSource in CoreServices.InputSystem.DetectedInputSources)
-        {
-            if(inputSource.SourceType == InputSourceType.Hand)
+        if(m_browseWithHands)
+        { 
+            foreach(var inputSource in CoreServices.InputSystem.DetectedInputSources)
             {
-                Color? c = FindLayersAt(inputSource.Pointers[0]);
-                if(c != null)
+                if(inputSource.SourceType == InputSourceType.Hand)
                 {
-                    if(SetShaderLayerParams(c.Value))
-                        return;
+                    Color? c = FindLayersAt(inputSource.Pointers[0]);
+                    if(c != null)
+                    {
+                        if(SetShaderLayerParams(c.Value))
+                            break;
+                    }
                 }
             }
+        }
+
+
+        if(m_updateHighlight)
+        {
+            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_ID",    m_newID);
+            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_Layer", m_newLayer);
+            m_updateHighlight = false;
         }
     }
 
@@ -75,6 +95,20 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
     public void RemoveListener(IPickPanoListener l)
     {
         m_listeners.Remove(l);
+    }
+
+    /// <summary>
+    /// Highlight a specific data chunk.
+    /// Calling this method stops the browsing of data chunk with hands until a Select action is performed.
+    /// </summary>
+    /// <param name="layer">The layer where this data chunk is in</param>
+    /// <param name="id">The ID of the data chunk INSIDE the specified layer</param>
+    public void HighlightDataChunk(int layer, int id)
+    {
+        m_browseWithHands = false;
+        m_newID           = id;
+        m_newLayer        = layer;
+        m_updateHighlight = true;
     }
 
     /// <summary>
@@ -140,23 +174,32 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
         //Depending on where we hit, highlight a particular part of the game object if any layer information is there
         if (ir > 0)
         {
-            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_ID", ir);
-            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_Layer", 0);
+            m_updateHighlight = true;
+            m_newLayer        = 0;
+            m_newID           = ir;
             ret = true;
         }
         else if (ig > 0)
         {
-            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_ID", ig);
-            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_Layer", 1);
+            m_updateHighlight = true;
+            m_newLayer        = 1;
+            m_newID           = ig;
             ret = true;
         }
         else if (ib > 0)
         {
-            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_ID", ib);
-            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_Layer", 2);
+            m_updateHighlight = true;
+            m_newLayer        = 2;
+            m_newID           = ib;
             ret = true;
         }
-        else gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_Layer", 4);
+        else
+        {
+            m_updateHighlight = true;
+            m_newLayer        = 4;
+            m_newID           = -1;
+            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_Layer", 4);
+        }
 
         return ret;
     }
@@ -169,6 +212,12 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
     {
         if(eventData.InputSource.SourceType == InputSourceType.Hand && eventData.MixedRealityInputAction.Description == "Select")
         {
+            if(!m_browseWithHands) //Stop the highlighting from outside
+            {
+                m_browseWithHands = true;
+                return; 
+            }
+
             Color? c = FindLayersAt(eventData.InputSource.Pointers[0]);
             if (c != null)
             {

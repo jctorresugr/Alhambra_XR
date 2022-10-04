@@ -27,14 +27,14 @@ public abstract class AlhambraFragment extends Fragment
     /** The list of registered listeners*/
     private ArrayList<IFragmentListener> m_listeners = new ArrayList<>();
 
-    /** @brief Add a new listener
+    /** Add a new listener
      * @param l the new listener*/
     public void addListener(IFragmentListener l)
     {
         m_listeners.add(l);
     }
 
-    /** @brief Remove an old listener
+    /** Remove an old listener
      * @param l the listener to remove*/
     public void removeListener(IFragmentListener l)
     {
