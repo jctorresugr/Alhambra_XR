@@ -5,11 +5,23 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/annotationTooltip">
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/startAnnotation"
+            android:id="@+id/startAnnotationButton"/>
+    </LinearLayout>
+
     <!-- By design, we should have height > width -->
     <com.sereno.view.AnnotationCanvasView
         android:id="@+id/annotationCanvas"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_below="@id/annotationTooltip"/>
 
         <com.sereno.view.ColorPickerView
             android:layout_height="100dp"

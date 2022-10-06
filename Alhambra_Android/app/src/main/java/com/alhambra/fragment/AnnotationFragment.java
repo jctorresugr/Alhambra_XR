@@ -15,6 +15,7 @@ import com.sereno.view.AnnotationCanvasView;
 import com.sereno.view.AnnotationStroke;
 import com.sereno.view.ColorPickerView;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,10 +27,16 @@ public class AnnotationFragment extends AlhambraFragment
     /** Interface used to catch events from the annotation fragment*/
     public interface IAnnotationFragmentListener
     {
-        /** Method called to confirm the current annotation task*/
+        /** Method called when the Fragment wants data to start an annotation process
+         * @param frag the fragment calling this method*/
+        void askStartAnnotation(AnnotationFragment frag);
+
+        /** Method called to confirm the current annotation task
+         * @param frag the fragment calling this method*/
         void onConfirmAnnotation(AnnotationFragment frag);
 
-        /** Method called to cancel the current annotation task*/
+        /** Method called to cancel the current annotation task
+         * @param frag the fragment calling this method*/
         void onCancelAnnotation(AnnotationFragment frag);
     }
 
@@ -48,7 +55,13 @@ public class AnnotationFragment extends AlhambraFragment
     /** The color picker view*/
     private ColorPickerView m_colorPicker = null;
 
+    /** Button to start an annotation */
+    private Button m_startAnnotationBtn = null;
+
+    /** Button to confirm the annotation*/
     private Button m_confirmBtn = null;
+
+    /** Button to cancel the current annotation*/
     private Button m_cancelBtn  = null;
 
     /** Default constructor */
@@ -59,6 +72,7 @@ public class AnnotationFragment extends AlhambraFragment
     {
         m_canvas             = v.findViewById(R.id.annotationCanvas);
         m_colorPicker        = v.findViewById(R.id.colorPicker);
+        m_startAnnotationBtn = v.findViewById(R.id.startAnnotationButton);
         m_confirmBtn         = v.findViewById(R.id.confirmAnnotation);
         m_cancelBtn          = v.findViewById(R.id.cancelAnnotation);
         m_currentStrokeColor = m_colorPicker.getModel().getColor().toRGB().toARGB8888();
@@ -82,6 +96,11 @@ public class AnnotationFragment extends AlhambraFragment
 
             @Override
             public void onSetBackground(AnnotationCanvasData data, Bitmap background) {}
+        });
+
+        m_startAnnotationBtn.setOnClickListener(view -> {
+            for(IAnnotationFragmentListener l : m_listeners)
+                l.askStartAnnotation(AnnotationFragment.this);
         });
 
         m_confirmBtn.setOnClickListener(view -> {
@@ -127,6 +146,7 @@ public class AnnotationFragment extends AlhambraFragment
      * @param argbImg the ARGB8888 image to annotate*/
     public boolean startNewAnnotation(int width, int height, byte[] argbImg)
     {
+        //Check that the incoming data has the correct size
         if(argbImg.length < 4*width*height)
             return false;
 

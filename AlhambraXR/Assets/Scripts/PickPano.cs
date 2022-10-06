@@ -199,6 +199,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
                 return; 
             }
 
+            //Accept to select layers ONLY in the default setting
+            if(m_model.CurrentAction != CurrentAction.DEFAULT)
+                return;
+
             Color? c = FindLayersAt(eventData.InputSource.Pointers[0]);
             if (c != null)
             {

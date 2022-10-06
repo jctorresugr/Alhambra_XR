@@ -17,6 +17,7 @@ import com.alhambra.network.receivingmsg.SelectionMessage;
 import com.alhambra.network.SocketManager;
 import com.alhambra.network.sendingmsg.FinishAnnotation;
 import com.alhambra.network.sendingmsg.HighlightDataChunk;
+import com.alhambra.network.sendingmsg.StartAnnotation;
 import com.google.android.material.tabs.TabLayout;
 
 import org.json.JSONException;
@@ -213,7 +214,7 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
         m_tabLayout = (TabLayout)findViewById(R.id.tabs);
         m_tabLayout.setupWithViewPager(m_viewPager);
 
-        disableAnnotationTab();
+        //disableAnnotationTab();
 
         //Set the dataset on the UI thread for redoing all the widgets of the PreviewFragment
         this.runOnUiThread(() -> m_previewFragment.setDataset(m_dataset));
@@ -256,17 +257,21 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
     }
 
     @Override
+    public void askStartAnnotation(AnnotationFragment frag) {
+        m_socket.push(StartAnnotation.generateJSON());
+    }
+
+    @Override
     public void onConfirmAnnotation(AnnotationFragment frag)
     {
         m_socket.push(FinishAnnotation.generateJSON(true, frag.getStrokes()));
-        runOnUiThread(this::disableAnnotationTab);
+        //runOnUiThread(this::disableAnnotationTab);
     }
 
     @Override
     public void onCancelAnnotation(AnnotationFragment frag)
     {
         m_socket.push(FinishAnnotation.generateJSON(false, frag.getStrokes()));
-        runOnUiThread(this::disableAnnotationTab);
-
+        //runOnUiThread(this::disableAnnotationTab);
     }
 }

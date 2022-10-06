@@ -99,8 +99,11 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
     private void Update()
     {
-        HandleIPTxt();
-        HandleRandomText();
+        lock(this)
+        {
+            HandleIPTxt();
+            HandleRandomText();
+        }
     }
 
     private void OnDestroy()
@@ -140,7 +143,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         //Update the displayed text requiring networking attention
         if (m_updateRandomText)
         {
-            //Enable/Disable the IP Text
+            //Enable/Disable the random text
             RandomText.enabled = m_enableRandomText;
 
             //If we should enable the text, set the text value
@@ -157,14 +160,19 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     {
         if(status == ConnectionStatus.DISCONNECTED)
         {
-            this.m_updateIPTexts = true;
-            this.m_enableIPTexts = true;
+            lock(this)
+            { 
+                this.m_updateIPTexts = true;
+                this.m_enableIPTexts = true;
+            }
         }
         else
         {
-            this.m_updateIPTexts = true;
-            this.m_enableIPTexts = false;
-
+            lock (this)
+            {
+                this.m_updateIPTexts = true;
+                this.m_enableIPTexts = false;
+            }
             server.TabletClient.AddListener(this);
         }
     }
@@ -190,6 +198,25 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
             m_model.CurrentAction    = CurrentAction.IN_HIGHLIGHT;
             m_model.CurrentHighlight = new PairLayerID() { Layer = detailedMsg.data.layer, ID = detailedMsg.data.id };
         }
+
+        else if(commonMsg.action == "startAnnotation")
+        {
+            //Display instruction to the user
+            lock (this)
+            {
+                m_updateRandomText = true;
+                m_enableRandomText = true;
+                m_randomStr = "Tap to start annotating\non the tablet";
+            }
+
+            //Change the current action and remove highlighting if needed
+            CurrentAction oldAction = m_model.CurrentAction;
+            m_model.CurrentAction = CurrentAction.START_ANNOTATION;
+            if (oldAction != CurrentAction.IN_HIGHLIGHT)
+            {
+                m_model.CurrentHighlight = new PairLayerID() { Layer = -1, ID = -1 };
+            }
+        }
     }
 
     public void OnSetCurrentAction(Model model, CurrentAction action)
@@ -202,11 +229,17 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     {
         if (eventData.InputSource.SourceType == InputSourceType.Hand && eventData.MixedRealityInputAction.Description == "Select")
         {
-            //if(m_model.CurrentAction == CurrentAction.START_ANNOTATION)
+            if(m_model.CurrentAction == CurrentAction.START_ANNOTATION)
             {
+                //Go back to the default state
                 m_model.CurrentAction = CurrentAction.DEFAULT;
+                lock (this)
+                {
+                    m_updateRandomText = true;
+                    m_enableRandomText = false;
+                }
 
-                //Create the texture that we will read, and a RenderTexture that the camera will render into
+                    //Create the texture that we will read, and a RenderTexture that the camera will render into
                 Texture2D screenShot = new Texture2D(Camera.main.scaledPixelWidth, Camera.main.scaledPixelHeight, TextureFormat.RGBA32, false);
                 RenderTexture rt = new RenderTexture(screenShot.width, screenShot.height, 24);
 
