@@ -226,10 +226,13 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     {}
 
     public void OnActionStarted(BaseInputEventData eventData)
+    {}
+
+    public void OnActionEnded(BaseInputEventData eventData)
     {
         if (eventData.InputSource.SourceType == InputSourceType.Hand && eventData.MixedRealityInputAction.Description == "Select")
         {
-            if(m_model.CurrentAction == CurrentAction.START_ANNOTATION)
+            if (m_model.CurrentAction == CurrentAction.START_ANNOTATION)
             {
                 //Go back to the default state
                 m_model.CurrentAction = CurrentAction.DEFAULT;
@@ -239,7 +242,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                     m_enableRandomText = false;
                 }
 
-                    //Create the texture that we will read, and a RenderTexture that the camera will render into
+                //Create the texture that we will read, and a RenderTexture that the camera will render into
                 Texture2D screenShot = new Texture2D(Camera.main.scaledPixelWidth, Camera.main.scaledPixelHeight, TextureFormat.RGBA32, false);
                 RenderTexture rt = new RenderTexture(screenShot.width, screenShot.height, 24);
 
@@ -262,8 +265,8 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
                 //Copy some values for them to be usable in a separate thread (Task.Run)...
                 byte[] pixels = new byte[4 * screenShot.width * screenShot.height];
-                int width     = screenShot.width;
-                int height    = screenShot.height;
+                int width = screenShot.width;
+                int height = screenShot.height;
                 Vector3 cameraPos = Camera.main.transform.position;
                 Quaternion cameraRot = Camera.main.transform.rotation;
                 screenShot.GetRawTextureData().CopyTo(pixels, 0);
@@ -284,30 +287,27 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         Debug.Log($"Saving image to {destination}");
         FileStream file;
 
-        if (File.Exists(destination)) 
+        if (File.Exists(destination))
             file = File.OpenWrite(destination);
         else
             file = File.Create(destination);
 
-        using(StreamWriter sw = new StreamWriter(file))
-        { 
+        using (StreamWriter sw = new StreamWriter(file))
+        {
             sw.Write($"P3\n{width} {height}\n255");
             for (Int32 j = height - 1; j >= 0; j--)
             {
                 for (Int32 i = 0; i < width; i++)
                 {
-                    if ((i + width*(height-1-j)) % (70/12) == 0) //70 -- maximum line in caracters for PPM. 12: 3 caracters per components, 3 components, 2 spaces
+                    if ((i + width * (height - 1 - j)) % (70 / 12) == 0) //70 -- maximum line in caracters for PPM. 12: 3 caracters per components, 3 components, 2 spaces
                         sw.Write("\n");
                     for (int k = 0; k < 3; k++)
-                    { 
-                        sw.Write($"{pixels[j*width*4 + i*4 + k]} ");
+                    {
+                        sw.Write($"{pixels[j * width * 4 + i * 4 + k]} ");
                     }
                 }
             }
         }
         file.Close();
     }
-
-    public void OnActionEnded(BaseInputEventData eventData)
-    {}
 }
