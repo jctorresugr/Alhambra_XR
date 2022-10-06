@@ -10,29 +10,29 @@ using System.Threading;
 #endif
 
 
-public interface IClientListener
-{
-    /// <summary>
-    /// Function called when a client is closed.
-    /// This method can only be called on attempts to write data or after the Close() method is called
-    /// Note: the Socket is closed just after this event is fired
-    /// </summary>
-    /// <param name="c"></param>
-    void OnClose(Client c);
-
-    /// <summary>
-    /// Function called when a new String message has been received
-    /// </summary>
-    /// <param name="c">The client calling this method</param>
-    /// <param name="msg">The received message</param>
-    void OnRead(Client c, String msg);
-}
-
 /// <summary>
 /// Client connected with this Server
 /// </summary>
 public class Client
 {
+    public interface IClientListener
+    {
+        /// <summary>
+        /// Function called when a client is closed.
+        /// This method can only be called on attempts to write data or after the Close() method is called
+        /// Note: the Socket is closed just after this event is fired
+        /// </summary>
+        /// <param name="c"></param>
+        void OnClose(Client c);
+
+        /// <summary>
+        /// Function called when a new String message has been received
+        /// </summary>
+        /// <param name="c">The client calling this method</param>
+        /// <param name="msg">The received message</param>
+        void OnRead(Client c, String msg);
+    }
+
     /// <summary>
     /// The Socket of the client
     /// </summary>

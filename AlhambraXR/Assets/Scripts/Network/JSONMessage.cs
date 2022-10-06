@@ -31,4 +31,20 @@ public class JSONMessage
              "    }\n" +
              "}";
     }
+
+    public static String StartAnnotation(byte[] pixels, int width, int height, Vector3 cameraPos, Quaternion cameraRot)
+    {
+        return 
+             "{" +
+             "    \"action\": \"annotation\",\n" +
+             "    \"data\":\n" +
+             "    {\n" +
+            $"        \"base64\": \"{System.Convert.ToBase64String(pixels)}\",\n" +
+            $"        \"width\": {width},\n"   +
+            $"        \"height\": {height},\n" +
+            $"        \"cameraPos\": [{cameraPos.x}, {cameraPos.y}, {cameraPos.z}],\n" +
+            $"        \"cameraRot\": [{cameraRot.w}, {cameraRot.x}, {cameraRot.y}, {cameraRot.z}]\n" +
+             "    }\n" +
+             "}";
+    }
 }

@@ -132,11 +132,16 @@ public class AnnotationFragment extends AlhambraFragment
 
         //Need to convert the byte array to the int array...
         int[] argb8888Colors = new int[width*height];
-        for(int i = 0; i < width*height; i++)
-            argb8888Colors[i] = (argbImg[4*i+0] << 24) +
-                                (argbImg[4*i+1] << 16) +
-                                (argbImg[4*i+2] << 8)  +
-                                (argbImg[4*i+3]);
+        for(int j = 0; j < height; j++)
+            for(int i = 0; i < width; i++)
+            {
+                int srcIdx = j*width+i;
+                int newIdx = (height-1-j)*width+i;
+                argb8888Colors[newIdx] = (argbImg[4*srcIdx+3] << 24) +
+                                         (argbImg[4*srcIdx+0] << 16) +
+                                         (argbImg[4*srcIdx+1] << 8)  +
+                                         (argbImg[4*srcIdx+2]);
+            }
 
         m_canvas.getModel().setBackground(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888));
         m_canvas.getModel().clearStrokes();

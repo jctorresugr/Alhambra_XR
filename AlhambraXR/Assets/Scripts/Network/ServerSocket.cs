@@ -30,7 +30,7 @@ public interface IServerSocketListener
 /// Basic class for TCP/IP Server. All messages are sent as soon as possible (NoDelay)
 /// This object opens one thread for accepting incoming connection, one to read their data, and N threads for writing data, N == clients.Length
 /// </summary>
-public class ServerSocket: IClientListener
+public class ServerSocket: Client.IClientListener
 {
     /// <summary>
     /// The server socket

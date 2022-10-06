@@ -4,7 +4,7 @@ using Microsoft.MixedReality.Toolkit.Physics;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
+public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IModelListener
 {
     /// <summary>
     /// Listener for events launched from PickPano
@@ -26,6 +26,11 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
     /// The image containing the layer information
     /// </summary>
     public Texture2D Image;
+
+    /// <summary>
+    /// The model to use. Should be set up by the main application
+    /// </summary>
+    private Model m_model = null;
     
     /// <summary>
     /// The listeners objects listening for selection events
@@ -33,13 +38,15 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
     private HashSet<IPickPanoListener> m_listeners = new HashSet<IPickPanoListener>();
 
     /// <summary>
-    /// Should we browse with the hand?
+    /// Should we update the graphical parameters about the data chunk to highlight?
     /// </summary>
-    private bool m_browseWithHands = true;
-
-    private int  m_newLayer       = -1;
-    private int  m_newID           = -1;
     private bool m_updateHighlight = false;
+
+    public void Init(Model model)
+    {
+        m_model = model;
+        model.AddListener(this);
+    }
 
     void Start()
     {
@@ -54,7 +61,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
 
     void Update()
     {
-        if(m_browseWithHands)
+        if(m_model.CurrentAction == CurrentAction.DEFAULT)
         { 
             foreach(var inputSource in CoreServices.InputSystem.DetectedInputSources)
             {
@@ -70,11 +77,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
             }
         }
 
-
         if(m_updateHighlight)
         {
-            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_ID",    m_newID);
-            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_Layer", m_newLayer);
+            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_ID",    m_model.CurrentHighlight.ID);
+            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_Layer", m_model.CurrentHighlight.Layer);
             m_updateHighlight = false;
         }
     }
@@ -96,21 +102,6 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
     {
         m_listeners.Remove(l);
     }
-
-    /// <summary>
-    /// Highlight a specific data chunk.
-    /// Calling this method stops the browsing of data chunk with hands until a Select action is performed.
-    /// </summary>
-    /// <param name="layer">The layer where this data chunk is in</param>
-    /// <param name="id">The ID of the data chunk INSIDE the specified layer</param>
-    public void HighlightDataChunk(int layer, int id)
-    {
-        m_browseWithHands = false;
-        m_newID           = id;
-        m_newLayer        = layer;
-        m_updateHighlight = true;
-    }
-
     /// <summary>
     /// Find the pixel color containing the layer information that the user is currently pointing at
     /// The color is determined from the Index texture.
@@ -143,8 +134,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
 
                 //Get the position of the hit
                 Vector2 point = hit.textureCoord;
-                Debug.Log("u " + point.x + " v " + point.y);
-                GameObject.Find("Origin").transform.position = hit.point;
+                //Debug.Log("u " + point.x + " v " + point.y);
+                //GameObject.Find("Origin").transform.position = hit.point;
 
 
                 //Get the corresponding Layer information using the Image that encodes up to 4 layers
@@ -168,37 +159,27 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
         int ig = Mathf.RoundToInt(c.g * 255);
         int ib = Mathf.RoundToInt(c.b * 255);
         int ia = Mathf.RoundToInt(c.a * 255);
-        Debug.Log($" r {ir}, g {ig}, b {ib}, a {ia}");
-
+        //Debug.Log($" r {ir}, g {ig}, b {ib}, a {ia}");
 
         //Depending on where we hit, highlight a particular part of the game object if any layer information is there
         if (ir > 0)
         {
-            m_updateHighlight = true;
-            m_newLayer        = 0;
-            m_newID           = ir;
+            m_model.CurrentHighlight = new PairLayerID() { ID = ir, Layer = 0 };
             ret = true;
         }
         else if (ig > 0)
         {
-            m_updateHighlight = true;
-            m_newLayer        = 1;
-            m_newID           = ig;
+            m_model.CurrentHighlight = new PairLayerID() { ID = ig, Layer = 1 };
             ret = true;
         }
         else if (ib > 0)
         {
-            m_updateHighlight = true;
-            m_newLayer        = 2;
-            m_newID           = ib;
+            m_model.CurrentHighlight = new PairLayerID() { ID = ib, Layer = 2 };
             ret = true;
         }
         else
         {
-            m_updateHighlight = true;
-            m_newLayer        = 4;
-            m_newID           = -1;
-            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_Layer", 4);
+            m_model.CurrentHighlight = new PairLayerID() { ID = -1, Layer = -1 };
         }
 
         return ret;
@@ -212,9 +193,9 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
     {
         if(eventData.InputSource.SourceType == InputSourceType.Hand && eventData.MixedRealityInputAction.Description == "Select")
         {
-            if(!m_browseWithHands) //Stop the highlighting from outside
+            if(m_model.CurrentAction == CurrentAction.IN_HIGHLIGHT) //Stop the highlighting from outside
             {
-                m_browseWithHands = true;
+                m_model.CurrentAction = CurrentAction.DEFAULT;
                 return; 
             }
 
@@ -230,4 +211,23 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler
 
     public void OnActionEnded(BaseInputEventData eventData)
     {}
+
+    /*********************************************/
+    /********** IModelListener interface *********/
+    /*********************************************/
+
+    public void OnSetCurrentAction(Model model, CurrentAction action)
+    {
+        m_updateHighlight = true;
+    }
+
+    public void OnSetCurrentHighlight(Model model, PairLayerID id)
+    {
+        m_updateHighlight = true;
+    }
+
+    public Mesh Mesh
+    {
+        get => gameObject.GetComponent<MeshFilter>().mesh;
+    }
 }

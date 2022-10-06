@@ -22,26 +22,26 @@ public enum ConnectionStatus
 }
 
 /// <summary>
-/// The interface containing methods to call on events for AlhambraServer objects
-/// </summary>
-public interface IAlhambraServerListener
-{
-    /// <summary>
-    /// Method called when the connection status of the remote tablet has changed
-    /// </summary>
-    /// <param name="server">The server calling this method</param>
-    /// <param name="status">The change in the connection status</param>
-    public void OnConnectionStatus(AlhambraServer server, ConnectionStatus status);
-}
-
-
-/// <summary>
 /// The Alhambra server.
 /// This server handles only one tablet at a time. 
 /// If multiple attempts of connection happens, this server only keeps the last one and closes the old one
 /// </summary>
 public class AlhambraServer : ServerSocket, IServerSocketListener
 {
+    /// <summary>
+    /// The interface containing methods to call on events for AlhambraServer objects
+    /// </summary>
+    public interface IAlhambraServerListener
+    {
+        /// <summary>
+        /// Method called when the connection status of the remote tablet has changed
+        /// </summary>
+        /// <param name="server">The server calling this method</param>
+        /// <param name="status">The change in the connection status</param>
+        public void OnConnectionStatus(AlhambraServer server, ConnectionStatus status);
+    }
+
+
     /// <summary>
     /// The tablet client. Compared to the default settings of ServerSocket, here, we handle only one tablet
     /// </summary>
