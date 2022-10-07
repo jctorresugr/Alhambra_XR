@@ -273,6 +273,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                                                      0));
                             indices.Add(incr++);
                         }
+                        indices.Add(incr-1); //Avoid connecting multiple strokes together
                     }
                     lines.vertices = vertices.ToArray();
                     lines.SetIndices(indices.ToArray(), MeshTopology.LineStrip, 0);
