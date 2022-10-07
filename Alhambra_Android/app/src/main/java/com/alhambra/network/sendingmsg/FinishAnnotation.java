@@ -2,6 +2,8 @@ package com.alhambra.network.sendingmsg;
 
 import android.graphics.Point;
 
+import com.sereno.math.Quaternion;
+import com.sereno.math.Vector3;
 import com.sereno.view.AnnotationStroke;
 
 import java.util.List;
@@ -19,7 +21,7 @@ public class FinishAnnotation
         List<Point> points = stroke.getPoints();
 
         res.append(SendingMessage.generateIncr(incr)).append("{\n");
-        res.append(SendingMessage.generateIncr(incr+4)).append("\"point\": [");
+        res.append(SendingMessage.generateIncr(incr+4)).append("\"points\": [");
         for(int i = 0; i < points.size()-1; i++)
             res.append(points.get(i).x).append(", ").append(points.get(i).y).append(", ");
         res.append(points.get(points.size()-1).x).append(", ").append(points.get(points.size()-1).y).append("]\n");
@@ -51,12 +53,16 @@ public class FinishAnnotation
     /** Generate the JSON message of "finishAnnotation"
      * @param confirm is the annotation validated (true) or cancelled (false)?
      * @param strokes the strokes of the annotation
+     * @param cameraPos the camera position at the time of where the annotated image was taken
+     * @param cameraRot the camera orientation at the time of where the annotated image was taken
      * @return the JSON message, curly brackets included.*/
-    public static String generateJSON(boolean confirm, List<AnnotationStroke> strokes)
+    public static String generateJSON(boolean confirm, List<AnnotationStroke> strokes, float[] cameraPos, Quaternion cameraRot)
     {
         return "{\n" +
                 "   \"action\": \"finishAnnotation\",\n" +
                 "   \"data\": {\n" +
+                "       \"cameraPos\": " + Vector3.toString(cameraPos) + ",\n" +
+                "       \"cameraRot\": " + cameraRot.toString() + ",\n" +
                 "       \"confirm\": " + (confirm ? "true" : "false") + ",\n" +
                 "       \"strokes\": " + generateStrokesJSON(strokes, 8) + "\n" +
                 "   }\n" +

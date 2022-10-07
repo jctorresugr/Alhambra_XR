@@ -170,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
                         MainActivity.this.runOnUiThread(() -> {
                             m_tabLayout.getTabAt(ANNOTATION_FRAGMENT_TAB).view.setVisibility(View.VISIBLE);
                             m_viewPager.setCurrentItem(ANNOTATION_FRAGMENT_TAB);
-                            m_annotationFragment.startNewAnnotation(annotation.getWidth(), annotation.getHeight(), annotation.getBitmap());
+                            m_annotationFragment.startNewAnnotation(annotation.getWidth(), annotation.getHeight(), annotation.getBitmap(), annotation.getCameraPos(), annotation.getCameraRot());
                             m_viewPager.setPagingEnabled(true);
                         });
                     }
@@ -264,14 +264,14 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
     @Override
     public void onConfirmAnnotation(AnnotationFragment frag)
     {
-        m_socket.push(FinishAnnotation.generateJSON(true, frag.getStrokes()));
+        m_socket.push(FinishAnnotation.generateJSON(true, frag.getStrokes(), frag.getCameraPos(), frag.getCameraRot()));
         //runOnUiThread(this::disableAnnotationTab);
     }
 
     @Override
     public void onCancelAnnotation(AnnotationFragment frag)
     {
-        m_socket.push(FinishAnnotation.generateJSON(false, frag.getStrokes()));
+        m_socket.push(FinishAnnotation.generateJSON(false, frag.getStrokes(), frag.getCameraPos(), frag.getCameraRot()));
         //runOnUiThread(this::disableAnnotationTab);
     }
 }

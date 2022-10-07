@@ -6,8 +6,6 @@ import org.json.JSONObject;
 
 import androidx.annotation.NonNull;
 
-import com.alhambra.Dataset;
-
 /** The class representing the "selection" action received from the server*/
 public class SelectionMessage
 {

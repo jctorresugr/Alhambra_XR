@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 import com.alhambra.R;
+import com.sereno.math.Quaternion;
 import com.sereno.view.AnnotationCanvasData;
 import com.sereno.view.AnnotationCanvasView;
 import com.sereno.view.AnnotationStroke;
@@ -42,6 +43,12 @@ public class AnnotationFragment extends AlhambraFragment
 
     /** The list of registered listeners*/
     private ArrayList<IAnnotationFragmentListener> m_listeners = new ArrayList<>();
+
+    /** The camera position at the time of where the annotation image was taken. null if no image is currently being annotated*/
+    private float[]    m_cameraPos = null;
+
+    /** The camera orientation at the time of where the annotation image was taken. null if no image is currently being annotated*/
+    private Quaternion m_cameraRot = null;
 
     /** The context associated with this fragment*/
     private Context m_ctx = null;
@@ -143,8 +150,10 @@ public class AnnotationFragment extends AlhambraFragment
     /** Start a new annotation
      * @param width the width of the background to annotate
      * @param height the height of the background to annotate
-     * @param argbImg the ARGB8888 image to annotate*/
-    public boolean startNewAnnotation(int width, int height, byte[] argbImg)
+     * @param argbImg the ARGB8888 image to annotate
+     * @param cameraPos the camera position at the time of where the argbImg was taken
+     * @param cameraRot the camera orientation at the time of where the argbImg was taken*/
+    public boolean startNewAnnotation(int width, int height, byte[] argbImg, float[] cameraPos, Quaternion cameraRot)
     {
         //Check that the incoming data has the correct size
         if(argbImg.length < 4*width*height)
@@ -167,6 +176,8 @@ public class AnnotationFragment extends AlhambraFragment
         m_canvas.getModel().clearStrokes();
         m_confirmBtn.setVisibility(View.VISIBLE);
         m_cancelBtn.setVisibility(View.VISIBLE);
+        m_cameraPos = cameraPos;
+        m_cameraRot = cameraRot;
         return true;
     }
 
@@ -176,6 +187,14 @@ public class AnnotationFragment extends AlhambraFragment
     {
         return m_canvas.getModel().getStrokes();
     }
+
+    /** The camera position at the time of where the annotation image was taken. null if no image is currently being annotated
+     * @return the [x, y, z] position Vector3*/
+    public float[] getCameraPos() {return m_cameraPos;}
+
+    /** The camera orientation at the time of where the annotation image was taken. null if no image is currently being annotated
+     * @return the Quaternion representing the orientation*/
+    public Quaternion getCameraRot() {return m_cameraRot;}
 
     /** Function to enable or disable the swiping based on a motion event
      * @param motionEvent the motion event received*/

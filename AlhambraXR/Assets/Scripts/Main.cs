@@ -1,6 +1,7 @@
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
 using System;
+using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -77,6 +78,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         //Parameterize Unity
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
         m_persistantPath = Application.persistentDataPath;
+        CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
 
         m_server.Launch();
         m_server.AddListener(this);
@@ -216,6 +218,12 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
             {
                 m_model.CurrentHighlight = new PairLayerID() { Layer = -1, ID = -1 };
             }
+        }
+
+        else if(commonMsg.action == "finishAnnotation")
+        {
+            ReceivedMessage<FinishAnnotationMessage> detailedMsg = ReceivedMessage<FinishAnnotationMessage>.FromJSON(msg);
+            Debug.Log(detailedMsg);
         }
     }
 
