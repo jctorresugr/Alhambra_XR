@@ -78,7 +78,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         //Parameterize Unity
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
         m_persistantPath = Application.persistentDataPath;
-        CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+        CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture; //Useful to enforce dots, and not commas, on double/float values when we print them
 
         m_server.Launch();
         m_server.AddListener(this);
@@ -160,6 +160,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
     public void OnConnectionStatus(AlhambraServer server, ConnectionStatus status)
     {
+        //Show the IP address of the device in case of a disconnection. Otherwise, hide it.
         if(status == ConnectionStatus.DISCONNECTED)
         {
             lock(this)
@@ -223,7 +224,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         else if(commonMsg.action == "finishAnnotation")
         {
             ReceivedMessage<FinishAnnotationMessage> detailedMsg = ReceivedMessage<FinishAnnotationMessage>.FromJSON(msg);
-            Debug.Log(detailedMsg);
+            //TODO: Anchor back the annotation
         }
     }
 
@@ -289,6 +290,13 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         }
     }
 
+    /// <summary>
+    /// For debug purpose, save a RGBA32 image in a PPM file for later analyses.
+    /// </summary>
+    /// <param name="pixels">The RGBA32 pixel data, column-major ordered. Expected size: width*height*4</param>
+    /// <param name="width">The width of the image</param>
+    /// <param name="height">The height of the image</param>
+    /// <param name="fileName">The filename of the image to be put in m_persistantPath directory</param>
     private void SavePPMImageForDebug(byte[] pixels, int width, int height, String fileName)
     {
         String destination = $"{m_persistantPath}/{fileName}";

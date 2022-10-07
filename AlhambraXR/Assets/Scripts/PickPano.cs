@@ -234,6 +234,9 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         m_updateHighlight = true;
     }
 
+    /// <summary>
+    /// The Mesh of the object linked to this GameObject. Useful, for instance, to draw this mesh on a dedicated RenderTexture
+    /// </summary>
     public Mesh Mesh
     {
         get => gameObject.GetComponent<MeshFilter>().mesh;
