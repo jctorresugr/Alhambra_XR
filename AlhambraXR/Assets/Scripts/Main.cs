@@ -1,6 +1,7 @@
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -52,10 +53,22 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     /// </summary>
     private String m_persistantPath = "";
 
+    private Queue<Action> m_tasksInMainThread = new Queue<Action>();
+
     /// <summary>
     /// The MonoBehaviour script handling the panel picking of the Alhambra model
     /// </summary>
     public PickPano m_pickPanoModel;
+
+    /// <summary>
+    /// The material to display UV mapping of a particular mesh
+    /// </summary>
+    public Material UVMaterial;
+
+    /// <summary>
+    /// Camera used with RenderTexture to retrieve information
+    /// </summary>
+    public Camera RTCamera;
 
     /// <summary>
     /// The IP header text being displayed
@@ -79,6 +92,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
         m_persistantPath = Application.persistentDataPath;
         CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture; //Useful to enforce dots, and not commas, on double/float values when we print them
+        RTCamera.CopyFrom(Camera.main);
 
         m_server.Launch();
         m_server.AddListener(this);
@@ -105,6 +119,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         {
             HandleIPTxt();
             HandleRandomText();
+            HandleTasks();
         }
     }
 
@@ -157,6 +172,14 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         }
     }
 
+    private void HandleTasks()
+    {
+        while(m_tasksInMainThread.Count > 0)
+        {
+            Action tasks = m_tasksInMainThread.Dequeue();
+            tasks.Invoke();
+        }
+    }
 
     public void OnConnectionStatus(AlhambraServer server, ConnectionStatus status)
     {
@@ -224,7 +247,18 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         else if(commonMsg.action == "finishAnnotation")
         {
             ReceivedMessage<FinishAnnotationMessage> detailedMsg = ReceivedMessage<FinishAnnotationMessage>.FromJSON(msg);
-            //TODO: Anchor back the annotation
+            lock(this)
+            {
+                //Purpose: Get the UV mapping of the scene at the particular pos/rotation
+                m_tasksInMainThread.Enqueue(() =>
+                {
+                    RTCamera.transform.position = new Vector3(detailedMsg.data.cameraPos[0], detailedMsg.data.cameraPos[1], detailedMsg.data.cameraPos[2]);
+                    RTCamera.transform.rotation = new Quaternion(detailedMsg.data.cameraRot[1], detailedMsg.data.cameraRot[2], detailedMsg.data.cameraRot[3], detailedMsg.data.cameraRot[0]);
+                    Texture2D screenShot = RenderPickPanoMeshInRT(RTCamera, UVMaterial);
+                    //SavePPMImageForDebug(screenShot.GetRawTextureData(), screenShot.width, screenShot.height, "uvMapping.ppm");
+                    //TODO: Do something with the UV mapping
+                });
+            }
         }
     }
 
@@ -251,26 +285,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                     m_enableRandomText = false;
                 }
 
-                //Create the texture that we will read, and a RenderTexture that the camera will render into
-                Texture2D screenShot = new Texture2D(Camera.main.scaledPixelWidth, Camera.main.scaledPixelHeight, TextureFormat.RGBA32, false);
-                RenderTexture rt = new RenderTexture(screenShot.width, screenShot.height, 24);
-
-                //Render what the specific mesh from the camera position in the render texture (and thus in the linked screenShot texture)
-                CommandBuffer buf = new CommandBuffer();
-                buf.SetRenderTarget(rt, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
-                buf.DrawMesh(m_pickPanoModel.Mesh, m_pickPanoModel.transform.localToWorldMatrix, m_pickPanoModel.GetComponent<Renderer>().material);
-                Camera.main.AddCommandBuffer(CameraEvent.AfterDepthTexture, buf);
-                Camera.main.Render();
-                Camera.main.RemoveCommandBuffer(CameraEvent.AfterDepthTexture, buf);
-
-                //Read back the pixels from the render texture to the texture
-                RenderTexture.active = rt;
-                screenShot.ReadPixels(new Rect(0, 0, screenShot.width, screenShot.height), 0, 0);
-
-                //Clean up our messes
-                Camera.main.targetTexture = null;
-                RenderTexture.active = null;
-                Destroy(rt);
+                Texture2D screenShot = RenderPickPanoMeshInRT(Camera.main, m_pickPanoModel.GetComponent<Renderer>().material);
 
                 //Copy some values for them to be usable in a separate thread (Task.Run)...
                 byte[] pixels = new byte[4 * screenShot.width * screenShot.height];
@@ -288,6 +303,38 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 });
             }
         }
+    }
+
+    /// <summary>
+    /// Render the PickPanoMesh in a RenterTexture and returns the texture containing the data
+    /// </summary>
+    /// <param name="cam">The Camera to use to render the PickPano Mesh</param>
+    /// <param name="mat">The material to use to render the PickPano Mesh</param>
+    /// <returns>The RGBA32 Texture resized using the Camera settings where the mesh is drawn into.</returns>
+    private Texture2D RenderPickPanoMeshInRT(Camera cam, Material mat)
+    {
+        //Create the texture that we will read, and a RenderTexture that the camera will render into
+        Texture2D screenShot = new Texture2D(cam.scaledPixelWidth, cam.scaledPixelHeight, TextureFormat.RGBA32, false);
+        RenderTexture rt = new RenderTexture(screenShot.width, screenShot.height, 24);
+
+        //Render what the specific mesh from the camera position in the render texture (and thus in the linked screenShot texture)
+        CommandBuffer buf = new CommandBuffer();
+        buf.SetRenderTarget(rt, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
+        buf.DrawMesh(m_pickPanoModel.Mesh, m_pickPanoModel.transform.localToWorldMatrix, mat);
+        cam.AddCommandBuffer(CameraEvent.AfterDepthTexture, buf);
+        cam.Render();
+        cam.RemoveCommandBuffer(CameraEvent.AfterDepthTexture, buf);
+
+        //Read back the pixels from the render texture to the texture
+        RenderTexture.active = rt;
+        screenShot.ReadPixels(new Rect(0, 0, screenShot.width, screenShot.height), 0, 0);
+
+        //Clean up our messes
+        cam.targetTexture = null;
+        RenderTexture.active = null;
+        Destroy(rt);
+
+        return screenShot;
     }
 
     /// <summary>
