@@ -42,6 +42,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     /// </summary>
     private bool m_updateHighlight = false;
 
+    /// <summary>
+    /// Initialize this GameObject and link it with the other components of the Scene
+    /// </summary>
+    /// <param name="model">The Model object containing the data of the overall application</param>
     public void Init(Model model)
     {
         m_model = model;

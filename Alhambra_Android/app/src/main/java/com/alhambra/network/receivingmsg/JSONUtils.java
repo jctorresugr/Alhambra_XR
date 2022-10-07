@@ -3,8 +3,13 @@ package com.alhambra.network.receivingmsg;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+/** Helper class for JSON objects */
 public class JSONUtils
 {
+    /** Convert a JSON Array containing floating-point values to a Java float array
+     * @param arr the JSON array to read data from
+     * @return the converted JSON array to a float array. Length: arr.length()
+     * @throws JSONException Error at parsing the JSONArray as a floating-point value array.*/
     public static float[] jsonArrayToFloatArray(JSONArray arr) throws JSONException
     {
         float[] res = new float[arr.length()];
