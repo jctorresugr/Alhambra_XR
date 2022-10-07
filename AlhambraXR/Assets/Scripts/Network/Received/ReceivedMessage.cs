@@ -16,6 +16,7 @@ public class ReceivedMessage<T> : CommonMessage
     /// Deserialize a JSON string to a ReceivedMessage<T> object
     /// </summary>
     /// <param name="json">The string to deserialize</param>
+    /// <typeparam name="T">An object representing the "data" part of the JSON message. It must be Serializable</typeparam>
     /// <returns>The object deserialize on success</returns>
     public static new ReceivedMessage<T> FromJSON(String json)
     {
