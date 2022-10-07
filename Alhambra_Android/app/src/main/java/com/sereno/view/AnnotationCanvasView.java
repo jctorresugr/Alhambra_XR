@@ -231,6 +231,11 @@ public class AnnotationCanvasView extends View implements AnnotationCanvasData.I
     @Override
     public void onSetBackground(AnnotationCanvasData data, Bitmap background)
     {
+        if(m_model.getBackground() == null)
+        {
+            invalidate();
+            return;
+        }
         m_backgroundSrcRect = new Rect(0, 0,
                                        m_model.getBackground().getWidth(), m_model.getBackground().getHeight());
         invalidate();

@@ -53,10 +53,12 @@ public class FinishAnnotation
     /** Generate the JSON message of "finishAnnotation"
      * @param confirm is the annotation validated (true) or cancelled (false)?
      * @param strokes the strokes of the annotation
+     * @param width the annotated image width
+     * @param height the annotated image height
      * @param cameraPos the camera position at the time of where the annotated image was taken
      * @param cameraRot the camera orientation at the time of where the annotated image was taken
      * @return the JSON message, curly brackets included.*/
-    public static String generateJSON(boolean confirm, List<AnnotationStroke> strokes, float[] cameraPos, Quaternion cameraRot)
+    public static String generateJSON(boolean confirm, List<AnnotationStroke> strokes, int width, int height, float[] cameraPos, Quaternion cameraRot)
     {
         return "{\n" +
                 "   \"action\": \"finishAnnotation\",\n" +
@@ -64,6 +66,8 @@ public class FinishAnnotation
                 "       \"cameraPos\": " + Vector3.toString(cameraPos) + ",\n" +
                 "       \"cameraRot\": " + cameraRot.toString() + ",\n" +
                 "       \"confirm\": " + (confirm ? "true" : "false") + ",\n" +
+                "       \"width\": " + width + ",\n" +
+                "       \"height\": " + height + ",\n" +
                 "       \"strokes\": " + generateStrokesJSON(strokes, 8) + "\n" +
                 "   }\n" +
                 "}";

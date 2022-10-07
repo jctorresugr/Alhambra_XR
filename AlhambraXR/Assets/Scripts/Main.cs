@@ -65,6 +65,8 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     /// </summary>
     public Material UVMaterial;
 
+    public Material StencilMaskMaterial;
+
     /// <summary>
     /// Camera used with RenderTexture to retrieve information
     /// </summary>
@@ -93,6 +95,8 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         m_persistantPath = Application.persistentDataPath;
         CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture; //Useful to enforce dots, and not commas, on double/float values when we print them
         RTCamera.CopyFrom(Camera.main);
+        RTCamera.name = "RTCamera";
+        RTCamera.targetDisplay = -1;
 
         m_server.Launch();
         m_server.AddListener(this);
@@ -254,8 +258,57 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 {
                     RTCamera.transform.position = new Vector3(detailedMsg.data.cameraPos[0], detailedMsg.data.cameraPos[1], detailedMsg.data.cameraPos[2]);
                     RTCamera.transform.rotation = new Quaternion(detailedMsg.data.cameraRot[1], detailedMsg.data.cameraRot[2], detailedMsg.data.cameraRot[3], detailedMsg.data.cameraRot[0]);
-                    Texture2D screenShot = RenderPickPanoMeshInRT(RTCamera, UVMaterial);
-                    //SavePPMImageForDebug(screenShot.GetRawTextureData(), screenShot.width, screenShot.height, "uvMapping.ppm");
+
+                    //Create the line
+                    Mesh lines = new Mesh();
+                    List<Vector3> vertices = new List<Vector3>();
+                    List<int>     indices  = new List<int>();
+                    int incr = 0;
+                    foreach(Stroke stroke in detailedMsg.data.strokes)
+                    {
+                        for(int i = 0; i < stroke.points.Length; i += 2)
+                        {
+                            vertices.Add(new Vector3(2*stroke.points[i]/detailedMsg.data.width -1,
+                                                     2*stroke.points[i + 1]/detailedMsg.data.height - 1,
+                                                     0));
+                            indices.Add(incr++);
+                        }
+                    }
+                    lines.vertices = vertices.ToArray();
+                    lines.SetIndices(indices.ToArray(), MeshTopology.LineStrip, 0);
+                    lines.RecalculateBounds();
+
+                    //Create the texture that we will read, and a RenderTexture that the camera will render into
+                    Texture2D screenShot = new Texture2D(RTCamera.scaledPixelWidth, RTCamera.scaledPixelHeight, TextureFormat.RGBA32, false);
+                    RenderTexture rt = new RenderTexture(screenShot.width, screenShot.height, 24);
+                    rt.Create();
+
+                    //Render what the specific mesh from the camera position in the render texture (and thus in the linked screenShot texture)
+                    CommandBuffer buf = new CommandBuffer();
+                    buf.SetRenderTarget(rt, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
+                    buf.DrawMesh(lines, Matrix4x4.identity, StencilMaskMaterial, 0, -1);
+                    buf.DrawMesh(m_pickPanoModel.Mesh, m_pickPanoModel.transform.localToWorldMatrix, UVMaterial, 0, -1);
+                    RTCamera.AddCommandBuffer(CameraEvent.AfterDepthTexture, buf);
+                    RTCamera.Render();
+                    RTCamera.RemoveCommandBuffer(CameraEvent.AfterDepthTexture, buf);
+
+                    //Read back the pixels from the render texture to the texture
+                    RenderTexture.active = rt;
+                    screenShot.ReadPixels(new Rect(0, 0, screenShot.width, screenShot.height), 0, 0);
+
+                    //Clean up our messes
+                    RTCamera.targetTexture = null;
+                    RenderTexture.active = null;
+                    Destroy(rt);
+
+
+
+
+
+
+
+                    //Texture2D screenShot = RenderPickPanoMeshInRT(RTCamera, UVMaterial);
+                    SavePPMImageForDebug(screenShot.GetRawTextureData(), screenShot.width, screenShot.height, "uvMapping.ppm");
                     //TODO: Do something with the UV mapping
                 });
             }
@@ -291,7 +344,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 byte[] pixels = new byte[4 * screenShot.width * screenShot.height];
                 int width = screenShot.width;
                 int height = screenShot.height;
-                Vector3 cameraPos = Camera.main.transform.position;
+                Vector3    cameraPos = Camera.main.transform.position;
                 Quaternion cameraRot = Camera.main.transform.rotation;
                 screenShot.GetRawTextureData().CopyTo(pixels, 0);
 

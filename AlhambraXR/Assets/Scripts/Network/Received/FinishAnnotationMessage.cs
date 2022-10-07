@@ -10,6 +10,7 @@ public class Stroke
     /// The points of the stroke
     /// Number of points: points.Length/2
     /// Position of point ID i: {x=points[2*i], y=points[2*i+1]}
+    /// Points should be between (0, 0) and (annotationWidth, annotationHeight)
     /// </summary>
     public float[] points;
 }
@@ -39,4 +40,14 @@ public class FinishAnnotationMessage
     /// The strokes to anchor back to the environment
     /// </summary>
     public Stroke[] strokes;
+
+    /// <summary>
+    /// The width of the image where the strokes were captured
+    /// </summary>
+    public int width;
+
+    /// <summary>
+    /// The height of the image where the strokes were captured
+    /// </summary>
+    public int height;
 }

@@ -264,14 +264,18 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
     @Override
     public void onConfirmAnnotation(AnnotationFragment frag)
     {
-        m_socket.push(FinishAnnotation.generateJSON(true, frag.getStrokes(), frag.getCameraPos(), frag.getCameraRot()));
+        m_socket.push(FinishAnnotation.generateJSON(true, frag.getAnnotationCanvasData().getStrokes(), frag.getAnnotationCanvasData().getWidth(), frag.getAnnotationCanvasData().getHeight(),
+                                                    frag.getCameraPos(), frag.getCameraRot()));
+        frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);
     }
 
     @Override
     public void onCancelAnnotation(AnnotationFragment frag)
     {
-        m_socket.push(FinishAnnotation.generateJSON(false, frag.getStrokes(), frag.getCameraPos(), frag.getCameraRot()));
+        m_socket.push(FinishAnnotation.generateJSON(false, frag.getAnnotationCanvasData().getStrokes(), frag.getAnnotationCanvasData().getWidth(), frag.getAnnotationCanvasData().getHeight(),
+                                                    frag.getCameraPos(), frag.getCameraRot()));
+        frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);
     }
 }

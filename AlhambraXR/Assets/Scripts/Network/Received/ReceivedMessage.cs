@@ -24,6 +24,9 @@ public class ReceivedMessage<T> : CommonMessage
     }
 }
 
+/// <summary>
+/// Commont part of any incoming message
+/// </summary>
 public class CommonMessage
 {
     /// <summary>
@@ -31,6 +34,11 @@ public class CommonMessage
     /// </summary>
     public String action;
 
+    /// <summary>
+    /// Deserialize a JSON string to a CommonMessage object
+    /// </summary>
+    /// <param name="json">The string to deserialize</param>
+    /// <returns>The object deserialize on success</returns>
     public static CommonMessage FromJSON(String json)
     {
         return JsonUtility.FromJson<CommonMessage>(json);

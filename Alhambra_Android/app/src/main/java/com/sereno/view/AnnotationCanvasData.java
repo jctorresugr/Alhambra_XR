@@ -99,11 +99,11 @@ public class AnnotationCanvasData
     }
 
     /** Get the current background of the canvas
-     * @return the current image background*/
+     * @return the current image background, or null if no background*/
     public Bitmap getBackground() {return m_background;}
 
     /** Set the background of the canvas
-     * @param background the new background to use*/
+     * @param background the new background to use, or null if no background should be used*/
     public void setBackground(Bitmap background)
     {
         m_background = background;

@@ -397,6 +397,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_pickPanoModel: {fileID: 7568032346716495948}
   UVMaterial: {fileID: 2100000, guid: c7069d79f1e96f24aad06f92e8f5b24f, type: 2}
+  StencilMaskMaterial: {fileID: 2100000, guid: 8862b095d660062479985c35905e01e8, type: 2}
   RTCamera: {fileID: 1055798508}
   IPHeaderText: {fileID: 102304001}
   IPValueText: {fileID: 149515418}
@@ -916,7 +917,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1055798509}
   - component: {fileID: 1055798508}
-  - component: {fileID: 1055798507}
   m_Layer: 0
   m_Name: RTCamera
   m_TagString: Untagged
@@ -924,14 +924,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &1055798507
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1055798506}
-  m_Enabled: 1
 --- !u!20 &1055798508
 Camera:
   m_ObjectHideFlags: 0

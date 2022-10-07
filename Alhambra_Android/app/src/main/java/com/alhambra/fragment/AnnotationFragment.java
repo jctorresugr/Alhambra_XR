@@ -181,11 +181,12 @@ public class AnnotationFragment extends AlhambraFragment
         return true;
     }
 
-    /** Get the strokes of the current annotation
-     * @return the strokes*/
-    public List<AnnotationStroke> getStrokes()
+    public void clearAnnotation()
     {
-        return m_canvas.getModel().getStrokes();
+        m_canvas.getModel().clearStrokes();
+        m_canvas.getModel().setBackground(null);
+        m_cancelBtn.setVisibility(View.GONE);
+        m_confirmBtn.setVisibility(View.GONE);
     }
 
     /** The camera position at the time of where the annotation image was taken. null if no image is currently being annotated
@@ -195,6 +196,10 @@ public class AnnotationFragment extends AlhambraFragment
     /** The camera orientation at the time of where the annotation image was taken. null if no image is currently being annotated
      * @return the Quaternion representing the orientation*/
     public Quaternion getCameraRot() {return m_cameraRot;}
+
+    /** Get the annotation canvas data model
+     * @return the annotation canvas data model*/
+    public AnnotationCanvasData getAnnotationCanvasData() {return m_canvas.getModel();}
 
     /** Function to enable or disable the swiping based on a motion event
      * @param motionEvent the motion event received*/
