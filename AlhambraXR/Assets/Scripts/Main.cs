@@ -267,7 +267,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
                     foreach(Stroke stroke in detailedMsg.data.strokes)
                     {
-                        for(int i = 0; i < stroke.points.Length-4; i += 2)
+                        for(int i = 0; i < stroke.points.Length-4; i+=2)
                         {
                             //Get the points of the line
                             float xStart = 2 * stroke.points[i]   / detailedMsg.data.width  - 1;
@@ -275,7 +275,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                             float xEnd   = 2 * stroke.points[i+2] / detailedMsg.data.width  - 1;
                             float yEnd   = 2 * stroke.points[i+3] / detailedMsg.data.height - 1;
 
-                            //Lines are too close...
+                            //Lines are too close to differenciate them...
                             if(xEnd == xStart && yEnd == yStart)
                                 continue;
 
@@ -382,12 +382,11 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 Texture2D screenShot = RenderPickPanoMeshInRT(Camera.main, m_pickPanoModel.GetComponent<Renderer>().material);
 
                 //Copy some values for them to be usable in a separate thread (Task.Run)...
-                byte[] pixels = new byte[4 * screenShot.width * screenShot.height];
-                int width = screenShot.width;
-                int height = screenShot.height;
+                byte[] pixels = screenShot.GetRawTextureData();
+                int width     = screenShot.width;
+                int height    = screenShot.height;
                 Vector3    cameraPos = Camera.main.transform.position;
                 Quaternion cameraRot = Camera.main.transform.rotation;
-                screenShot.GetRawTextureData().CopyTo(pixels, 0);
 
                 //...and send them asynchronously to the tablet client
                 Task.Run(() =>

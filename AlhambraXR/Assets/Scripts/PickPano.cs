@@ -26,15 +26,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     }
 
     /// <summary>
-    /// The image containing the layer information
-    /// </summary>
-    public Texture2D Image;
-
-    /// <summary>
     /// The model to use. Should be set up by the main application
     /// </summary>
     private Model m_model = null;
-    
+
     /// <summary>
     /// The listeners objects listening for selection events
     /// </summary>
@@ -46,6 +41,11 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     private bool m_updateHighlight = false;
 
     /// <summary>
+    /// All the colors already used in the annotation
+    /// </summary>
+    private List<Color32> m_usedColors = new List<Color32>();
+
+    /// <summary>
     /// Initialize this GameObject and link it with the other components of the Scene
     /// </summary>
     /// <param name="model">The Model object containing the data of the overall application</param>
@@ -53,6 +53,18 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     {
         m_model = model;
         model.AddListener(this);
+
+        //Read the index texture to know which colors are used
+        Texture2D indexTexture = (Texture2D)gameObject.GetComponent<MeshRenderer>().sharedMaterial.GetTexture("_IndexTex");
+        NativeArray<byte> srcRGBA = indexTexture.GetRawTextureData<byte>();
+
+        for (int i = 0; i < indexTexture.width * indexTexture.height; i++)
+            if(srcRGBA[4*i+3] > 0 && !m_usedColors.Exists((c) => c.r == srcRGBA[4 * i + 0] &&
+                                                                 c.g == srcRGBA[4 * i + 1] &&
+                                                                 c.b == srcRGBA[4 * i + 2]))
+                m_usedColors.Add(new Color32(srcRGBA[4 * i + 0],
+                                             srcRGBA[4 * i + 1],
+                                             srcRGBA[4 * i + 2], 255));
     }
 
     void Start()
@@ -144,9 +156,9 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
                 //Debug.Log("u " + point.x + " v " + point.y);
                 //GameObject.Find("Origin").transform.position = hit.point;
 
-
                 //Get the corresponding Layer information using the Image that encodes up to 4 layers
-                Color c = Image.GetPixel((int)(point.x * Image.width), (int)(point.y * Image.height));
+                Texture2D indexTexture = (Texture2D)gameObject.GetComponent<MeshRenderer>().sharedMaterial.GetTexture("_IndexTex");
+                Color c = indexTexture.GetPixel((int)(point.x * indexTexture.width), (int)(point.y * indexTexture.height));
                 return c;
             }
         }
@@ -199,50 +211,132 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         Texture2D srcAnnotationTexture = (Texture2D)gameObject.GetComponent<MeshRenderer>().sharedMaterial.GetTexture("_IndexTex");
         NativeArray<byte>  srcRGBA = srcAnnotationTexture.GetRawTextureData<byte>();
 
+        //Save some texture variables to let us read texture data in separate thread...
+        int uvWidth = uvMapping.width;
+        int uvHeight = uvMapping.height;
+        int srcWidth = srcAnnotationTexture.width;
+        int srcHeight = srcAnnotationTexture.height;
+
         //The purpose is to find on which layer to anchor this annotation
-        int     layer      = 0;
+        int     layer      = 2;
         Color32 layerColor = new Color32(0, 0, 0, 255);
 
-        /*for(int j = 0; j < uvMapping.height; j++)
+        for(int j = 0; j < uvMapping.height; j++)
         {
             for(int i = 0; i < uvMapping.width; i++)
             {
-                if(newRGBA[4*(j*uvMapping.width + i) + 3] == 0) //Transparent UV
+                if (newRGBA[j * uvWidth + i].a == 0) //Transparent UV
                     continue;
 
-                int srcJ = newRGBA[4 * (j * uvMapping.width + i) + 1] * srcAnnotationTexture.height / 255;
-                int srcI = newRGBA[4 * (j * uvMapping.width + i) + 0] * srcAnnotationTexture.width  / 255;
-                int r    = srcRGBA[4 * (srcJ * srcAnnotationTexture.width + srcI)];
-                if(r > 0)
+                int srcJ = (int)(newRGBA[j * uvWidth + i].g * srcHeight);
+                int srcI = (int)(newRGBA[j * uvWidth + i].r * srcWidth);
+                int b    = srcRGBA[4 * (srcJ * srcAnnotationTexture.width + srcI) + 2];
+                if(b > 0)
                 {
                     int g = srcRGBA[4 * (srcJ * srcAnnotationTexture.width + srcI) + 1];
                     if(g > 0)
                     {
-                        layer        = 2;
-                        layerColor.r = (byte)r;
+                        layer        = 0;
                         layerColor.g = (byte)g;
+                        layerColor.b = (byte)b;
                         goto endFindLayer; //Final depth -- Cannot go further
                     }
-                    layer = Math.Max(1, layer); //Normally 1 is the max, as the "2" break the for loop
-                    layerColor.r = (byte)r;
+                    layer = Math.Min(1, layer); //Normally 1 is always the min, as the "0" breaks the for loop
+                    layerColor.b = (byte)b;
                 }
             }
         }
-        endFindLayer:*/
+        endFindLayer:
 
         //Define the final color
-        //TODO have a table, somewhere, of the possible remaining colors...
-        if (layer == 0)
-            layerColor.r = 5;
-        else if (layer == 2)
-            layerColor.g = 5;
-        else if (layer == 3)
-            layerColor.b = 5;
+        //Brute force all the possibilities depending on the layer
+        if(layer == 0)
+        {
+            int r = 1;
+            for(; r < (1<<8); r++)
+                if(!m_usedColors.Exists((c) => c.r == r &&
+                                               c.g == layerColor.g &&
+                                               c.b == layerColor.b))
+                {
+                    layerColor.r = (byte)r;
+                    m_usedColors.Add(layerColor);
+                    break;
+                }
 
-        int uvWidth   = uvMapping.width;
-        int uvHeight  = uvMapping.height;
-        int srcWidth  = srcAnnotationTexture.width;
-        int srcHeight = srcAnnotationTexture.height;
+            if(r == (1<<8))
+            {
+                Debug.Log($"Issue: We excided the number of possible values in Layer 0 for colors g == {layerColor.g} and b == {layerColor.b}. Cancelling the annotation");
+                return;
+            }
+        }
+        else if(layer == 1)
+        {
+            bool found = false;
+            for (int g = 1; g < (1 << 8) && !found; g++) //Search that layer (g, b) does not exist first
+            {
+                if (m_usedColors.Exists((c) => c.g == g &&
+                                               c.b == layerColor.b))
+                    continue;
+
+                //Then try to add (r, g, b)
+                for (int r = 1; r < (1 << 8); r++)
+                {
+                    if(!m_usedColors.Exists((c) => c.r == r &&
+                                                   c.g == g &&
+                                                   c.b == layerColor.b))
+                    {
+                        layerColor.r = (byte)r;
+                        layerColor.g = (byte)g;
+                        m_usedColors.Add(layerColor);
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            if(!found)
+            {
+                Debug.Log($"Issue: We excided the number of possible values in Layer 1 for color b == {layerColor.b}. Cancelling the annotation...");
+                return;
+            }
+        }
+        else if(layer == 2)
+        {
+            bool found = false;
+            for (int b = 1; b < (1 << 8) && !found; b++) //Search that layer (b) does not exist first
+            {
+                if (m_usedColors.Exists((c) => c.b == b))
+                    continue;
+                for (int g = 1; g < (1 << 8) && !found; g++) //Search that layer (g, b) does not exist first
+                {
+                    if (m_usedColors.Exists((c) => c.g == g &&
+                                                   c.b == b))
+                        continue;
+
+                    //Then try to add (r, g, b)
+                    for (int r = 1; r < (1 << 8); r++)
+                    {
+                        if (!m_usedColors.Exists((c) => c.r == r &&
+                                                        c.g == g &&
+                                                        c.b == layerColor.b))
+                        {
+                            layerColor.r = (byte)r;
+                            layerColor.g = (byte)g;
+                            layerColor.b = (byte)b;
+                            m_usedColors.Add(layerColor);
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!found)
+            {
+                Debug.Log($"Issue: We excided the number of possible values in Layer 2. Cancelling the annotation...");
+                return;
+            }
+        }
 
         //Now that we know on which layer to put that annotation, anchor it
         //Since every pixel are independent, and that multiple write is not an issue, parallelize the code
@@ -259,10 +353,11 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
                 for (int jj = srcJ; jj <= srcJ; jj++)
                     for (int ii = srcI; ii <= srcI; ii++)
                         for (int k = 0; k < 4; k++)
-                            srcRGBA[4 * (jj * srcWidth + ii) + k] = 255;
+                            srcRGBA[4 * (jj * srcWidth + ii) + k] = layerColor[k];
 
             }
         });
+        Debug.Log($"Finish to add annotation Color {layerColor}");
 
         srcAnnotationTexture.Apply();
         gameObject.GetComponent<MeshRenderer>().sharedMaterial.SetTexture("_IndexTex", srcAnnotationTexture);
