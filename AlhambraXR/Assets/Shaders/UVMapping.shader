@@ -5,7 +5,6 @@ Shader "Unlit/UVMapping"
     SubShader
     {
         Tags { "RenderType"="Opaque" }
-        LOD 100
 
         Stencil
         {
@@ -41,9 +40,9 @@ Shader "Unlit/UVMapping"
                 return o;
             }
 
-            fixed4 frag(v2f i) : SV_Target
+            float4 frag(v2f i) : COLOR
             {
-                return fixed4(i.uv, 0.0, 1.0);
+                return float4(i.uv, 0.0, 1.0);
             }
             ENDCG
         }

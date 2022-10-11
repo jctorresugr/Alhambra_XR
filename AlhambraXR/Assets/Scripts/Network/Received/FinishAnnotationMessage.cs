@@ -50,4 +50,9 @@ public class FinishAnnotationMessage
     /// The height of the image where the strokes were captured
     /// </summary>
     public int height;
+
+    /// <summary>
+    /// The message associated with this annotation
+    /// </summary>
+    public String message;
 }

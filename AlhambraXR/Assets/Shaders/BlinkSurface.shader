@@ -7,13 +7,14 @@ Shader "Custom/BlinkSurface"
         _Glossiness ("Smoothness", Range(0,1)) = 0.5
         _Metallic   ("Metallic", Range(0,1)) = 0.0
 
-        _IndexTex   ("Texture", 2D) = "white" {}
+        _IndexTex   ("Index Texture", 2D) = "white" {}
         _ID         ("ID",Int)     = 254
         _Layer      ("Layer", Int) = 0
     }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
+        Cull Off
         CGPROGRAM
         // Physically based Standard lighting model
         #pragma surface surf Standard
@@ -58,7 +59,7 @@ Shader "Custom/BlinkSurface"
             fixed indexArray[4] = { index.r, index.g, index.b, index.a };
             if (_Layer < 4 && ((indexArray[_Layer])*255 == _ID)) { o.Albedo = c.rgb + 0.6 * (_SinTime[3] * _SinTime[3]) * _Color; }
 
-            //if ((indexArray[3]) * 255 >0) { o.Albedo = c.rgb + 0.6 * (_SinTime[3] * _SinTime[3]) * _Color; }  // Debuging 
+            //if ((indexArray[0]) * 255 > 0) { o.Albedo = c.rgb + 0.6 * (_SinTime[3] * _SinTime[3]) * _Color; }  // Debuging 
 
             // Metallic and smoothness come from slider variables
             o.Metallic   = _Metallic;

@@ -12,6 +12,7 @@ Shader "Unlit/StencilMask"
         LOD 100
         ColorMask 0
         ZWrite off
+        Cull Off
 
         Stencil
         {
@@ -46,9 +47,9 @@ Shader "Unlit/StencilMask"
                 return o;
             }
 
-            fixed4 frag(v2f i) : COLOR
+            half4 frag(v2f i) : COLOR
             {
-                return fixed4(1,1,1,1);
+                return half4(1,1,1,1);
             }
             ENDCG
         }

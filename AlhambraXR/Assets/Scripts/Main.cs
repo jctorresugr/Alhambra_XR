@@ -259,29 +259,76 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                     RTCamera.transform.position = new Vector3(detailedMsg.data.cameraPos[0], detailedMsg.data.cameraPos[1], detailedMsg.data.cameraPos[2]);
                     RTCamera.transform.rotation = new Quaternion(detailedMsg.data.cameraRot[1], detailedMsg.data.cameraRot[2], detailedMsg.data.cameraRot[3], detailedMsg.data.cameraRot[0]);
 
-                    //Create the line
+                    //Create quad from lines
                     Mesh lines = new Mesh();
                     List<Vector3> vertices = new List<Vector3>();
                     List<int>     indices  = new List<int>();
-                    int incr = 0;
+                    float lineWidth = 0.01f;//width in screen space. Should be parametreable at one point...
+
                     foreach(Stroke stroke in detailedMsg.data.strokes)
                     {
-                        for(int i = 0; i < stroke.points.Length; i += 2)
+                        for(int i = 0; i < stroke.points.Length-4; i += 2)
                         {
-                            vertices.Add(new Vector3(2*stroke.points[i]/detailedMsg.data.width -1,
-                                                     2*stroke.points[i + 1]/detailedMsg.data.height - 1,
+                            //Get the points of the line
+                            float xStart = 2 * stroke.points[i]   / detailedMsg.data.width  - 1;
+                            float yStart = 2 * stroke.points[i+1] / detailedMsg.data.height - 1;
+                            float xEnd   = 2 * stroke.points[i+2] / detailedMsg.data.width  - 1;
+                            float yEnd   = 2 * stroke.points[i+3] / detailedMsg.data.height - 1;
+
+                            //Lines are too close...
+                            if(xEnd == xStart && yEnd == yStart)
+                                continue;
+
+                            //Get the normal of the line
+                            float normalX = yStart - yEnd;
+                            float normalY = xEnd   - xStart;
+                            float mag      = (float)Math.Sqrt(normalX*normalX + normalY*normalY);
+                            normalX /= mag;
+                            normalY /= mag;
+
+                            //Add the four points generated from the line that has a width "lineWidth"
+                            vertices.Add(new Vector3(xStart - normalX/2.0f*lineWidth,
+                                                     yStart - normalY/2.0f*lineWidth,
                                                      0));
-                            indices.Add(incr++);
+
+                            vertices.Add(new Vector3(xStart + normalX / 2.0f * lineWidth,
+                                                     yStart + normalY / 2.0f * lineWidth,
+                                                     0));
+
+                            vertices.Add(new Vector3(xEnd - normalX / 2.0f * lineWidth,
+                                                     yEnd - normalY / 2.0f * lineWidth,
+                                                     0));
+
+                            vertices.Add(new Vector3(xEnd + normalX / 2.0f * lineWidth,
+                                                     yEnd + normalY / 2.0f * lineWidth,
+                                                     0));
+
+                            //Put the indices
+
+                            //First triangle
+                            indices.Add(vertices.Count-4);
+                            indices.Add(vertices.Count-3);
+                            indices.Add(vertices.Count-1);
+
+                            //Second triangle
+                            indices.Add(vertices.Count - 4);
+                            indices.Add(vertices.Count - 1);
+                            indices.Add(vertices.Count - 2);
                         }
-                        indices.Add(incr-1); //Avoid connecting multiple strokes together
                     }
-                    lines.vertices = vertices.ToArray();
-                    lines.SetIndices(indices.ToArray(), MeshTopology.LineStrip, 0);
+                    lines.vertices    = vertices.ToArray();
+                    lines.indexFormat = IndexFormat.UInt32;
+                    lines.SetIndices(indices.ToArray(), MeshTopology.Triangles, 0);
                     lines.RecalculateBounds();
 
+                    if (!SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat) ||
+                        !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
+                        !SystemInfo.IsFormatSupported(UnityEngine.Experimental.Rendering.GraphicsFormat.R32G32B32A32_SFloat, UnityEngine.Experimental.Rendering.FormatUsage.ReadPixels))
+                        Debug.Log("Issue with float...");
+
                     //Create the texture that we will read, and a RenderTexture that the camera will render into
-                    Texture2D screenShot = new Texture2D(RTCamera.scaledPixelWidth, RTCamera.scaledPixelHeight, TextureFormat.RGBA32, false);
-                    RenderTexture rt = new RenderTexture(screenShot.width, screenShot.height, 24);
+                    Texture2D screenShot = new Texture2D(2048, 2048, TextureFormat.RGBAFloat, false);
+                    RenderTexture rt     = new RenderTexture(screenShot.width, screenShot.height, 24, RenderTextureFormat.ARGBFloat);
                     rt.Create();
 
                     //Render what the specific mesh from the camera position in the render texture (and thus in the linked screenShot texture)
@@ -302,15 +349,8 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                     RenderTexture.active = null;
                     Destroy(rt);
 
-
-
-
-
-
-
-                    //Texture2D screenShot = RenderPickPanoMeshInRT(RTCamera, UVMaterial);
-                    SavePPMImageForDebug(screenShot.GetRawTextureData(), screenShot.width, screenShot.height, "uvMapping.ppm");
-                    //TODO: Do something with the UV mapping
+                    //Anchor the annotation in the PickPano object
+                    m_pickPanoModel.AddAnnotation(screenShot);
                 });
             }
         }

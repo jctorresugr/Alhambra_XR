@@ -1,7 +1,10 @@
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Physics;
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Unity.Collections;
 using UnityEngine;
 
 public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IModelListener
@@ -187,6 +190,82 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         }
 
         return ret;
+    }
+
+    public void AddAnnotation(Texture2D uvMapping)
+    {
+        //Get the pixels of the uvMapping to anchor, and the texture that contains the annotation
+        NativeArray<Color> newRGBA = uvMapping.GetRawTextureData<Color>();
+        Texture2D srcAnnotationTexture = (Texture2D)gameObject.GetComponent<MeshRenderer>().sharedMaterial.GetTexture("_IndexTex");
+        NativeArray<byte>  srcRGBA = srcAnnotationTexture.GetRawTextureData<byte>();
+
+        //The purpose is to find on which layer to anchor this annotation
+        int     layer      = 0;
+        Color32 layerColor = new Color32(0, 0, 0, 255);
+
+        /*for(int j = 0; j < uvMapping.height; j++)
+        {
+            for(int i = 0; i < uvMapping.width; i++)
+            {
+                if(newRGBA[4*(j*uvMapping.width + i) + 3] == 0) //Transparent UV
+                    continue;
+
+                int srcJ = newRGBA[4 * (j * uvMapping.width + i) + 1] * srcAnnotationTexture.height / 255;
+                int srcI = newRGBA[4 * (j * uvMapping.width + i) + 0] * srcAnnotationTexture.width  / 255;
+                int r    = srcRGBA[4 * (srcJ * srcAnnotationTexture.width + srcI)];
+                if(r > 0)
+                {
+                    int g = srcRGBA[4 * (srcJ * srcAnnotationTexture.width + srcI) + 1];
+                    if(g > 0)
+                    {
+                        layer        = 2;
+                        layerColor.r = (byte)r;
+                        layerColor.g = (byte)g;
+                        goto endFindLayer; //Final depth -- Cannot go further
+                    }
+                    layer = Math.Max(1, layer); //Normally 1 is the max, as the "2" break the for loop
+                    layerColor.r = (byte)r;
+                }
+            }
+        }
+        endFindLayer:*/
+
+        //Define the final color
+        //TODO have a table, somewhere, of the possible remaining colors...
+        if (layer == 0)
+            layerColor.r = 5;
+        else if (layer == 2)
+            layerColor.g = 5;
+        else if (layer == 3)
+            layerColor.b = 5;
+
+        int uvWidth   = uvMapping.width;
+        int uvHeight  = uvMapping.height;
+        int srcWidth  = srcAnnotationTexture.width;
+        int srcHeight = srcAnnotationTexture.height;
+
+        //Now that we know on which layer to put that annotation, anchor it
+        //Since every pixel are independent, and that multiple write is not an issue, parallelize the code
+        Parallel.For(0, uvHeight, new ParallelOptions { MaxDegreeOfParallelism = 8 }, (j, state) =>
+        {
+            for (int i = 0; i < uvWidth; i++)
+            {
+                if (newRGBA[j * uvWidth + i].a == 0) //Transparent UV
+                    continue;
+
+                int srcJ = (int)(newRGBA[j * uvWidth + i].g * srcHeight);
+                int srcI = (int)(newRGBA[j * uvWidth + i].r * srcWidth);
+
+                for (int jj = srcJ; jj <= srcJ; jj++)
+                    for (int ii = srcI; ii <= srcI; ii++)
+                        for (int k = 0; k < 4; k++)
+                            srcRGBA[4 * (jj * srcWidth + ii) + k] = 255;
+
+            }
+        });
+
+        srcAnnotationTexture.Apply();
+        gameObject.GetComponent<MeshRenderer>().sharedMaterial.SetTexture("_IndexTex", srcAnnotationTexture);
     }
 
     /*********************************************/
