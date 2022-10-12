@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
+using Unity.Burst;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -97,6 +98,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         RTCamera.CopyFrom(Camera.main);
         RTCamera.name = "RTCamera";
         RTCamera.targetDisplay = -1;
+        RTCamera.stereoTargetEye = StereoTargetEyeMask.Left;
 
         m_server.Launch();
         m_server.AddListener(this);
@@ -259,86 +261,30 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                     RTCamera.transform.position = new Vector3(detailedMsg.data.cameraPos[0], detailedMsg.data.cameraPos[1], detailedMsg.data.cameraPos[2]);
                     RTCamera.transform.rotation = new Quaternion(detailedMsg.data.cameraRot[1], detailedMsg.data.cameraRot[2], detailedMsg.data.cameraRot[3], detailedMsg.data.cameraRot[0]);
 
-                    //Create quad from lines
-                    Mesh lines = new Mesh();
-                    List<Vector3> vertices = new List<Vector3>();
-                    List<int>     indices  = new List<int>();
-                    float lineWidth = 0.01f;//width in screen space. Should be parametreable at one point...
+                    Mesh lines = GenerateMeshFromStrokes(detailedMsg.data.strokes, detailedMsg.data.width, detailedMsg.data.height, 0.02f); //Generate the mesh from the strokes. The line width should be parametreable at one point...
 
-                    foreach(Stroke stroke in detailedMsg.data.strokes)
-                    {
-                        for(int i = 0; i < stroke.points.Length-4; i+=2)
-                        {
-                            //Get the points of the line
-                            float xStart = 2 * stroke.points[i]   / detailedMsg.data.width  - 1;
-                            float yStart = 2 * stroke.points[i+1] / detailedMsg.data.height - 1;
-                            float xEnd   = 2 * stroke.points[i+2] / detailedMsg.data.width  - 1;
-                            float yEnd   = 2 * stroke.points[i+3] / detailedMsg.data.height - 1;
-
-                            //Lines are too close to differenciate them...
-                            if(xEnd == xStart && yEnd == yStart)
-                                continue;
-
-                            //Get the normal of the line
-                            float normalX = yStart - yEnd;
-                            float normalY = xEnd   - xStart;
-                            float mag      = (float)Math.Sqrt(normalX*normalX + normalY*normalY);
-                            normalX /= mag;
-                            normalY /= mag;
-
-                            //Add the four points generated from the line that has a width "lineWidth"
-                            vertices.Add(new Vector3(xStart - normalX/2.0f*lineWidth,
-                                                     yStart - normalY/2.0f*lineWidth,
-                                                     0));
-
-                            vertices.Add(new Vector3(xStart + normalX / 2.0f * lineWidth,
-                                                     yStart + normalY / 2.0f * lineWidth,
-                                                     0));
-
-                            vertices.Add(new Vector3(xEnd - normalX / 2.0f * lineWidth,
-                                                     yEnd - normalY / 2.0f * lineWidth,
-                                                     0));
-
-                            vertices.Add(new Vector3(xEnd + normalX / 2.0f * lineWidth,
-                                                     yEnd + normalY / 2.0f * lineWidth,
-                                                     0));
-
-                            //Put the indices
-
-                            //First triangle
-                            indices.Add(vertices.Count-4);
-                            indices.Add(vertices.Count-3);
-                            indices.Add(vertices.Count-1);
-
-                            //Second triangle
-                            indices.Add(vertices.Count - 4);
-                            indices.Add(vertices.Count - 1);
-                            indices.Add(vertices.Count - 2);
-                        }
-                    }
-                    lines.vertices    = vertices.ToArray();
-                    lines.indexFormat = IndexFormat.UInt32;
-                    lines.SetIndices(indices.ToArray(), MeshTopology.Triangles, 0);
-                    lines.RecalculateBounds();
-
+                    //Test that the plateforms handles some texture reading and format
                     if (!SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat) ||
                         !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
                         !SystemInfo.IsFormatSupported(UnityEngine.Experimental.Rendering.GraphicsFormat.R32G32B32A32_SFloat, UnityEngine.Experimental.Rendering.FormatUsage.ReadPixels))
-                        Debug.Log("Issue with float...");
+                    {
+                        Debug.Log("Issue with ARGBFloat textures... Cancel the adding of the annotation");
+                        return;
+                    }
 
                     //Create the texture that we will read, and a RenderTexture that the camera will render into
                     Texture2D screenShot = new Texture2D(2048, 2048, TextureFormat.RGBAFloat, false);
                     RenderTexture rt     = new RenderTexture(screenShot.width, screenShot.height, 24, RenderTextureFormat.ARGBFloat);
                     rt.Create();
 
-                    //Render what the specific mesh from the camera position in the render texture (and thus in the linked screenShot texture)
+                    //Render the specific mesh from the camera position in the render texture (and thus in the linked screenShot texture)
                     CommandBuffer buf = new CommandBuffer();
                     buf.SetRenderTarget(rt, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
                     buf.DrawMesh(lines, Matrix4x4.identity, StencilMaskMaterial, 0, -1);
                     buf.DrawMesh(m_pickPanoModel.Mesh, m_pickPanoModel.transform.localToWorldMatrix, UVMaterial, 0, -1);
-                    RTCamera.AddCommandBuffer(CameraEvent.AfterDepthTexture, buf);
+                    RTCamera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
                     RTCamera.Render();
-                    RTCamera.RemoveCommandBuffer(CameraEvent.AfterDepthTexture, buf);
+                    RTCamera.RemoveCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
 
                     //Read back the pixels from the render texture to the texture
                     RenderTexture.active = rt;
@@ -346,7 +292,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
                     //Clean up our messes
                     RTCamera.targetTexture = null;
-                    RenderTexture.active = null;
+                    RenderTexture.active   = null;
                     Destroy(rt);
 
                     //Anchor the annotation in the PickPano object
@@ -354,6 +300,74 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 });
             }
         }
+    }
+
+    [BurstCompile(FloatPrecision.Medium, FloatMode.Fast)]
+    private Mesh GenerateMeshFromStrokes(Stroke[] strokes, int imgWidth, int imgHeight, float lineWidth)
+    {
+
+        //Create quad from lines
+        Mesh lines = new Mesh();
+        List<Vector3> vertices = new List<Vector3>();
+        List<int> indices = new List<int>();
+
+        foreach (Stroke stroke in strokes)
+        {
+            for (int i = 0; i < stroke.points.Length - 4; i += 2)
+            {
+                //Get the points of the line
+                float xStart = 2 * stroke.points[i]     / imgWidth - 1;
+                float yStart = 2 * stroke.points[i + 1] / imgHeight - 1;
+                float xEnd   = 2 * stroke.points[i + 2] / imgWidth - 1;
+                float yEnd   = 2 * stroke.points[i + 3] / imgHeight - 1;
+
+                //Lines are too close to differenciate them...
+                if (xEnd == xStart && yEnd == yStart)
+                    continue;
+
+                //Get the normal of the line
+                float normalX = yStart - yEnd;
+                float normalY = xEnd - xStart;
+                float mag = (float)Math.Sqrt(normalX * normalX + normalY * normalY);
+                normalX /= mag;
+                normalY /= mag;
+
+                //Add the four points generated from the line that has a width "lineWidth"
+                vertices.Add(new Vector3(xStart - normalX / 2.0f * lineWidth,
+                                         yStart - normalY / 2.0f * lineWidth,
+                                         0));
+
+                vertices.Add(new Vector3(xStart + normalX / 2.0f * lineWidth,
+                                         yStart + normalY / 2.0f * lineWidth,
+                                         0));
+
+                vertices.Add(new Vector3(xEnd - normalX / 2.0f * lineWidth,
+                                         yEnd - normalY / 2.0f * lineWidth,
+                                         0));
+
+                vertices.Add(new Vector3(xEnd + normalX / 2.0f * lineWidth,
+                                         yEnd + normalY / 2.0f * lineWidth,
+                                         0));
+
+                //Put the indices
+
+                //First triangle
+                indices.Add(vertices.Count - 4);
+                indices.Add(vertices.Count - 3);
+                indices.Add(vertices.Count - 1);
+
+                //Second triangle
+                indices.Add(vertices.Count - 4);
+                indices.Add(vertices.Count - 1);
+                indices.Add(vertices.Count - 2);
+            }
+        }
+        lines.vertices = vertices.ToArray();
+        lines.indexFormat = IndexFormat.UInt32;
+        lines.SetIndices(indices.ToArray(), MeshTopology.Triangles, 0);
+        lines.RecalculateBounds();
+
+        return lines;
     }
 
     public void OnSetCurrentAction(Model model, CurrentAction action)
@@ -379,7 +393,9 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                     m_enableRandomText = false;
                 }
 
-                Texture2D screenShot = RenderPickPanoMeshInRT(Camera.main, m_pickPanoModel.GetComponent<Renderer>().material);
+                RTCamera.transform.position = Camera.main.transform.position;
+                RTCamera.transform.rotation = Camera.main.transform.rotation;
+                Texture2D screenShot = RenderPickPanoMeshInRT(RTCamera, m_pickPanoModel.GetComponent<Renderer>().material);
 
                 //Copy some values for them to be usable in a separate thread (Task.Run)...
                 byte[] pixels = screenShot.GetRawTextureData();
@@ -408,15 +424,17 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     {
         //Create the texture that we will read, and a RenderTexture that the camera will render into
         Texture2D screenShot = new Texture2D(cam.scaledPixelWidth, cam.scaledPixelHeight, TextureFormat.RGBA32, false);
-        RenderTexture rt = new RenderTexture(screenShot.width, screenShot.height, 24);
+        RenderTexture rt = new RenderTexture(screenShot.width, screenShot.height, 24, RenderTextureFormat.ARGB32);
+        rt.vrUsage = VRTextureUsage.OneEye;
+        rt.Create();
 
         //Render what the specific mesh from the camera position in the render texture (and thus in the linked screenShot texture)
         CommandBuffer buf = new CommandBuffer();
         buf.SetRenderTarget(rt, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
         buf.DrawMesh(m_pickPanoModel.Mesh, m_pickPanoModel.transform.localToWorldMatrix, mat);
-        cam.AddCommandBuffer(CameraEvent.AfterDepthTexture, buf);
+        cam.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
         cam.Render();
-        cam.RemoveCommandBuffer(CameraEvent.AfterDepthTexture, buf);
+        cam.RemoveCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
 
         //Read back the pixels from the render texture to the texture
         RenderTexture.active = rt;

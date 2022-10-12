@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Unity.Collections;
 using UnityEngine;
+using Unity.Burst;
 
 public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IModelListener
 {
@@ -49,22 +50,40 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     /// Initialize this GameObject and link it with the other components of the Scene
     /// </summary>
     /// <param name="model">The Model object containing the data of the overall application</param>
+    [BurstCompile(FloatPrecision.Medium, FloatMode.Fast)]
     public void Init(Model model)
     {
         m_model = model;
         model.AddListener(this);
 
-        //Read the index texture to know which colors are used
+        //Read the index texture to know which colors are used (parallelize the reading to speed up the process)
         Texture2D indexTexture = (Texture2D)gameObject.GetComponent<MeshRenderer>().sharedMaterial.GetTexture("_IndexTex");
         NativeArray<byte> srcRGBA = indexTexture.GetRawTextureData<byte>();
 
-        for (int i = 0; i < indexTexture.width * indexTexture.height; i++)
-            if(srcRGBA[4*i+3] > 0 && !m_usedColors.Exists((c) => c.r == srcRGBA[4 * i + 0] &&
-                                                                 c.g == srcRGBA[4 * i + 1] &&
-                                                                 c.b == srcRGBA[4 * i + 2]))
-                m_usedColors.Add(new Color32(srcRGBA[4 * i + 0],
-                                             srcRGBA[4 * i + 1],
-                                             srcRGBA[4 * i + 2], 255));
+        Parallel.For(0, indexTexture.width * indexTexture.height,
+            () => new List<Color32>(),
+            (i, state, partialRes) =>
+            {
+                int idx = 4*i;
+                if (srcRGBA[idx + 3] > 0 && !partialRes.Exists((c) => c.r == srcRGBA[idx + 0] &&
+                                                                      c.g == srcRGBA[idx + 1] &&
+                                                                      c.b == srcRGBA[idx + 2]))
+                    partialRes.Add(new Color32(srcRGBA[idx + 0],
+                                               srcRGBA[idx + 1],
+                                               srcRGBA[idx + 2], 255));
+
+                return partialRes;
+            },
+            (partialRes) =>
+            {
+                lock(this)
+                { 
+                    foreach(Color32 c in partialRes)
+                        if(!m_usedColors.Exists((color) => color.r == c.r && color.g == c.g && color.b == c.b))
+                            m_usedColors.Add(c);
+                }
+            }
+        );
     }
 
     void Start()
@@ -204,6 +223,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         return ret;
     }
 
+    [BurstCompile(FloatPrecision.Medium, FloatMode.Fast)]
     public void AddAnnotation(Texture2D uvMapping)
     {
         //Get the pixels of the uvMapping to anchor, and the texture that contains the annotation
@@ -350,10 +370,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
                 int srcJ = (int)(newRGBA[j * uvWidth + i].g * srcHeight);
                 int srcI = (int)(newRGBA[j * uvWidth + i].r * srcWidth);
 
-                for (int jj = srcJ; jj <= srcJ; jj++)
-                    for (int ii = srcI; ii <= srcI; ii++)
-                        for (int k = 0; k < 4; k++)
-                            srcRGBA[4 * (jj * srcWidth + ii) + k] = layerColor[k];
+                for (int k = 0; k < 4; k++)
+                    srcRGBA[4 * (srcJ * srcWidth + srcI) + k] = layerColor[k];
 
             }
         });
