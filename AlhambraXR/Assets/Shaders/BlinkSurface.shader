@@ -14,7 +14,6 @@ Shader "Custom/BlinkSurface"
     SubShader
     {
         Tags { "RenderType"="Opaque" }
-        Cull Off
         CGPROGRAM
         // Physically based Standard lighting model
         #pragma surface surf Standard

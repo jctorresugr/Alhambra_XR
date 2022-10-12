@@ -19,6 +19,11 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     /// The server application
     /// </summary>
     private AlhambraServer m_server = new AlhambraServer();
+
+    /// <summary>
+    /// All the additional annotations the tablet client created
+    /// </summary>
+    private List<Annotation> m_annotations = new List<Annotation>();
     
     /// <summary>
     /// Should we enable the IPText?
@@ -228,6 +233,13 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 this.m_enableIPTexts = false;
             }
             server.TabletClient.AddListener(this);
+
+            //Send annotation data
+            lock (this)
+            {
+                foreach(Annotation annot in m_annotations)
+                    m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annot));
+            }
         }
     }
 
@@ -340,12 +352,15 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                     int newHeight;
                     byte[] newRGBA = MinimumRectImage(colorScreenShot.GetRawTextureData<byte>(), colorScreenShot.width, colorScreenShot.height, out newWidth, out newHeight);
 
-                    //TODO save that information for later reuses (e.g., to send back on disconnection)
+                    //Save that information for later reuses (e.g., to send back on disconnection)
+                    Annotation annot = new Annotation(annotationColor, newRGBA, newWidth, newHeight);
+                    lock (this)
+                        m_annotations.Add(annot);
 
-                    //TODO Send the information back to the tablet, if any.
+                    //Send the information back to the tablet, if any.
                     Task.Run(() =>
                     {
-
+                        m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annot));
                     });
                 }
                 Destroy(colorRT);
@@ -422,7 +437,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         //Create a subtexture
         int newWidth  = (colorTextureRect[2] - colorTextureRect[0]);
         int newHeight = (colorTextureRect[3] - colorTextureRect[1]);
-        byte[] newRGBA = new byte[4 * newTextureWidth * newTextureHeight];
+        byte[] newRGBA = new byte[4 * newWidth * newHeight];
 
         Parallel.For(0, newHeight,
             (j, state) =>
@@ -555,7 +570,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 Task.Run(() =>
                 {
                     //SavePPMImageForDebug(pixels, width, height, "image.ppm");
-                    m_server.SendASCIIStringToClients(JSONMessage.StartAnnotation(pixels, width, height, cameraPos, cameraRot));
+                    m_server.SendASCIIStringToClients(JSONMessage.StartAnnotationToJSON(pixels, width, height, cameraPos, cameraRot));
                 });
             }
         }

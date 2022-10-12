@@ -32,7 +32,16 @@ public class JSONMessage
              "}";
     }
 
-    public static String StartAnnotation(byte[] pixels, int width, int height, Vector3 cameraPos, Quaternion cameraRot)
+    /// <summary>
+    /// Create the JSON message containing all the necessary information for the client to annotate a part of the 3D space
+    /// </summary>
+    /// <param name="pixels">The RGBA32 image of the background that the client will annotate</param>
+    /// <param name="width">The width of "pixels"</param>
+    /// <param name="height">The height of "pixels"</param>
+    /// <param name="cameraPos">The camera position where the snapshot "pixels" was taken, useful to anchor back the annotation</param>
+    /// <param name="cameraRot">The camera orientation where the snapshot "pixels" was taken, useful to anchor back the annotation</param>
+    /// <returns>The "annotation" JSON message to be sent to, e.g., tablet client</returns>
+    public static String StartAnnotationToJSON(byte[] pixels, int width, int height, Vector3 cameraPos, Quaternion cameraRot)
     {
         return 
              "{" +
@@ -46,5 +55,20 @@ public class JSONMessage
             $"        \"cameraRot\": [{cameraRot.w}, {cameraRot.x}, {cameraRot.y}, {cameraRot.z}]\n" +
              "    }\n" +
              "}";
+    }
+
+    public static String AddAnnotationToJSON(Annotation annot)
+    {
+        return 
+            "{" +
+            "    \"action\": \"addAnnotation\",\n" +
+            "    \"data\":\n" +
+            "    {\n" +
+           $"        \"snapshotBase64\": \"{System.Convert.ToBase64String(annot.SnapshotRGBA)}\",\n" +
+           $"        \"snapshotWidth\":  {annot.SnapshotWidth},\n" +
+           $"        \"snapshotHeight\": {annot.SnapshotHeight},\n" +
+           $"        \"annotationColor\": [{annot.Color.r}, {annot.Color.g}, {annot.Color.b}, {annot.Color.a}]" +
+            "    }\n" +
+            "}";
     }
 }
