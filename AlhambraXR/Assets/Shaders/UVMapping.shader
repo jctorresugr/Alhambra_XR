@@ -1,7 +1,9 @@
 Shader "Unlit/UVMapping"
 {
     Properties
-    {}
+    {
+        _MainTex("Albedo (RGB)", 2D) = "white" {}
+    }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
@@ -20,6 +22,8 @@ Shader "Unlit/UVMapping"
 
             #include "UnityCG.cginc"
 
+            sampler2D _MainTex;
+
             struct appdata
             {
                 float4 vertex : POSITION;
@@ -32,6 +36,11 @@ Shader "Unlit/UVMapping"
                 float4 vertex : SV_POSITION;
             };
 
+            struct fragOutput {
+                float4 uv    : SV_Target0;
+                fixed4 color : SV_Target1;
+            };
+
             v2f vert (appdata v)
             {
                 v2f o;
@@ -40,9 +49,12 @@ Shader "Unlit/UVMapping"
                 return o;
             }
 
-            float4 frag(v2f i) : COLOR
+            fragOutput frag(v2f i)
             {
-                return float4(i.uv, 0.0, 1.0);
+                fragOutput o;
+                o.uv    = float4(i.uv, 0.0, 1.0);
+                o.color = tex2D(_MainTex, i.uv);
+                return o;
             }
             ENDCG
         }

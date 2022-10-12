@@ -223,8 +223,14 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         return ret;
     }
 
+    /// <summary>
+    /// Adds a new annotation in the Index Texture associated with the GameObject
+    /// </summary>
+    /// <param name="uvMapping">A texture containing the UV mapping of the Index Texture to anchor the annotation into</param>
+    /// <param name="outputColor">The color of the annotation inside the Index Texture. Every pixel of that color refers to the same annotation (the newly created one)</param>
+    /// <returns>True on success (we found a suitable color for the annotation), false otherwise. If false, outputColor == Color32(0,0,0,0).</returns>
     [BurstCompile(FloatPrecision.Medium, FloatMode.Fast)]
-    public void AddAnnotation(Texture2D uvMapping)
+    public bool AddAnnotation(Texture2D uvMapping, out Color32 outputColor)
     {
         //Get the pixels of the uvMapping to anchor, and the texture that contains the annotation
         NativeArray<Color> newRGBA = uvMapping.GetRawTextureData<Color>();
@@ -286,7 +292,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             if(r == (1<<8))
             {
                 Debug.Log($"Issue: We excided the number of possible values in Layer 0 for colors g == {layerColor.g} and b == {layerColor.b}. Cancelling the annotation");
-                return;
+                outputColor = new Color32(0, 0, 0, 0);
+                return false;
             }
         }
         else if(layer == 1)
@@ -317,7 +324,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             if(!found)
             {
                 Debug.Log($"Issue: We excided the number of possible values in Layer 1 for color b == {layerColor.b}. Cancelling the annotation...");
-                return;
+                outputColor = new Color32(0, 0, 0, 0);
+                return false;
             }
         }
         else if(layer == 2)
@@ -354,7 +362,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             if (!found)
             {
                 Debug.Log($"Issue: We excided the number of possible values in Layer 2. Cancelling the annotation...");
-                return;
+                outputColor = new Color32(0, 0, 0, 0);
+                return false;
             }
         }
 
@@ -379,6 +388,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
 
         srcAnnotationTexture.Apply();
         gameObject.GetComponent<MeshRenderer>().sharedMaterial.SetTexture("_IndexTex", srcAnnotationTexture);
+        
+        //Return
+        outputColor = layerColor;
+        return true;
     }
 
     /*********************************************/
