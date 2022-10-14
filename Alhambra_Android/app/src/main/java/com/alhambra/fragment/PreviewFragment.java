@@ -116,6 +116,8 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         onSetSelection(d, d.getCurrentSelection());
     }
 
+    /** Add the UI components of a data chunk
+     * @param idx the data chunk index in the linked dataset*/
     private void addDataChunk(int idx)
     {
         LayoutInflater inflater = LayoutInflater.from(m_ctx);

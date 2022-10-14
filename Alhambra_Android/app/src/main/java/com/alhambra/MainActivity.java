@@ -284,7 +284,7 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
     {
         m_socket.push(FinishAnnotation.generateJSON(true, frag.getAnnotationCanvasData().getStrokes(), frag.getAnnotationCanvasData().getWidth(), frag.getAnnotationCanvasData().getHeight(),
                                                     frag.getCameraPos(), frag.getCameraRot()));
-        //frag.clearAnnotation();
+        frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);
     }
 
@@ -293,7 +293,7 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
     {
         m_socket.push(FinishAnnotation.generateJSON(false, frag.getAnnotationCanvasData().getStrokes(), frag.getAnnotationCanvasData().getWidth(), frag.getAnnotationCanvasData().getHeight(),
                                                     frag.getCameraPos(), frag.getCameraRot()));
-        //frag.clearAnnotation();
+        frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);
     }
 }

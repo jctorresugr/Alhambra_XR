@@ -7,4 +7,5 @@
     <string name="quitSelection">Quit Selection</string>
     <string name="highlightOnHololens">Highlight on HoloLens</string>
     <string name="startAnnotation">Start Annotation</string>
+    <string name="tapToAddAnnotation">See HoloLens to add an Annotation</string>
 </resources>

@@ -8,6 +8,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.alhambra.R;
 import com.sereno.math.Quaternion;
@@ -59,6 +60,9 @@ public class AnnotationFragment extends AlhambraFragment
     /** The canvas view */
     private AnnotationCanvasView m_canvas = null;
 
+    /** The text shown when the user is starting an annotation*/
+    private TextView m_startAnnotationTxt = null;
+
     /** The color picker view*/
     private ColorPickerView m_colorPicker = null;
 
@@ -82,6 +86,7 @@ public class AnnotationFragment extends AlhambraFragment
         m_startAnnotationBtn = v.findViewById(R.id.startAnnotationButton);
         m_confirmBtn         = v.findViewById(R.id.confirmAnnotation);
         m_cancelBtn          = v.findViewById(R.id.cancelAnnotation);
+        m_startAnnotationTxt = v.findViewById(R.id.tapToAddAnnotationTxt);
         m_currentStrokeColor = m_colorPicker.getModel().getColor().toRGB().toARGB8888();
 
         m_canvas.setOnTouchListener((view, motionEvent) -> {
@@ -108,6 +113,7 @@ public class AnnotationFragment extends AlhambraFragment
         m_startAnnotationBtn.setOnClickListener(view -> {
             for(IAnnotationFragmentListener l : m_listeners)
                 l.askStartAnnotation(AnnotationFragment.this);
+            m_startAnnotationTxt.setVisibility(View.VISIBLE);
         });
 
         m_confirmBtn.setOnClickListener(view -> {
@@ -122,6 +128,7 @@ public class AnnotationFragment extends AlhambraFragment
         m_colorPicker.getModel().addListener((data, color) -> m_currentStrokeColor = color);
         m_confirmBtn.setVisibility(View.GONE);
         m_cancelBtn.setVisibility(View.GONE);
+        m_startAnnotationTxt.setVisibility(View.GONE);
     }
 
     /** @brief Add a new listener
@@ -178,9 +185,11 @@ public class AnnotationFragment extends AlhambraFragment
         m_cancelBtn.setVisibility(View.VISIBLE);
         m_cameraPos = cameraPos;
         m_cameraRot = cameraRot;
+        m_startAnnotationTxt.setVisibility(View.GONE);
         return true;
     }
 
+    /** Clear the annotation snapshot on the fragment's view*/
     public void clearAnnotation()
     {
         m_canvas.getModel().clearStrokes();
