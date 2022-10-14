@@ -280,14 +280,14 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         {
             int r = 1;
             for(; r < (1<<8); r++)
-                if(!m_usedColors.Exists((c) => c.r == r &&
-                                               c.g == layerColor.g &&
-                                               c.b == layerColor.b))
+            { 
+                if(!m_usedColors.Exists((c) => c.r == r))
                 {
                     layerColor.r = (byte)r;
                     m_usedColors.Add(layerColor);
                     break;
                 }
+            }
 
             if(r == (1<<8))
             {
@@ -298,30 +298,19 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         }
         else if(layer == 1)
         {
-            bool found = false;
-            for (int g = 1; g < (1 << 8) && !found; g++) //Search that layer (g, b) does not exist first
+            int g = 1;
+            for (; g < (1 << 8); g++) //Search that layer (g, b) does not exist first
             {
-                if (m_usedColors.Exists((c) => c.g == g &&
-                                               c.b == layerColor.b))
-                    continue;
-
-                //Then try to add (r, g, b)
-                for (int r = 1; r < (1 << 8); r++)
+                if(!m_usedColors.Exists((c) => c.r == 0 &&
+                                               c.g == g))
                 {
-                    if(!m_usedColors.Exists((c) => c.r == r &&
-                                                   c.g == g &&
-                                                   c.b == layerColor.b))
-                    {
-                        layerColor.r = (byte)r;
-                        layerColor.g = (byte)g;
-                        m_usedColors.Add(layerColor);
-                        found = true;
-                        break;
-                    }
+                    layerColor.g = (byte)g;
+                    m_usedColors.Add(layerColor);
+                    break;
                 }
             }
 
-            if(!found)
+            if(g == (1<<8))
             {
                 Debug.Log($"Issue: We excided the number of possible values in Layer 1 for color b == {layerColor.b}. Cancelling the annotation...");
                 outputColor = new Color32(0, 0, 0, 0);
@@ -330,36 +319,20 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         }
         else if(layer == 2)
         {
-            bool found = false;
-            for (int b = 1; b < (1 << 8) && !found; b++) //Search that layer (b) does not exist first
+            int b = 1;
+            for (; b < (1 << 8); b++) //Search that layer (b) does not exist first
             {
-                if (m_usedColors.Exists((c) => c.b == b))
-                    continue;
-                for (int g = 1; g < (1 << 8) && !found; g++) //Search that layer (g, b) does not exist first
+                if(!m_usedColors.Exists((c) => c.r == 0 &&
+                                               c.g == 0 &&
+                                               c.b == b))
                 {
-                    if (m_usedColors.Exists((c) => c.g == g &&
-                                                   c.b == b))
-                        continue;
-
-                    //Then try to add (r, g, b)
-                    for (int r = 1; r < (1 << 8); r++)
-                    {
-                        if (!m_usedColors.Exists((c) => c.r == r &&
-                                                        c.g == g &&
-                                                        c.b == layerColor.b))
-                        {
-                            layerColor.r = (byte)r;
-                            layerColor.g = (byte)g;
-                            layerColor.b = (byte)b;
-                            m_usedColors.Add(layerColor);
-                            found = true;
-                            break;
-                        }
-                    }
+                    layerColor.b = (byte)b;
+                    m_usedColors.Add(layerColor);
+                    break;
                 }
             }
 
-            if (!found)
+            if (b == (1<<8))
             {
                 Debug.Log($"Issue: We excided the number of possible values in Layer 2. Cancelling the annotation...");
                 outputColor = new Color32(0, 0, 0, 0);

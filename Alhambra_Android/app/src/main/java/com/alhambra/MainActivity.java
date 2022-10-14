@@ -160,8 +160,15 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
                             for(int i = 0; i < indexes.size(); i++)
                                 indexArr[i] = indexes.get(i);
 
+                            //show shallowest layer first
+                            int mainEntryIndex = -1;
+                            if(indexArr.length > 0)
+                                mainEntryIndex = indexArr[0];
+
                             //Set the current selection and jump to the preview fragment on the tablet to highlight that the action is made
                             m_dataset.setCurrentSelection(indexArr);
+                            if(mainEntryIndex != -1)
+                                m_dataset.setMainEntryIndex(mainEntryIndex);
                             m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
                         });
                     }

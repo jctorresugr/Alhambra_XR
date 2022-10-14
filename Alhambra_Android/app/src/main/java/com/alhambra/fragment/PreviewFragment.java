@@ -213,7 +213,8 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
             if(currentGroup[i] == m_currentSelection)
                 return (m_dataset.isIndexValid(currentGroup[i+1]) ? currentGroup[i+1] : -1);
 
-
+        if(currentGroup.length > 0) return -1;
+            //return (m_dataset.isIndexValid(currentGroup[0]) ? currentGroup[0] : -1);
         return (m_dataset.isIndexValid(m_currentSelection+1) ? m_currentSelection+1 : -1);
     }
 
@@ -229,6 +230,8 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
             if(currentGroup[i] == m_currentSelection)
                 return (m_dataset.isIndexValid(currentGroup[i-1]) ? currentGroup[i-1] : -1);
 
+        if(currentGroup.length > 0) return -1;
+            //return (m_dataset.isIndexValid(currentGroup[currentGroup.length-1]) ? currentGroup[currentGroup.length-1] : -1);
         return (m_dataset.isIndexValid(m_currentSelection-1) ? m_currentSelection-1 : -1);
     }
 

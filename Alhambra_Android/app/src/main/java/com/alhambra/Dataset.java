@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -424,6 +425,7 @@ public class Dataset
             if(!isIndexValid(id))
                 return false;
 
+        Arrays.sort(selections);
         m_currentSelection = selections;
         for(IDatasetListener l : m_listeners)
             l.onSetSelection(this, selections);

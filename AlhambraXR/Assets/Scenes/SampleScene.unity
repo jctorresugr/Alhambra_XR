@@ -988,6 +988,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 963194228}
     m_Modifications:
+    - target: {fileID: 136755977130421558, guid: d01a102e13c9d6e4cb8bfe04a3fcd0e9, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5346282920650293930, guid: d01a102e13c9d6e4cb8bfe04a3fcd0e9, type: 3}
       propertyPath: m_Color.b
       value: 1
@@ -1058,7 +1062,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5346282921930033205, guid: d01a102e13c9d6e4cb8bfe04a3fcd0e9, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5346282921930033205, guid: d01a102e13c9d6e4cb8bfe04a3fcd0e9, type: 3}
       propertyPath: m_LocalRotation.w
