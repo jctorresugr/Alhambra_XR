@@ -57,6 +57,11 @@ public class JSONMessage
              "}";
     }
 
+    /// <summary>
+    /// Create the JSON message containing all the necessary information for the client to store an annotation
+    /// <param name="annot">The annotation data</param>
+    /// <returns>The "addAnnotation" JSON message to be sent to, e.g., tablet client</returns>
+    /// </summary>
     public static String AddAnnotationToJSON(Annotation annot)
     {
         return 

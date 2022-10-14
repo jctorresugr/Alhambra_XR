@@ -12,6 +12,7 @@ import com.alhambra.fragment.AnnotationFragment;
 import com.alhambra.fragment.PageViewer;
 import com.alhambra.fragment.PreviewFragment;
 import com.alhambra.fragment.ViewPagerAdapter;
+import com.alhambra.network.receivingmsg.AddAnnotationMessage;
 import com.alhambra.network.receivingmsg.AnnotationMessage;
 import com.alhambra.network.receivingmsg.SelectionMessage;
 import com.alhambra.network.SocketManager;
@@ -125,8 +126,10 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
         m_socket = new SocketManager(m_config.getServerIP(), m_config.getServerPort());
         m_socket.addListener(new SocketManager.ISocketManagerListener() {
             @Override
-            public void onDisconnection(SocketManager socket) {
+            public void onDisconnection(SocketManager socket)
+            {
                 Log.w(TAG, "Disconnected");
+                m_dataset.clearServerAnnotations();
             }
 
             @Override
@@ -172,6 +175,14 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
                             m_viewPager.setCurrentItem(ANNOTATION_FRAGMENT_TAB);
                             m_annotationFragment.startNewAnnotation(annotation.getWidth(), annotation.getHeight(), annotation.getBitmap(), annotation.getCameraPos(), annotation.getCameraRot());
                             m_viewPager.setPagingEnabled(true);
+                        });
+                    }
+
+                    else if(action.equals("addAnnotation"))
+                    {
+                        final AddAnnotationMessage addAnnotation = new AddAnnotationMessage(reader.getJSONObject("data"));
+                        MainActivity.this.runOnUiThread(() -> {
+                            m_dataset.addServerAnnotation(addAnnotation);
                         });
                     }
                 }
@@ -266,7 +277,7 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
     {
         m_socket.push(FinishAnnotation.generateJSON(true, frag.getAnnotationCanvasData().getStrokes(), frag.getAnnotationCanvasData().getWidth(), frag.getAnnotationCanvasData().getHeight(),
                                                     frag.getCameraPos(), frag.getCameraRot()));
-        frag.clearAnnotation();
+        //frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);
     }
 
@@ -275,7 +286,7 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
     {
         m_socket.push(FinishAnnotation.generateJSON(false, frag.getAnnotationCanvasData().getStrokes(), frag.getAnnotationCanvasData().getWidth(), frag.getAnnotationCanvasData().getHeight(),
                                                     frag.getCameraPos(), frag.getCameraRot()));
-        frag.clearAnnotation();
+        //frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);
     }
 }

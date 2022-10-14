@@ -17,4 +17,12 @@ public class JSONUtils
             res[i] = (float)arr.getDouble(i);
         return res;
     }
+
+    public static byte[] jsonArrayToByteArray(JSONArray arr) throws JSONException
+    {
+        byte[] res = new byte[arr.length()];
+        for(int i = 0; i < arr.length(); i++)
+            res[i] = (byte)arr.getInt(i);
+        return res;
+    }
 }

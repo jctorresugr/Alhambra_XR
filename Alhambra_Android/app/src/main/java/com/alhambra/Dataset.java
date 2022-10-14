@@ -1,13 +1,17 @@
 package com.alhambra;
 
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 
+import com.alhambra.network.receivingmsg.AddAnnotationMessage;
 import com.sereno.CSVReader;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -34,6 +38,16 @@ public class Dataset
          * @param dataset the dataset calling this function
          * @param selections the new indexes to highlight. If selections.length == 0, then there is nothing to highlight*/
         void onSetSelection(Dataset dataset, int[] selections);
+
+        /** Function called when a new data chunk was added to the dataset
+         * @param dataset the dataset calling this function
+         * @param data  the newly added data chunk. This data chunk can have been created on the server's requests, and can later be deleted if needed*/
+        void onAddDataChunk(Dataset dataset, Data data);
+
+        /** Function called when a data chunk was removed from the dataset
+         * @param dataset the dataset calling this function
+         * @param data  the data chunk that is being removed. This data chunk is not part of the original dataset (that is immutable)*/
+        void onRemoveDataChunk(Dataset dataset, Data data);
     }
 
     /** This class describes the chunk of data as saved in the database
@@ -95,9 +109,12 @@ public class Dataset
     }
 
     /** All the stored chunks of data
-     * Key: ID
+     * Key: Index
      * Value: Data*/
     private HashMap<Integer, Data> m_data = new HashMap<>();
+
+    /** The Indexes of the data chunks the server created*/
+    private ArrayList<Integer> m_serverAnnotations = new ArrayList<>();
 
     /** The HashMap of all available Layers and their underlying data. We prefer to pre-compute this list for fast access
      * Key: Layer ID
@@ -215,6 +232,90 @@ public class Dataset
 
         if(getIndexes().size() > 0)
             m_currentEntryIndex = getIndexes().iterator().next();
+    }
+
+    /** Add a new annotation as defined by the server
+     * @param msg the message the server sent
+     * @return true if the annotation is correctly constructed, false otherwise*/
+    public boolean addServerAnnotation(AddAnnotationMessage msg)
+    {
+        //Get layer and ID of the data chunk
+        int layer = 4;
+        int id    = -1;
+        for(int i = 0; i < 3; i++)
+        {
+            if(msg.getColor()[i] > 0)
+            {
+                layer = i;
+                id    = msg.getColor()[i];
+                break;
+            }
+        }
+        if(layer == 4)
+            return false;
+
+        int    width  = msg.getSnapshotWidth();
+        int    height = msg.getSnapshotHeight();
+        byte[] argbImg = msg.getSnapshotBitmap();
+
+        if(width*height*4 > msg.getSnapshotBitmap().length)
+            return false;
+
+        //Need to convert the byte array to the int array...
+        int[] argb8888Colors = new int[width*height];
+        for(int j = 0; j < height; j++)
+            for(int i = 0; i < width; i++)
+            {
+                int srcIdx = j*width+i;
+                int newIdx = (height-1-j)*width+i;
+                argb8888Colors[newIdx] = (argbImg[4*srcIdx+3] << 24) +
+                                         (argbImg[4*srcIdx+0] << 16) +
+                                         (argbImg[4*srcIdx+1] << 8)  +
+                                         (argbImg[4*srcIdx+2]);
+            }
+        Data data = new Data(m_data.size()+1, layer, id, msg.getARGB8888Color(), "", new BitmapDrawable(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888)));
+        m_data.put(data.getIndex(), data);
+        m_serverAnnotations.add(data.getIndex());
+
+        for(IDatasetListener l : m_listeners)
+            l.onAddDataChunk(this, data);
+        return true;
+    }
+
+    /** Clear all the annotations (on, e.g., a disconnection) the server created*/
+    public void clearServerAnnotations()
+    {
+        //Check the selection status...
+
+        //...First the MainEntryIndex
+        if(m_serverAnnotations.contains(getMainEntryIndex()))
+        {
+            for(int j : m_data.keySet())
+                if(!m_serverAnnotations.contains(j))
+                {
+                    setMainEntryIndex(j);
+                    break;
+                }
+        }
+
+        //...Then the current selections
+        ArrayList<Integer> curSelections = new ArrayList<>();
+        for(int i : getCurrentSelection())
+            if(!m_serverAnnotations.contains(i))
+                curSelections.add(i);
+        int[] curSelectionArr = new int[curSelections.size()];
+        for(int i = 0; i < curSelectionArr.length; i++)
+            curSelectionArr[i] = curSelections.get(i);
+        setCurrentSelection(curSelectionArr);
+
+        //Finally, delete everything
+        for(Integer i : m_serverAnnotations)
+        {
+            for(IDatasetListener l : m_listeners)
+                l.onRemoveDataChunk(this, m_data.get(i));
+            m_data.remove(i);
+        }
+        m_serverAnnotations.clear();
     }
 
     /** @brief Add a new listener

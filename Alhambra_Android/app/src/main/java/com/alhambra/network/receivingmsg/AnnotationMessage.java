@@ -34,10 +34,15 @@ public class AnnotationMessage
         m_width  = data.getInt("width");
         m_height = data.getInt("height");
         m_image  = Base64.decode(data.getString("base64"), Base64.DEFAULT);
+
         m_cameraPos = JSONUtils.jsonArrayToFloatArray(data.getJSONArray("cameraPos"));
         if(m_cameraPos.length != 3)
-            throw new JSONException("The length of the JSON array corresponding to a Vector3 is " + m_cameraPos.length);
-        m_cameraRot = new Quaternion(JSONUtils.jsonArrayToFloatArray(data.getJSONArray("cameraRot")));
+            throw new JSONException("The length of the JSON array corresponding to a Vector3 is: " + m_cameraPos.length);
+
+        float[] quatArr = JSONUtils.jsonArrayToFloatArray(data.getJSONArray("cameraRot"));
+        if(quatArr.length != 4)
+            throw new JSONException("The length of the JSON array corresponding to a Quaternion is: " + m_cameraPos.length);
+        m_cameraRot = new Quaternion(quatArr);
     }
 
     /** Get the width of the received image

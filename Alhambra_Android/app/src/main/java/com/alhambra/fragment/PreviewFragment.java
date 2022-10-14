@@ -107,37 +107,37 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         m_treeView.getModel().clear();
         m_datasetEntries.clear();
 
-        /*--------------------------------------*/
-        /*Create as many preview as data chunks-*/
-        /*--------------------------------------*/
-        LayoutInflater inflater = LayoutInflater.from(m_ctx);
-
         //Populate the preview tree
-        final Tree<View> treeModel = m_treeView.getModel();
         for(Integer i : m_dataset.getIndexes())
-        {
-            //Inflate the layout
-            View preview = inflater.inflate(R.layout.preview_key_entry, null);
-            preview.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-            //Configure the text
-            TextView textView = preview.findViewById(R.id.preview_key_entry_name);
-            textView.setText(i.toString());
-
-            //Configure the preview image
-            ImageView imageView = preview.findViewById(R.id.preview_key_entry_drawable);
-            imageView.setImageDrawable(m_dataset.getDataFromIndex(i).getImage());
-
-            //Put that in the tree view and set all the interactive listeners
-            Tree<View> idTree = new Tree<>(preview);
-            preview.setOnClickListener(view -> m_dataset.setMainEntryIndex(i));
-            treeModel.addChild(idTree, -1);
-            m_datasetEntries.put(i, idTree);
-        }
+            addDataChunk(i);
 
         //Setup the view based on the model information
         onSetMainEntryIndex(d, d.getMainEntryIndex());
         onSetSelection(d, d.getCurrentSelection());
+    }
+
+    private void addDataChunk(int idx)
+    {
+        LayoutInflater inflater = LayoutInflater.from(m_ctx);
+        final Tree<View> treeModel = m_treeView.getModel();
+
+        //Inflate the layout
+        View preview = inflater.inflate(R.layout.preview_key_entry, null);
+        preview.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        //Configure the text
+        TextView textView = preview.findViewById(R.id.preview_key_entry_name);
+        textView.setText(Integer.toString(idx));
+
+        //Configure the preview image
+        ImageView imageView = preview.findViewById(R.id.preview_key_entry_drawable);
+        imageView.setImageDrawable(m_dataset.getDataFromIndex(idx).getImage());
+
+        //Put that in the tree view and set all the interactive listeners
+        Tree<View> idTree = new Tree<>(preview);
+        preview.setOnClickListener(view -> m_dataset.setMainEntryIndex(idx));
+        treeModel.addChild(idTree, -1);
+        m_datasetEntries.put(idx, idTree);
     }
 
     /** Init the layout of the application
@@ -290,5 +290,20 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
 
         //Set the selection to the first group
         m_dataset.setMainEntryIndex(selections[0]);
+    }
+
+    @Override
+    public void onAddDataChunk(Dataset dataset, Dataset.Data data)
+    {
+        addDataChunk(data.getIndex());
+    }
+
+    @Override
+    public void onRemoveDataChunk(Dataset dataset, Dataset.Data data)
+    {
+        final Tree<View> treeModel = m_treeView.getModel();
+
+        Tree<View> entry = m_datasetEntries.get(data.getIndex());
+        treeModel.removeChild(entry);
     }
 }
