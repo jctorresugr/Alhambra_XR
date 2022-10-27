@@ -261,8 +261,9 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         if(commonMsg.action == "highlight")
         {
             ReceivedMessage<HighlightMessage> detailedMsg = ReceivedMessage<HighlightMessage>.FromJSON(msg);
-            m_model.CurrentAction    = CurrentAction.IN_HIGHLIGHT;
-            m_model.CurrentHighlight = new PairLayerID() { Layer = detailedMsg.data.layer, ID = detailedMsg.data.id };
+            m_model.CurrentAction          = CurrentAction.IN_HIGHLIGHT;
+            m_model.CurrentHighlightMain   = new PairLayerID() { Layer = detailedMsg.data.layer, ID = detailedMsg.data.id };
+            m_model.CurrentHighlightSecond = new PairLayerID() { Layer = -1, ID = -1};
         }
 
         else if(commonMsg.action == "startAnnotation")
@@ -280,7 +281,8 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
             m_model.CurrentAction = CurrentAction.START_ANNOTATION;
             if (oldAction != CurrentAction.IN_HIGHLIGHT)
             {
-                m_model.CurrentHighlight = new PairLayerID() { Layer = -1, ID = -1 };
+                m_model.CurrentHighlightMain   = new PairLayerID() { Layer = -1, ID = -1 };
+                m_model.CurrentHighlightSecond = new PairLayerID() { Layer = -1, ID = -1 };
             }
         }
 
@@ -305,7 +307,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 RTCamera.transform.position = new Vector3(detailedMsg.data.cameraPos[0], detailedMsg.data.cameraPos[1], detailedMsg.data.cameraPos[2]);
                 RTCamera.transform.rotation = new Quaternion(detailedMsg.data.cameraRot[1], detailedMsg.data.cameraRot[2], detailedMsg.data.cameraRot[3], detailedMsg.data.cameraRot[0]);
 
-                Mesh lines = GenerateMeshFromStrokes(detailedMsg.data.strokes, detailedMsg.data.width, detailedMsg.data.height, 0.02f); //Generate the mesh from the strokes. The line width should be parametreable at one point...
+                Mesh lines = GenerateMeshFromStrokes(detailedMsg.data.strokes, detailedMsg.data.width, detailedMsg.data.height); //Generate the mesh from the strokes. The line width should be parametreable at one point...
 
                 //Create the texture that we will read, and a RenderTexture that the camera will render into for UV mappings
                 Texture2D uvScreenShot = new Texture2D(2048, 2048, TextureFormat.RGBAFloat, false);
@@ -463,10 +465,9 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     /// <param name="strokes">The list of strokes to convert to triangles</param>
     /// <param name="imgWidth">The original width of the image where the strokes were drawn upon, to normalize the coordinate of the different points of the strokes</param>
     /// <param name="imgHeight">The original height of the image where the strokes were drawn upon, to normalize the coordinate of the different points of the strokes</param>
-    /// <param name="lineWidth">The line width in the camera space</param>
     /// <returns>The generated mesh containing triangles representing strokes with a given width in the camera space</returns>
     [BurstCompile(FloatPrecision.Medium, FloatMode.Fast)]
-    private Mesh GenerateMeshFromStrokes(Stroke[] strokes, int imgWidth, int imgHeight, float lineWidth)
+    private Mesh GenerateMeshFromStrokes(Stroke[] strokes, int imgWidth, int imgHeight)
     {
         //Create quad from lines
         Mesh lines = new Mesh();
@@ -475,6 +476,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
         foreach (Stroke stroke in strokes)
         {
+            float lineWidth = stroke.width / Math.Min(imgWidth, imgHeight) * 2.0f;
             for (int i = 0; i < stroke.points.Length - 4; i += 2)
             {
                 //Get the points of the line
@@ -535,7 +537,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     public void OnSetCurrentAction(Model model, CurrentAction action)
     {}
 
-    public void OnSetCurrentHighlight(Model model, PairLayerID id)
+    public void OnSetCurrentHighlight(Model model, PairLayerID mainID, PairLayerID secondID)
     {}
 
     public void OnActionStarted(BaseInputEventData eventData)

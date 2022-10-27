@@ -13,6 +13,11 @@ public class Stroke
     /// Points should be between (0, 0) and (annotationWidth, annotationHeight)
     /// </summary>
     public float[] points;
+
+    /// <summary>
+    /// The width of the stroke in pixel
+    /// </summary>
+    public float width;
 }
 
 /// <summary>

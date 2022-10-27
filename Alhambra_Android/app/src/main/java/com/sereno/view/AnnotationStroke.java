@@ -24,7 +24,7 @@ public class AnnotationStroke
 
         /** Method called when the stroke width changes
          * @param stroke the annotation stroke changing width
-         * @param c the new stroke width*/
+         * @param w the new stroke width*/
         void onSetWidth(AnnotationStroke stroke, float w);
     }
 
@@ -34,8 +34,8 @@ public class AnnotationStroke
     /** Color of the stroke*/
     private int m_color = Color.BLACK;
 
-    /** Width of the stroke*/
-    private float m_width = 5.0f;
+    /** Width of the stroke in pixels*/
+    private float m_width = 10.0f;
 
     /** The listeners to call when the current state of the annotations changed*/
     private ArrayList<IAnnotationStrokeListener> m_listeners = new ArrayList<>();
@@ -76,14 +76,14 @@ public class AnnotationStroke
     }
 
     /** Get the stroke color
-     * @return the stroke color*/
+     * @return the stroke ARGB8888 color*/
     public int getColor()
     {
         return m_color;
     }
 
     /** Set the stroke color
-     * @param color the new stroke color to apply*/
+     * @param color the new stroke ARGB8888 color to apply*/
     public void setColor(int color)
     {
         m_color = color;
@@ -92,9 +92,18 @@ public class AnnotationStroke
     }
 
     /** Get the stroke width
-     * @return the stroke width*/
+     * @return the stroke width in pixels*/
     public float getWidth()
     {
         return m_width;
+    }
+
+    /** Set the stroke width
+     * @param width the new stroke width in pixels to apply*/
+    public void setWidth(int width)
+    {
+        m_width = width;
+        for(int i = 0; i < m_listeners.size(); i++)
+            m_listeners.get(i).onSetWidth(this, width);
     }
 }

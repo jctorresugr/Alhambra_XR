@@ -21,6 +21,7 @@ public class FinishAnnotation
         List<Point> points = stroke.getPoints();
 
         res.append(SendingMessage.generateIncr(incr)).append("{\n");
+        res.append(SendingMessage.generateIncr(incr+4)).append("\"width\": ").append(stroke.getWidth()).append(",\n");
         res.append(SendingMessage.generateIncr(incr+4)).append("\"points\": [");
         for(int i = 0; i < points.size()-1; i++)
             res.append(points.get(i).x).append(", ").append(points.get(i).y).append(", ");

@@ -22,6 +22,22 @@ public enum CurrentAction
 }
 
 /// <summary>
+/// Enumerate the possible handeness
+/// </summary>
+public enum Handedness
+{
+    /// <summary>
+    /// right hand
+    /// </summary>
+    RIGHT = 0,
+
+    /// <summary>
+    /// left hand
+    /// </summary>
+    LEFT  = 1,
+}
+
+/// <summary>
 /// A pair of layer--ID to identify a data chunk
 /// </summary>
 public struct PairLayerID
@@ -55,15 +71,20 @@ public class Model
         void OnSetCurrentAction(Model model, CurrentAction action);
 
         /// <summary>
-        /// Method called when the current highlighted data chunk is updated. Note that this goes in pair with an action (CurrentAction) that needs such an information
+        /// Method called when the current highlighted data chunks are updated. Note that this goes in pair with an action (CurrentAction) that needs such an information
         /// </summary>
         /// <param name="model">The model of the application calling this method</param>
-        /// <param name="id">
-        /// The new data chunk to highlight if the CurrentAction needs such an information.
+        /// <param name="mainID">
+        /// The new main data chunk to highlight if the CurrentAction needs such an information.
         /// For the moment, this information is only needed in CurrentAction == CurrentAction.IN_HIGHLIGHT and in CurrentAction == CurrentAction.DEFAULT
         /// Note that if Layer == -1 or ID == -1, then there is nothing to highlight
         /// </param>
-        void OnSetCurrentHighlight(Model model, PairLayerID id);
+        /// <param name="secondID">
+        /// The second main data chunk to highlight if the CurrentAction needs such an information.
+        /// For the moment, this information is only needed in CurrentAction == CurrentAction.DEFAULT
+        /// Note that if Layer == -1 or ID == -1, then there is nothing to highlight
+        /// </param>
+        void OnSetCurrentHighlight(Model model, PairLayerID mainID, PairLayerID secondID);
     }
 
     /// <summary>
@@ -77,9 +98,14 @@ public class Model
     private CurrentAction m_currentAction = CurrentAction.DEFAULT;
 
     /// <summary>
-    /// The data chunk to highlight if the current action needs such an information
+    /// The main data chunk to highlight if the current action needs such an information
     /// </summary>
-    private PairLayerID m_currentHighlight = new PairLayerID(){ Layer= -1, ID= -1 };
+    private PairLayerID m_currentHighlightMain = new PairLayerID(){ Layer= -1, ID= -1 };
+
+    /// <summary>
+    /// The second data chunk to highlight if the current action needs such an information
+    /// </summary>
+    private PairLayerID m_currentHighlightSecond = new PairLayerID() { Layer = -1, ID = -1 };
 
     /// <summary>
     /// Add a new listener to notify events
@@ -114,17 +140,32 @@ public class Model
     }
 
     /// <summary>
-    /// The data chunk to highlight if the CurrentAction needs such an information.
+    /// The main data chunk to highlight if the CurrentAction needs such an information.
     /// For the moment, this information is only needed in CurrentAction == CurrentAction.IN_HIGHLIGHT and in CurrentAction == CurrentAction.DEFAULT
     /// </summary>
-    public PairLayerID CurrentHighlight
+    public PairLayerID CurrentHighlightMain
     {
-        get => m_currentHighlight;
+        get => m_currentHighlightMain;
         set
         {
-            m_currentHighlight = value;
+            m_currentHighlightMain = value;
             foreach(IModelListener l in m_listeners)
-                l.OnSetCurrentHighlight(this, value);
+                l.OnSetCurrentHighlight(this, value, m_currentHighlightSecond);
+        }
+    }
+
+    /// <summary>
+    /// The second data chunk to highlight if the CurrentAction needs such an information.
+    /// For the moment, this information is only needed in CurrentAction == CurrentAction.DEFAULT
+    /// </summary>
+    public PairLayerID CurrentHighlightSecond
+    {
+        get => m_currentHighlightSecond;
+        set
+        {
+            m_currentHighlightSecond = value;
+            foreach (IModelListener l in m_listeners)
+                l.OnSetCurrentHighlight(this, m_currentHighlightMain, value);
         }
     }
 }

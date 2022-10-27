@@ -108,8 +108,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
                     Color? c = FindLayersAt(inputSource.Pointers[0]);
                     if(c != null)
                     {
-                        if(SetShaderLayerParams(c.Value))
-                            break;
+                        Handedness hand = Handedness.RIGHT;
+                        if(inputSource.Pointers[0].Controller.ControllerHandedness == Microsoft.MixedReality.Toolkit.Utilities.Handedness.Left)
+                            hand = Handedness.LEFT;
+                        SetShaderLayerParams(c.Value, hand);
                     }
                 }
             }
@@ -117,8 +119,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
 
         if(m_updateHighlight)
         {
-            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_ID",    m_model.CurrentHighlight.ID);
-            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_Layer", m_model.CurrentHighlight.Layer);
+            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_IDRight",    m_model.CurrentHighlightMain.ID);
+            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_LayerRight", m_model.CurrentHighlightMain.Layer);
+            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_IDLeft",     m_model.CurrentHighlightSecond.ID);
+            gameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("_LayerLeft",  m_model.CurrentHighlightSecond.Layer);
             m_updateHighlight = false;
         }
     }
@@ -190,37 +194,33 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     /// </summary>
     /// <param name="c">The color in the index texture of a specific area to highlight</param>
     /// <returns>true if something is to be highlighted, false otherwise</returns>
-    private bool SetShaderLayerParams(Color c)
+    private bool SetShaderLayerParams(Color c, Handedness hand)
     {
-        bool ret = false;
+        PairLayerID? ret;
+
         int ir = Mathf.RoundToInt(c.r * 255);
         int ig = Mathf.RoundToInt(c.g * 255);
         int ib = Mathf.RoundToInt(c.b * 255);
         int ia = Mathf.RoundToInt(c.a * 255);
+
         //Debug.Log($" r {ir}, g {ig}, b {ib}, a {ia}");
 
         //Depending on where we hit, highlight a particular part of the game object if any layer information is there
         if (ir > 0)
-        {
-            m_model.CurrentHighlight = new PairLayerID() { ID = ir, Layer = 0 };
-            ret = true;
-        }
+            ret = new PairLayerID() { ID = ir, Layer = 0 };
         else if (ig > 0)
-        {
-            m_model.CurrentHighlight = new PairLayerID() { ID = ig, Layer = 1 };
-            ret = true;
-        }
+            ret = new PairLayerID() { ID = ig, Layer = 1 };
         else if (ib > 0)
-        {
-            m_model.CurrentHighlight = new PairLayerID() { ID = ib, Layer = 2 };
-            ret = true;
-        }
+            ret = new PairLayerID() { ID = ib, Layer = 2 };
         else
-        {
-            m_model.CurrentHighlight = new PairLayerID() { ID = -1, Layer = -1 };
-        }
+            ret = new PairLayerID() { ID = -1, Layer = -1 };
 
-        return ret;
+        if (hand == Handedness.RIGHT)
+            m_model.CurrentHighlightMain = ret.Value;
+        else if (hand == Handedness.LEFT)
+            m_model.CurrentHighlightSecond = ret.Value;
+
+        return ret.Value.Layer != -1;
     }
 
     /// <summary>
@@ -388,7 +388,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             Color? c = FindLayersAt(eventData.InputSource.Pointers[0]);
             if (c != null)
             {
-                SetShaderLayerParams(c.Value);
+                Handedness hand = Handedness.RIGHT;
+                if (eventData.InputSource.Pointers[0].Controller.ControllerHandedness == Microsoft.MixedReality.Toolkit.Utilities.Handedness.Left)
+                    hand = Handedness.LEFT;
+                SetShaderLayerParams(c.Value, hand);
                 foreach (IPickPanoListener l in m_listeners)
                     l.OnSelection(this, c.Value);
             }
@@ -407,7 +410,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         m_updateHighlight = true;
     }
 
-    public void OnSetCurrentHighlight(Model model, PairLayerID id)
+    public void OnSetCurrentHighlight(Model model, PairLayerID mainID, PairLayerID secondMainID)
     {
         m_updateHighlight = true;
     }
