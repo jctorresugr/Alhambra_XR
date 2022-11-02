@@ -116,6 +116,10 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
         m_persistantPath = Application.persistentDataPath;
         CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture; //Useful to enforce dots, and not commas, on double/float values when we print them
+        PointerUtils.SetHandRayPointerBehavior(PointerBehavior.AlwaysOn, Microsoft.MixedReality.Toolkit.Utilities.Handedness.Right);
+        PointerUtils.SetHandRayPointerBehavior(PointerBehavior.AlwaysOn, Microsoft.MixedReality.Toolkit.Utilities.Handedness.Left);
+
+        //Parameterize the RenderTexture Camera
         RTCamera.CopyFrom(Camera.main);
         RTCamera.name = "RTCamera";
         RTCamera.targetDisplay = -1;
@@ -130,7 +134,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
             !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGB32) ||
             !SystemInfo.IsFormatSupported(UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_UNorm, UnityEngine.Experimental.Rendering.FormatUsage.ReadPixels))
         {
-            Debug.Log("Issue with ARGBFloat or ARGB32 textures... This device cannot anchor annotations correctly.");
+            Debug.LogWarning("Issue with ARGBFloat or ARGB32 textures... This device cannot anchor annotations correctly.");
         }
 
         m_server.Launch();
@@ -171,7 +175,6 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         CoreServices.InputSystem?.UnregisterHandler<IMixedRealityInputActionHandler>(this);
         m_server.Close();
     }
-
 
     /// <summary>
     /// Handles the server status texts
@@ -215,6 +218,9 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         }
     }
 
+    /// <summary>
+    /// Handle the 3D arrow that points toward annotations
+    /// </summary>
     private void HandlePointingArrow()
     {
         if(m_curAnnotation != null)

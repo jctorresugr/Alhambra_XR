@@ -12,12 +12,29 @@ using UnityEngine.Rendering;
 
 public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IModelListener
 {
+    /// <summary>
+    /// Class used to register annotations
+    /// </summary>
     public class Annotation
     {
+        /// <summary>
+        /// The color of the annotation
+        /// </summary>
         public Color32 Color { get; set; }
+
+        /// <summary>
+        /// The bounding box (min XYZ position) in the local space of the 3D model where this annotation belongs to.
+        /// </summary>
         public float[] BoundingMin { get; set; }
+
+        /// <summary>
+        /// The bounding box (max XYZ position) in the local space of the 3D model where this annotation belongs to.
+        /// </summary>
         public float[] BoundingMax { get; set; }
 
+        /// <summary>
+        /// The central position of this annotation in the local space of the 3D model.
+        /// </summary>
         public Vector3 Center
         {
             get => new Vector3(0.5f * (BoundingMax[0] - BoundingMin[0]) + BoundingMin[0],
@@ -25,6 +42,9 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
                                0.5f * (BoundingMax[2] - BoundingMin[2]) + BoundingMin[2]);
         }
 
+        /// <summary>
+        /// Constructor. Initialize everything with default values.
+        /// </summary>
         public Annotation()
         {
             BoundingMin = new float[3] { 0, 0, 0 };
@@ -69,6 +89,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     /// </summary>
     private List<Annotation> m_annotations = new List<Annotation>();
 
+    /// <summary>
+    /// The RGBAFloat texture to read to map UV mapping to 3D positions. Useful to know where annotations are anchored in the 3D space.
+    /// Size: See _IndexTex.
+    /// </summary>
     private float[] m_uvToPositionPixels = null;
 
     /// <summary>
@@ -196,7 +220,6 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
 
     void Start()
     {
-        PointerUtils.SetHandRayPointerBehavior(PointerBehavior.AlwaysOn, Microsoft.MixedReality.Toolkit.Utilities.Handedness.Right);
         //CoreServices.InputSystem?.RegisterHandler<IMixedRealityInputActionHandler>(this);
     }
 
@@ -567,6 +590,9 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         get => gameObject.GetComponent<MeshFilter>().mesh;
     }
 
+    /// <summary>
+    /// The list of all registered annotations
+    /// </summary>
     public List<Annotation> Annotations
     {
         get => m_annotations;
