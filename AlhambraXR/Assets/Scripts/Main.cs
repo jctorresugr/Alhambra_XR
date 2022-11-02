@@ -66,9 +66,19 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     private Queue<Action> m_tasksInMainThread = new Queue<Action>();
 
     /// <summary>
+    /// The current annotation highlighted
+    /// </summary>
+    private PickPano.Annotation m_curAnnotation = null;
+
+    /// <summary>
     /// The MonoBehaviour script handling the panel picking of the Alhambra model
     /// </summary>
-    public PickPano m_pickPanoModel;
+    public PickPano PickPanoModel;
+
+    /// <summary>
+    /// The pointing arrow game object
+    /// </summary>
+    public GameObject PointingArrow;
 
     /// <summary>
     /// The material to display UV mapping of a particular mesh
@@ -100,7 +110,6 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     /// </summary>
     public UnityEngine.UI.Text RandomText;
 
-
     private void Awake()
     {
         //Parameterize Unity
@@ -127,8 +136,8 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         m_server.Launch();
         m_server.AddListener(this);
         m_model.AddListener(this);
-        m_pickPanoModel.Init(m_model);
-        m_pickPanoModel.AddListener(this);
+        PickPanoModel.Init(m_model);
+        PickPanoModel.AddListener(this);
 
         //Default text helpful to bind headset to tablet
         m_updateIPTexts = true;
@@ -138,6 +147,9 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
         //Necessary because Main cannot be focused
         CoreServices.InputSystem?.RegisterHandler<IMixedRealityInputActionHandler>(this);
+
+        //Debug messages
+        //OnRead(null, "{\"action\": \"highlight\", \"data\": { \"layer\": 0, \"id\": 112} }");
     }
 
     private void Start()
@@ -149,6 +161,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         {
             HandleIPTxt();
             HandleRandomText();
+            HandlePointingArrow();
             HandleTasks();
         }
     }
@@ -200,6 +213,17 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
             }
             m_updateRandomText = false;
         }
+    }
+
+    private void HandlePointingArrow()
+    {
+        if(m_curAnnotation != null)
+        {
+            PointingArrow.SetActive(true);
+            PointingArrow.transform.rotation = Quaternion.LookRotation(PickPanoModel.transform.localToWorldMatrix.MultiplyPoint3x4(m_curAnnotation.Center) - Camera.main.transform.position, new Vector3(0, 1, 0));
+        }
+        else
+            PointingArrow.SetActive(false);
     }
 
     /// <summary>
@@ -323,7 +347,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 CommandBuffer buf = new CommandBuffer();
                 buf.SetRenderTarget(new RenderTargetIdentifier[2] { uvRT, colorRT }, uvRT, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
                 buf.DrawMesh(lines, Matrix4x4.identity, StencilMaskMaterial, 0, -1);
-                buf.DrawMesh(m_pickPanoModel.Mesh, m_pickPanoModel.transform.localToWorldMatrix, UVMaterial, 0, -1);
+                buf.DrawMesh(PickPanoModel.Mesh, PickPanoModel.transform.localToWorldMatrix, UVMaterial, 0, -1);
                 RTCamera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
                 RTCamera.Render();
                 RTCamera.RemoveCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
@@ -339,7 +363,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
                 //Anchor the annotation in the PickPano object
                 Color32 annotationColor;
-                if (m_pickPanoModel.AddAnnotation(uvScreenShot, out annotationColor))
+                if (PickPanoModel.AddAnnotation(uvScreenShot, out annotationColor))
                 {
                     //Retrieve the color of the annotation
                     RenderTexture.active = colorRT;
@@ -535,10 +559,30 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     }
 
     public void OnSetCurrentAction(Model model, CurrentAction action)
-    {}
+    {
+        if(action != CurrentAction.IN_HIGHLIGHT)
+            lock(this)
+                m_curAnnotation = null; //Nothing to highlight. Cancel the current annotation
+    }
 
     public void OnSetCurrentHighlight(Model model, PairLayerID mainID, PairLayerID secondID)
-    {}
+    {
+        if(model.CurrentAction == CurrentAction.IN_HIGHLIGHT)
+        {
+            PickPano.Annotation annot = null;
+
+            //Search per layer the annotation data corresponding the demand of highlight
+            if (mainID.Layer == 0)
+                annot = PickPanoModel.Annotations.Find((annot) => annot.Color.r == mainID.ID);
+            else if(mainID.Layer == 1)
+                annot = PickPanoModel.Annotations.Find((annot) => annot.Color.r == 0 && annot.Color.g == mainID.ID);
+            else if(mainID.Layer == 2)
+                annot = PickPanoModel.Annotations.Find((annot) => annot.Color.r == 0 && annot.Color.g == 0 && annot.Color.b == mainID.ID);
+
+            lock(this)
+                m_curAnnotation = annot;
+        }
+    }
 
     public void OnActionStarted(BaseInputEventData eventData)
     {}
@@ -559,7 +603,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
                 RTCamera.transform.position = Camera.main.transform.position;
                 RTCamera.transform.rotation = Camera.main.transform.rotation;
-                Texture2D screenShot = RenderPickPanoMeshInRT(RTCamera, m_pickPanoModel.GetComponent<Renderer>().material);
+                Texture2D screenShot = RenderPickPanoMeshInRT(RTCamera, PickPanoModel.GetComponent<Renderer>().material);
 
                 //Copy some values for them to be usable in a separate thread (Task.Run)...
                 byte[] pixels = screenShot.GetRawTextureData();
@@ -595,7 +639,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         //Render what the specific mesh from the camera position in the render texture (and thus in the linked screenShot texture)
         CommandBuffer buf = new CommandBuffer();
         buf.SetRenderTarget(rt, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
-        buf.DrawMesh(m_pickPanoModel.Mesh, m_pickPanoModel.transform.localToWorldMatrix, mat);
+        buf.DrawMesh(PickPanoModel.Mesh, PickPanoModel.transform.localToWorldMatrix, mat);
         cam.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
         cam.Render();
         cam.RemoveCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);

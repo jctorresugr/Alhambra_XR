@@ -450,7 +450,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         { 
             Color = layerColor, 
             BoundingMin = new float[3] { float.MaxValue, float.MaxValue, float.MaxValue }, 
-            BoundingMax = new float[3]{float.MinValue, float.MinValue, float.MinValue }
+            BoundingMax = new float[3] { float.MinValue, float.MinValue, float.MinValue }
         };
 
         //Now that we know on which layer to put that annotation, anchor it
@@ -564,5 +564,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     public Mesh Mesh
     {
         get => gameObject.GetComponent<MeshFilter>().mesh;
+    }
+
+    public List<Annotation> Annotations
+    {
+        get => m_annotations;
     }
 }

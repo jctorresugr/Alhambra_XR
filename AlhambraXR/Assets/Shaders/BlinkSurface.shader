@@ -60,8 +60,9 @@ Shader "Custom/BlinkSurface"
             // sample the texture
             fixed4 index = tex2D(_IndexTex, IN.uv_MainTex);
             fixed indexArray[4] = { index.r, index.g, index.b, index.a };
-            if      (_LayerRight < 4 && ((indexArray[_LayerRight]) * 255 == _IDRight)) { o.Albedo = c.rgb + 0.6 * (_SinTime[3] * _SinTime[3]) * _Color; }
-            else if (_LayerLeft  < 4 && ((indexArray[_LayerLeft]) * 255  == _IDLeft))  { o.Albedo = c.rgb + 0.6 * (_SinTime[3] * _SinTime[3]) * _Color; }
+            float sinTime = sin(2*_Time[1]);
+            if      (_LayerRight < 4 && ((indexArray[_LayerRight]) * 255 == _IDRight)) { o.Albedo = c.rgb + 0.6 * (sinTime * sinTime) * _Color; }
+            else if (_LayerLeft  < 4 && ((indexArray[_LayerLeft]) * 255  == _IDLeft))  { o.Albedo = c.rgb + 0.6 * (sinTime * sinTime) * _Color; }
 
             //if ((indexArray[0]) * 255 > 0) { o.Albedo = c.rgb + 0.6 * (_SinTime[3] * _SinTime[3]) * _Color; }  // Debuging 
 
