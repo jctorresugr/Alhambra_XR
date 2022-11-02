@@ -280,7 +280,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 2223f417985dc4248bce4fd1744c67ac, type: 2}
+  - {fileID: 2100000, guid: d686db2a166020b4196c883a33f6a4ff, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1559,6 +1559,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed6aaab21e1c6114fa9a3e4e96fe2acd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  UVToPosition: {fileID: 2100000, guid: 5788994866c8191439b5797547b43547, type: 2}
+  RTCamera: {fileID: 1055798508}
 --- !u!64 &7568032346716495950
 MeshCollider:
   m_ObjectHideFlags: 0

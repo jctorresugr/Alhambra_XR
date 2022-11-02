@@ -617,7 +617,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     /// </summary>
     /// <param name="data">The binary data</param>
     /// <param name="fileName">The output file name. The final destination is {m_persistantPath}/{fileName}</param>
-    private void SaveBinaryDataOnDisk(byte[] data, String fileName)
+    public void SaveBinaryDataOnDisk(byte[] data, String fileName)
     {
         String destination = $"{m_persistantPath}/{fileName}";
         Debug.Log($"Saving file to {destination}");

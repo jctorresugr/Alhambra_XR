@@ -7,9 +7,32 @@ using System.Threading.Tasks;
 using Unity.Collections;
 using UnityEngine;
 using Unity.Burst;
+using UnityEngine.Rendering;
+
 
 public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IModelListener
 {
+    public class Annotation
+    {
+        public Color32 Color { get; set; }
+        public float[] BoundingMin { get; set; }
+        public float[] BoundingMax { get; set; }
+
+        public Vector3 Center
+        {
+            get => new Vector3(0.5f * (BoundingMax[0] - BoundingMin[0]) + BoundingMin[0],
+                               0.5f * (BoundingMax[1] - BoundingMin[1]) + BoundingMin[1],
+                               0.5f * (BoundingMax[2] - BoundingMin[2]) + BoundingMin[2]);
+        }
+
+        public Annotation()
+        {
+            BoundingMin = new float[3] { 0, 0, 0 };
+            BoundingMax = new float[3] { 0, 0, 0 };
+            Color       = new Color32(0, 0, 0, 0);
+        }
+    }
+
     /// <summary>
     /// Listener for events launched from PickPano
     /// </summary>
@@ -42,9 +65,21 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     private bool m_updateHighlight = false;
 
     /// <summary>
-    /// All the colors already used in the annotation
+    /// all the registered annotation
     /// </summary>
-    private List<Color32> m_usedColors = new List<Color32>();
+    private List<Annotation> m_annotations = new List<Annotation>();
+
+    private float[] m_uvToPositionPixels = null;
+
+    /// <summary>
+    /// The Material to map UV coordinates to the 3D positions in local space.
+    /// </summary>
+    public Material UVToPosition;
+
+    /// <summary>
+    /// The camera used to render data on RenderTexture
+    /// </summary>
+    public Camera RTCamera;
 
     /// <summary>
     /// Initialize this GameObject and link it with the other components of the Scene
@@ -55,22 +90,74 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     {
         m_model = model;
         model.AddListener(this);
-
-        //Read the index texture to know which colors are used (parallelize the reading to speed up the process)
         Texture2D indexTexture = (Texture2D)gameObject.GetComponent<MeshRenderer>().sharedMaterial.GetTexture("_IndexTex");
+
+        /*********************************************************************/
+        /************First -- Determine the 3D position at each UV************/
+        /***(this supposes that not two triangles share the same UV mapping***/
+        /*********************************************************************/
+
+        //Create a texture to map UV data to position data
+        Texture2D colorScreenShot = new Texture2D(indexTexture.width, indexTexture.height, TextureFormat.RGBAFloat, false);
+        RenderTexture colorRT = new RenderTexture(colorScreenShot.width, colorScreenShot.height, 24, RenderTextureFormat.ARGBFloat);
+        colorRT.Create();
+
+        //Render the specific mesh from the camera position in the render texture (and thus in the linked screenShot texture)
+        CommandBuffer buf = new CommandBuffer();
+        buf.SetRenderTarget(colorRT, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
+        buf.DrawMesh(Mesh, Matrix4x4.identity, UVToPosition, 0, -1);
+        RTCamera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
+        RTCamera.Render();
+        RTCamera.RemoveCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
+
+        //Read back the pixels from the render texture to the texture
+        RenderTexture.active = colorRT;
+        colorScreenShot.ReadPixels(new Rect(0, 0, colorScreenShot.width, colorScreenShot.height), 0, 0);
+
+        //Clean up our messes
+        RTCamera.targetTexture = null;
+        RenderTexture.active = null;
+        Destroy(colorRT);
+
+        //Save the pixels for later usages
+        m_uvToPositionPixels = colorScreenShot.GetRawTextureData<float>().ToArray();
+
+        /*********************************************************************/
+        /*************Second -- Determine the known annotations***************/
+        /*********************************************************************/
+
+        //Read the index texture to know which colors (at which positions) are used (parallelize the reading to speed up the process)
         NativeArray<byte> srcRGBA = indexTexture.GetRawTextureData<byte>();
 
         Parallel.For(0, indexTexture.width * indexTexture.height,
-            () => new List<Color32>(),
+            () => new List<Annotation>(),
             (i, state, partialRes) =>
             {
                 int idx = 4*i;
-                if (srcRGBA[idx + 3] > 0 && !partialRes.Exists((c) => c.r == srcRGBA[idx + 0] &&
-                                                                      c.g == srcRGBA[idx + 1] &&
-                                                                      c.b == srcRGBA[idx + 2]))
-                    partialRes.Add(new Color32(srcRGBA[idx + 0],
-                                               srcRGBA[idx + 1],
-                                               srcRGBA[idx + 2], 255));
+                if (srcRGBA[idx + 3] > 0 && m_uvToPositionPixels[idx+3] > 0)
+                {
+                    Annotation srcAnnot = partialRes.Find((annot) => annot.Color.r == srcRGBA[idx + 0] &&
+                                                                     annot.Color.g == srcRGBA[idx + 1] &&
+                                                                     annot.Color.b == srcRGBA[idx + 2]);
+
+                    if (srcAnnot == null)
+                        partialRes.Add(new Annotation()
+                        {
+                            Color = new Color32(srcRGBA[idx + 0],
+                                                srcRGBA[idx + 1],
+                                                srcRGBA[idx + 2], 255),
+                            BoundingMin = new float[3] { m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2] },
+                            BoundingMax = new float[3] { m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2] }
+                        });
+                    else
+                    {
+                        for(int j = 0; j < 3; j++)
+                        {
+                            srcAnnot.BoundingMin[j] = Math.Min(srcAnnot.BoundingMin[j], m_uvToPositionPixels[idx + j]);
+                            srcAnnot.BoundingMax[j] = Math.Max(srcAnnot.BoundingMax[j], m_uvToPositionPixels[idx + j]);
+                        }
+                    }
+                }
 
                 return partialRes;
             },
@@ -78,13 +165,34 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             {
                 lock(this)
                 { 
-                    foreach(Color32 c in partialRes)
-                        if(!m_usedColors.Exists((color) => color.r == c.r && color.g == c.g && color.b == c.b))
-                            m_usedColors.Add(c);
+                    foreach(Annotation annot in partialRes)
+                    {
+                        Color32 c = annot.Color;
+                        Annotation srcAnnot = m_annotations.Find((annot) => annot.Color.r == c.r && annot.Color.g == c.g && annot.Color.b == c.b);
+                        if(srcAnnot == null)
+                            m_annotations.Add(annot);
+                        else //Merge annotations in the parallel computation
+                        {
+                            for(int i = 0; i < 3; i++) 
+                            {
+                                srcAnnot.BoundingMax[i] = Math.Max(srcAnnot.BoundingMax[i], annot.BoundingMax[i]);
+                                srcAnnot.BoundingMin[i] = Math.Min(srcAnnot.BoundingMin[i], annot.BoundingMin[i]);
+                            }
+                        }
+                    }
                 }
             }
         );
-    }
+
+        //Debug purposes, to check that annotations are anchored at their correct position.
+        //GameObject originGO = GameObject.Find("Origin");
+        //foreach(Annotation annot in m_annotations)
+        //{
+        //    GameObject go         = GameObject.Instantiate(originGO);
+        //    go.transform.position = transform.localToWorldMatrix.MultiplyPoint3x4(annot.Center);
+        //}
+    }                                                                                               
+
 
     void Start()
     {
@@ -281,10 +389,9 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             int r = 1;
             for(; r < (1<<8); r++)
             { 
-                if(!m_usedColors.Exists((c) => c.r == r))
+                if(!m_annotations.Exists((annot) => annot.Color.r == r))
                 {
                     layerColor.r = (byte)r;
-                    m_usedColors.Add(layerColor);
                     break;
                 }
             }
@@ -301,11 +408,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             int g = 1;
             for (; g < (1 << 8); g++) //Search that layer (g, b) does not exist first
             {
-                if(!m_usedColors.Exists((c) => c.r == 0 &&
-                                               c.g == g))
+                if(!m_annotations.Exists((annot) => annot.Color.r == 0 &&
+                                                    annot.Color.g == g))
                 {
                     layerColor.g = (byte)g;
-                    m_usedColors.Add(layerColor);
                     break;
                 }
             }
@@ -322,12 +428,11 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             int b = 1;
             for (; b < (1 << 8); b++) //Search that layer (b) does not exist first
             {
-                if(!m_usedColors.Exists((c) => c.r == 0 &&
-                                               c.g == 0 &&
-                                               c.b == b))
+                if(!m_annotations.Exists((annot) => annot.Color.r == 0 &&
+                                                    annot.Color.g == 0 &&
+                                                    annot.Color.b == b))
                 {
                     layerColor.b = (byte)b;
-                    m_usedColors.Add(layerColor);
                     break;
                 }
             }
@@ -340,28 +445,66 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             }
         }
 
+        //Initialize the new annotation to register
+        Annotation annot = new Annotation() 
+        { 
+            Color = layerColor, 
+            BoundingMin = new float[3] { float.MaxValue, float.MaxValue, float.MaxValue }, 
+            BoundingMax = new float[3]{float.MinValue, float.MinValue, float.MinValue }
+        };
+
         //Now that we know on which layer to put that annotation, anchor it
         //Since every pixel are independent, and that multiple write is not an issue, parallelize the code
-        Parallel.For(0, uvHeight, new ParallelOptions { MaxDegreeOfParallelism = 8 }, (j, state) =>
-        {
-            for (int i = 0; i < uvWidth; i++)
+        Parallel.For(0, uvHeight, new ParallelOptions { MaxDegreeOfParallelism = 8 },
+            () => new float[6] { float.MaxValue, float.MaxValue, float.MaxValue, 
+                                 float.MinValue, float.MinValue, float.MinValue },
+            (j, state, partialRes) =>
             {
-                if (newRGBA[j * uvWidth + i].a == 0) //Transparent UV
-                    continue;
+                for(int i = 0; i < uvWidth; i++)
+                {
+                    if(newRGBA[j * uvWidth + i].a == 0) //Transparent UV
+                        continue;
 
-                int srcJ = (int)(newRGBA[j * uvWidth + i].g * srcHeight);
-                int srcI = (int)(newRGBA[j * uvWidth + i].r * srcWidth);
+                    int srcJ   = (int)(newRGBA[j * uvWidth + i].g * srcHeight);
+                    int srcI   = (int)(newRGBA[j * uvWidth + i].r * srcWidth);
+                    int srcIdx = 4 * (srcJ * srcWidth + srcI);
 
-                for (int k = 0; k < 4; k++)
-                    srcRGBA[4 * (srcJ * srcWidth + srcI) + k] = layerColor[k];
+                    if(m_uvToPositionPixels[srcIdx + 3] == 0) //Unknown 3D position
+                        continue;
 
+                    for(int k = 0; k < 4; k++)
+                        srcRGBA[srcIdx + k] = layerColor[k];
+                    
+                    for(int k = 0; k < 3; k++)
+                    {
+                        partialRes[k]   = Math.Min(m_uvToPositionPixels[srcIdx + k], partialRes[k]);
+                        partialRes[k+3] = Math.Max(m_uvToPositionPixels[srcIdx + k], partialRes[k+3]);
+                    }
+                }
+                return partialRes;
+            },
+            (partialRes) =>
+            {
+                lock(annot)
+                {
+                    for(int i = 0; i < 3; i++)
+                    {
+                        annot.BoundingMin[i] = Math.Min(annot.BoundingMin[i], partialRes[i]);
+                        annot.BoundingMax[i] = Math.Max(annot.BoundingMax[i], partialRes[i+3]);
+                    }
+                }
             }
-        });
+        );
         Debug.Log($"Finish to add annotation Color {layerColor}");
 
         srcAnnotationTexture.Apply();
         gameObject.GetComponent<MeshRenderer>().sharedMaterial.SetTexture("_IndexTex", srcAnnotationTexture);
-        
+
+        //Debug purposes
+        GameObject originGO = GameObject.Find("Origin");
+        GameObject go = GameObject.Instantiate(originGO);
+        go.transform.position = transform.localToWorldMatrix.MultiplyPoint3x4(annot.Center);
+
         //Return
         outputColor = layerColor;
         return true;

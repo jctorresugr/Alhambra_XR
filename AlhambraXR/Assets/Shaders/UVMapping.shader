@@ -45,7 +45,12 @@ Shader "Unlit/UVMapping"
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
+
+#if UNITY_UV_STARTS_AT_TOP == 1
                 o.uv     = v.uv;
+#else
+                o.uv     = 1-v.uv;
+#endif
                 return o;
             }
 
