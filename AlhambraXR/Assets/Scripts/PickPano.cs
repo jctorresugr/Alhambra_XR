@@ -496,14 +496,15 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             }
         );
         Debug.Log($"Finish to add annotation Color {layerColor}");
+        m_annotations.Add(annot);
 
         srcAnnotationTexture.Apply();
         gameObject.GetComponent<MeshRenderer>().sharedMaterial.SetTexture("_IndexTex", srcAnnotationTexture);
 
         //Debug purposes
-        GameObject originGO = GameObject.Find("Origin");
-        GameObject go = GameObject.Instantiate(originGO);
-        go.transform.position = transform.localToWorldMatrix.MultiplyPoint3x4(annot.Center);
+        //GameObject originGO = GameObject.Find("Origin");
+        //GameObject go = GameObject.Instantiate(originGO);
+        //go.transform.position = transform.localToWorldMatrix.MultiplyPoint3x4(annot.Center);
 
         //Return
         outputColor = layerColor;
