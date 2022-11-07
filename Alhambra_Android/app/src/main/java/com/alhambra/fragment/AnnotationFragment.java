@@ -7,13 +7,17 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.alhambra.R;
 import com.sereno.math.Quaternion;
 import com.sereno.view.AnnotationCanvasData;
 import com.sereno.view.AnnotationCanvasView;
+import com.sereno.view.AnnotationGeometry;
 import com.sereno.view.AnnotationStroke;
 import com.sereno.view.ColorPickerView;
 
@@ -66,8 +70,14 @@ public class AnnotationFragment extends AlhambraFragment
     /** The color picker view*/
     private ColorPickerView m_colorPicker = null;
 
+    /** The ComboBox listing all the drawing method (Strokes vs. Polygons)*/
+    private Spinner m_drawingMethod = null;
+
     /** Button to start an annotation */
     private Button m_startAnnotationBtn = null;
+
+    /** The EditText widget where the annotation description is written*/
+    private EditText m_editText = null;
 
     /** Button to confirm the annotation*/
     private Button m_confirmBtn = null;
@@ -82,11 +92,13 @@ public class AnnotationFragment extends AlhambraFragment
     private void initLayout(View v)
     {
         m_canvas             = v.findViewById(R.id.annotationCanvas);
+        m_editText           = v.findViewById(R.id.annotationText);
         m_colorPicker        = v.findViewById(R.id.colorPicker);
         m_startAnnotationBtn = v.findViewById(R.id.startAnnotationButton);
         m_confirmBtn         = v.findViewById(R.id.confirmAnnotation);
         m_cancelBtn          = v.findViewById(R.id.cancelAnnotation);
         m_startAnnotationTxt = v.findViewById(R.id.tapToAddAnnotationTxt);
+        m_drawingMethod      = v.findViewById(R.id.drawingMethod);
         m_currentStrokeColor = m_colorPicker.getModel().getColor().toRGB().toARGB8888();
 
         m_canvas.setOnTouchListener((view, motionEvent) -> {
@@ -99,15 +111,33 @@ public class AnnotationFragment extends AlhambraFragment
             return false;
         });
 
+        m_drawingMethod.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id)
+            {
+                m_canvas.getModel().setDrawingMethod(position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+
         m_canvas.getModel().addListener(new AnnotationCanvasData.IAnnotationDataListener() {
             @Override
             public void onAddStroke(AnnotationCanvasData data, AnnotationStroke stroke) { stroke.setColor(m_currentStrokeColor); }
 
             @Override
-            public void onClearStrokes(AnnotationCanvasData data, List<AnnotationStroke> strokes) {}
+            public void onClearGeometries(AnnotationCanvasData data, List<AnnotationGeometry> geometries) {}
 
             @Override
             public void onSetBackground(AnnotationCanvasData data, Bitmap background) {}
+
+            @Override
+            public void onSetDrawingMethod(AnnotationCanvasData data, int drawingMethod)
+            {
+                if(m_drawingMethod.getSelectedItemPosition() != drawingMethod)
+                    m_drawingMethod.setSelection(drawingMethod);
+            }
         });
 
         m_startAnnotationBtn.setOnClickListener(view -> {
@@ -129,6 +159,9 @@ public class AnnotationFragment extends AlhambraFragment
         m_confirmBtn.setVisibility(View.GONE);
         m_cancelBtn.setVisibility(View.GONE);
         m_startAnnotationTxt.setVisibility(View.GONE);
+        m_editText.setVisibility(View.GONE);
+        m_colorPicker.setVisibility(View.GONE);
+        m_drawingMethod.setVisibility(View.GONE);
     }
 
     /** @brief Add a new listener
@@ -180,9 +213,12 @@ public class AnnotationFragment extends AlhambraFragment
             }
 
         m_canvas.getModel().setBackground(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888));
-        m_canvas.getModel().clearStrokes();
+        m_canvas.getModel().clearGeometries();
         m_confirmBtn.setVisibility(View.VISIBLE);
         m_cancelBtn.setVisibility(View.VISIBLE);
+        m_editText.setVisibility(View.VISIBLE);
+        m_colorPicker.setVisibility(View.VISIBLE);
+        m_drawingMethod.setVisibility(View.VISIBLE);
         m_cameraPos = cameraPos;
         m_cameraRot = cameraRot;
         m_startAnnotationTxt.setVisibility(View.GONE);
@@ -192,10 +228,13 @@ public class AnnotationFragment extends AlhambraFragment
     /** Clear the annotation snapshot on the fragment's view*/
     public void clearAnnotation()
     {
-        m_canvas.getModel().clearStrokes();
+        m_canvas.getModel().clearGeometries();
         m_canvas.getModel().setBackground(null);
         m_cancelBtn.setVisibility(View.GONE);
         m_confirmBtn.setVisibility(View.GONE);
+        m_editText.setVisibility(View.GONE);
+        m_colorPicker.setVisibility(View.GONE);
+        m_drawingMethod.setVisibility(View.GONE);
     }
 
     /** The camera position at the time of where the annotation image was taken. null if no image is currently being annotated
@@ -209,6 +248,10 @@ public class AnnotationFragment extends AlhambraFragment
     /** Get the annotation canvas data model
      * @return the annotation canvas data model*/
     public AnnotationCanvasData getAnnotationCanvasData() {return m_canvas.getModel();}
+
+    /** Get the annotation description
+     * @return the String describing the annotation*/
+    public String getAnnotationDescription() {return m_editText.getText().toString();}
 
     /** Function to enable or disable the swiping based on a motion event
      * @param motionEvent the motion event received*/

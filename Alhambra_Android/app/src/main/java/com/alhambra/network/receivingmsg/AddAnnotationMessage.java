@@ -22,6 +22,9 @@ public class AddAnnotationMessage
     /** The color of the annotation (which encodes the layer + ID of the data chunk)*/
     private final byte[] m_color;
 
+    /** The textual description of the annotation*/
+    private final String m_desc;
+
     /** Constructor
      * @param data the JSONObject representing the "data" entry of the received JSON object from the network*/
     public AddAnnotationMessage(@NonNull JSONObject data) throws JSONException
@@ -30,6 +33,7 @@ public class AddAnnotationMessage
         m_height = data.getInt("snapshotHeight");
         m_image  = Base64.decode(data.getString("snapshotBase64"), Base64.DEFAULT);
         m_color  = JSONUtils.jsonArrayToByteArray(data.getJSONArray("annotationColor"));
+        m_desc   = data.getString("description");
 
         if(m_color.length != 4)
             throw new JSONException("The length of the JSON array corresponding to a Color (length 4) is: " + m_color.length);
@@ -60,5 +64,12 @@ public class AddAnnotationMessage
                (m_color[0] << 16) +
                (m_color[1] << 8)  +
                (m_color[2]);
+    }
+
+    /** Get the textual description of the annotation
+     * @return the textual description of the annotation*/
+    public String getDescription()
+    {
+        return m_desc;
     }
 }

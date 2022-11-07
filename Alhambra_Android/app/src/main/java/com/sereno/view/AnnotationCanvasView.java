@@ -17,7 +17,7 @@ import java.util.List;
 
 import androidx.annotation.Nullable;
 
-public class AnnotationCanvasView extends View implements AnnotationCanvasData.IAnnotationDataListener, AnnotationStroke.IAnnotationStrokeListener
+public class AnnotationCanvasView extends View implements AnnotationCanvasData.IAnnotationDataListener, AnnotationGeometry.IAnnotationGeometryListener, AnnotationStroke.IAnnotationStrokeListener
 {
     /** The internal data of the annotation view*/
     private AnnotationCanvasData m_model = new AnnotationCanvasData(1024, 1024);
@@ -76,24 +76,28 @@ public class AnnotationCanvasView extends View implements AnnotationCanvasData.I
             canvas.drawBitmap(m_model.getBackground(), m_backgroundSrcRect, new Rect(0, 0, viewWidth, viewHeight), m_strokePaint);
 
         //Draw the strokes
-        for(AnnotationStroke s : m_model.getStrokes())
+        for(AnnotationGeometry g : m_model.getGeometries())
         {
-            //Parameterize the paint
-            m_strokePaint.setColor(s.getColor());
-            m_strokePaint.setStrokeWidth(s.getWidth());
+            if(g instanceof AnnotationStroke)
+            {
+                AnnotationStroke s = (AnnotationStroke)g;
+                //Parameterize the paint
+                m_strokePaint.setColor(s.getColor());
+                m_strokePaint.setStrokeWidth(s.getWidth());
 
-            //Draw the path
-            Path path = new Path();
-            ArrayList<Point> points = s.getPoints();
+                //Draw the path
+                Path path = new Path();
+                ArrayList<Point> points = s.getPoints();
 
-            if(points.size() > 0)
-                path.moveTo(points.get(0).x*viewWidth/modelWidth,
-                            points.get(0).y*viewHeight/modelHeight);
-            for(int i = 1; i < points.size(); i++)
-                path.lineTo(points.get(i).x*viewWidth/modelWidth,
-                            points.get(i).y*viewHeight/modelHeight);
+                if(points.size() > 0)
+                    path.moveTo(points.get(0).x*viewWidth/modelWidth,
+                                points.get(0).y*viewHeight/modelHeight);
+                for(int i = 1; i < points.size(); i++)
+                    path.lineTo(points.get(i).x*viewWidth/modelWidth,
+                                points.get(i).y*viewHeight/modelHeight);
 
-            canvas.drawPath(path, m_strokePaint);
+                canvas.drawPath(path, m_strokePaint);
+            }
         }
     }
 
@@ -109,23 +113,33 @@ public class AnnotationCanvasView extends View implements AnnotationCanvasData.I
         if(m_model == null)
             return false;
 
-        boolean addStrokePoint = false;
+        boolean addPoint = false;
         if(e.getAction() == MotionEvent.ACTION_DOWN)
         {
-            addStrokePoint = true;
-            m_model.addStroke(new AnnotationStroke());
+            if(m_model.getDrawingMethod() == AnnotationCanvasData.DRAWING_METHOD_STROKES)
+            {
+                addPoint = true;
+                m_model.addStroke(new AnnotationStroke());
+            }
+            else if(m_model.getDrawingMethod() == AnnotationCanvasData.DRAWING_METHOD_POLYGONS)
+            {
+                //TODO
+            }
+
         }
 
         //Just to tell that we can modify the stroke
         else if(e.getAction() == MotionEvent.ACTION_MOVE)
-            addStrokePoint = true;
+            addPoint = true;
 
         //Add the event point. The callback listeners will invalidate this view
-        if(addStrokePoint && m_model.getStrokes().size() > 0)
+        if(addPoint && m_model.getGeometries().size() > 0)
         {
-            AnnotationStroke s = m_model.getStrokes().get(m_model.getStrokes().size()-1);
-            s.addPoint(new Point((int)(e.getX()*modelWidth/viewWidth),
-                                 (int)(e.getY()*modelHeight/viewHeight)));
+            Point p = new Point((int)(e.getX()*modelWidth/viewWidth),
+                                (int)(e.getY()*modelHeight/viewHeight));
+
+            if(m_model.getDrawingMethod() == AnnotationCanvasData.DRAWING_METHOD_STROKES)
+                m_model.getGeometries().get(m_model.getGeometries().size()-1).addPoint(p);
 
             return true;
         }
@@ -216,15 +230,20 @@ public class AnnotationCanvasView extends View implements AnnotationCanvasData.I
     @Override
     public void onAddStroke(AnnotationCanvasData data, AnnotationStroke stroke)
     {
-        stroke.addListener(this);
+        stroke.addListener((AnnotationGeometry.IAnnotationGeometryListener)this);
+        stroke.addListener((AnnotationStroke.IAnnotationStrokeListener)this);
         invalidate();
     }
 
     @Override
-    public void onClearStrokes(AnnotationCanvasData data, List<AnnotationStroke> strokes)
+    public void onClearGeometries(AnnotationCanvasData data, List<AnnotationGeometry> geometries)
     {
-        for(AnnotationStroke s : strokes)
-            s.removeListener(this);
+        for(AnnotationGeometry g : geometries)
+        {
+            g.removeListener(this);
+            if(g instanceof AnnotationStroke)
+                ((AnnotationStroke)g).removeListener((AnnotationStroke.IAnnotationStrokeListener)this);
+        }
         invalidate();
     }
 
@@ -242,13 +261,17 @@ public class AnnotationCanvasView extends View implements AnnotationCanvasData.I
     }
 
     @Override
-    public void onAddPoint(AnnotationStroke stroke, Point p)
+    public void onSetDrawingMethod(AnnotationCanvasData data, int drawingMethod)
+    {}
+
+    @Override
+    public void onAddPoint(AnnotationGeometry geometry, Point p)
     {
         invalidate();
     }
 
     @Override
-    public void onSetColor(AnnotationStroke stroke, int c)
+    public void onSetColor(AnnotationGeometry geometry, int c)
     {
         invalidate();
     }

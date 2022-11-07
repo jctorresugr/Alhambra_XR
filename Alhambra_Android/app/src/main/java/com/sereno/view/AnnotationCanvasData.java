@@ -15,23 +15,39 @@ public class AnnotationCanvasData
          * @param stroke  the stroke added*/
         void onAddStroke(AnnotationCanvasData data, AnnotationStroke stroke);
 
-        /** Method called when all the strokes are erased
-         * @param  data the AnnotationData firing this call
-         * @param strokes the old strokes getting cleared. You may want to remove some registered listeners*/
-        void onClearStrokes(AnnotationCanvasData data, List<AnnotationStroke> strokes);
+        /** Method called when all the geometries are erased
+         * @param data the AnnotationData firing this call
+         * @param geometries the old geometries getting cleared. You may want to remove some registered listeners*/
+        void onClearGeometries(AnnotationCanvasData data, List<AnnotationGeometry> geometries);
 
         /** Method called when a new background is set
          * @param data the AnnotationData firing this call
          * @param background the new background of the canvas*/
         void onSetBackground(AnnotationCanvasData data, Bitmap background);
+
+        /** Method called when the drawing method is set
+         * @param data the AnnotationData firing this call
+         * @param drawingMethod the new drawing method to apply*/
+        void onSetDrawingMethod(AnnotationCanvasData data, int drawingMethod);
     }
 
+    public static final int DRAWING_METHOD_STROKES  = 0;
+    public static final int DRAWING_METHOD_POLYGONS = 1;
+
+    /** the texture width where this annotation belongs to*/
     private int    m_width;
+
+    /** the texture height where this annotation belongs to*/
     private int    m_height;
+
+    /** The background Bitmap associated with the annotation canvas view */
     private Bitmap m_background = null;
 
-    /** List of strokes*/
-    private ArrayList<AnnotationStroke> m_strokes = new ArrayList<>();
+    /** the current drawing method. Useful to know what type of data to push (e.g., strokes or polygons?) */
+    private int m_drawingMethod = DRAWING_METHOD_STROKES;
+
+    /** List of m_geometries*/
+    private ArrayList<AnnotationGeometry> m_geometries = new ArrayList<>();
 
     /** The listeners to call when the current state of the annotations changed*/
     private ArrayList<IAnnotationDataListener> m_listeners = new ArrayList<>();
@@ -78,24 +94,24 @@ public class AnnotationCanvasData
      * @param s the new stroke to add*/
     public void addStroke(AnnotationStroke s)
     {
-        m_strokes.add(s);
+        m_geometries.add(s);
         for(int i = 0; i < m_listeners.size(); i++)
             m_listeners.get(i).onAddStroke(this, s);
     }
 
-    /** Get the list of strokes. Do not modify the list!
-     * @return the list of strokes. Do not modify the list! (but each AnnotationStroke can be)*/
-    public ArrayList<AnnotationStroke> getStrokes()
+    /** Get the list of geometries. Do not modify the list!
+     * @return the list of geometries. Do not modify the list! (but each AnnotationGeometry can be)*/
+    public ArrayList<AnnotationGeometry> getGeometries()
     {
-        return m_strokes;
+        return m_geometries;
     }
 
-    /** Clear all the registered strokes*/
-    public void clearStrokes()
+    /** Clear all the registered geometries*/
+    public void clearGeometries()
     {
         for(int i = 0; i < m_listeners.size(); i++)
-            m_listeners.get(i).onClearStrokes(this, m_strokes);
-        m_strokes.clear();
+            m_listeners.get(i).onClearGeometries(this, m_geometries);
+        m_geometries.clear();
     }
 
     /** Get the current background of the canvas
@@ -110,4 +126,20 @@ public class AnnotationCanvasData
         for(int i = 0; i < m_listeners.size(); i++)
             m_listeners.get(i).onSetBackground(this, background);
     }
+
+    /** Get the current drawing method. Useful to know what type of data to push (e.g., strokes or polygons?)
+     * @return the current drawing method. See static field "DRAWING_METHOD*" */
+    public int getDrawingMethod() {return m_drawingMethod;}
+
+    /** Set the current drawing method. Useful to know what type of data to push (e.g., strokes or polygons?)
+     * @param drawingMethod the new current drawing method to apply. See static field "DRAWING_METHOD*" */
+    public void setDrawingMethod(int drawingMethod)
+    {
+        if(m_drawingMethod == drawingMethod)
+            return;
+        m_drawingMethod = drawingMethod;
+        for(int i = 0; i < m_listeners.size(); i++)
+            m_listeners.get(i).onSetDrawingMethod(this, drawingMethod);
+    }
+
 }

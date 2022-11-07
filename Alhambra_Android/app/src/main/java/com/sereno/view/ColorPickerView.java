@@ -21,14 +21,15 @@ public class ColorPickerView extends View implements ColorPickerData.IColorPicke
         SLIDER,
         PICKER
     }
+
     /** Default hue slider picker height*/
-    private static final int PICKER_HEIGHT        = 50;
+    private static final int PICKER_HEIGHT        = 30;
 
     /** Default space between the picker SV and slider*/
-    private static final int PICKER_SPACE         = 10;
+    private static final int PICKER_SPACE         = 5;
 
     /** Default circle radius targeting the current color*/
-    private static final int PICKER_CIRCLE_RADIUS = 15;
+    private static final int PICKER_CIRCLE_RADIUS = 10;
 
     /** Default slider handler height*/
     private static final int SLIDER_HEIGHT        = 10;

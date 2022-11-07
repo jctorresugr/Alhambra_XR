@@ -2,7 +2,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Class describing annotations
+/// Immutable class describing registered annotations
 /// </summary>
 public class Annotation
 {
@@ -27,13 +27,19 @@ public class Annotation
     private int     m_snapshotHeight;
 
     /// <summary>
+    /// The textual description of the annotation
+    /// </summary>
+    private String m_description;
+
+    /// <summary>
     /// Constructor, initialize a read-only annotation
     /// </summary>
     /// <param name="color">The RGBA color representing this annotation in the target index texture</param>
     /// <param name="snapshotRGBA">The snapshot RGBA32 pixel image</param>
     /// <param name="snapshotWidth">The snapshot image width</param>
     /// <param name="snapshotHeight">The snapshot image height</param>
-    public Annotation(Color32 color, byte[] snapshotRGBA, int snapshotWidth, int snapshotHeight)
+    /// <param name="description">The textual description of the annotation</param>
+    public Annotation(Color32 color, byte[] snapshotRGBA, int snapshotWidth, int snapshotHeight, String description)
     {
         if (snapshotRGBA.Length < 4 * snapshotHeight * snapshotWidth)
             throw new InvalidOperationException($"The snapshot RGBA byte array contains {snapshotRGBA.Length} byte instead of {4*snapshotHeight*snapshotWidth}, according to the snapshot width and height");
@@ -41,6 +47,7 @@ public class Annotation
         m_snapshotRGBA   = snapshotRGBA;
         m_snapshotWidth  = snapshotWidth;
         m_snapshotHeight = snapshotHeight;
+        m_description    = description;
     }
 
     /// <summary>
@@ -73,5 +80,13 @@ public class Annotation
     public int SnapshotHeight
     {
         get => m_snapshotHeight;
+    }
+
+    /// <summary>
+    /// The textual description of the annotation
+    /// </summary>
+    public String Description
+    {
+        get => m_description;
     }
 }

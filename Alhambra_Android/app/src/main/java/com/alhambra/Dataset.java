@@ -274,7 +274,8 @@ public class Dataset
                                          (argbImg[4*srcIdx+1] << 8)  +
                                          (argbImg[4*srcIdx+2]);
             }
-        Data data = new Data(m_data.size()+1, layer, id, msg.getARGB8888Color(), "", new BitmapDrawable(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888)));
+        Data data = new Data(m_data.size()+1, layer, id, msg.getARGB8888Color(), msg.getDescription(),
+                             new BitmapDrawable(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888)));
         m_data.put(data.getIndex(), data);
         m_serverAnnotations.add(data.getIndex());
 

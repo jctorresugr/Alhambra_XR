@@ -7,32 +7,16 @@ import android.graphics.Point;
 import java.util.ArrayList;
 
 /** Class containing an annotation stroke information*/
-public class AnnotationStroke
+public class AnnotationStroke extends AnnotationGeometry
 {
     /** Listener containing methods to call when the internal state of the AnnotationStroke object changes*/
     public interface IAnnotationStrokeListener
     {
-        /** Method called when a new point has been added
-         * @param p the new point to add
-         * @param stroke the annotation stroke adding the point*/
-        void onAddPoint(AnnotationStroke stroke, Point p);
-
-        /** Method called when the stroke color changes
-         * @param stroke the annotation stroke changing color
-         * @param c the new stroke color*/
-        void onSetColor(AnnotationStroke stroke, int c);
-
         /** Method called when the stroke width changes
          * @param stroke the annotation stroke changing width
          * @param w the new stroke width*/
         void onSetWidth(AnnotationStroke stroke, float w);
     }
-
-    /** List of points composing the stroke*/
-    private ArrayList<Point> m_points = new ArrayList<>();
-
-    /** Color of the stroke*/
-    private int m_color = Color.BLACK;
 
     /** Width of the stroke in pixels*/
     private float m_width = 10.0f;
@@ -57,38 +41,6 @@ public class AnnotationStroke
     public void removeListener(IAnnotationStrokeListener l)
     {
         m_listeners.remove(l);
-    }
-
-    /** Add a new point on the points list
-     * @param p the new point to add*/
-    public void addPoint(Point p)
-    {
-        m_points.add(p);
-        for(int i = 0; i < m_listeners.size(); i++)
-            m_listeners.get(i).onAddPoint(this, p);
-    }
-
-    /** Get the list of points describing the stroke
-     * @return the list of points describing the stroke*/
-    public ArrayList<Point> getPoints()
-    {
-        return m_points;
-    }
-
-    /** Get the stroke color
-     * @return the stroke ARGB8888 color*/
-    public int getColor()
-    {
-        return m_color;
-    }
-
-    /** Set the stroke color
-     * @param color the new stroke ARGB8888 color to apply*/
-    public void setColor(int color)
-    {
-        m_color = color;
-        for(int i = 0; i < m_listeners.size(); i++)
-            m_listeners.get(i).onSetColor(this, color);
     }
 
     /** Get the stroke width

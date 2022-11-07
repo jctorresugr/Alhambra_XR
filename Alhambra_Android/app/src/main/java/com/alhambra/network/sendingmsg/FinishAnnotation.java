@@ -4,8 +4,13 @@ import android.graphics.Point;
 
 import com.sereno.math.Quaternion;
 import com.sereno.math.Vector3;
+import com.sereno.view.AnnotationGeometry;
 import com.sereno.view.AnnotationStroke;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /** Generate the JSON message for the 'end annotation' action*/
@@ -53,20 +58,27 @@ public class FinishAnnotation
 
     /** Generate the JSON message of "finishAnnotation"
      * @param confirm is the annotation validated (true) or cancelled (false)?
-     * @param strokes the strokes of the annotation
+     * @param geometries the geometries of the annotation
      * @param width the annotated image width
      * @param height the annotated image height
+     * @param desc the annotation description
      * @param cameraPos the camera position at the time of where the annotated image was taken
      * @param cameraRot the camera orientation at the time of where the annotated image was taken
      * @return the JSON message, curly brackets included.*/
-    public static String generateJSON(boolean confirm, List<AnnotationStroke> strokes, int width, int height, float[] cameraPos, Quaternion cameraRot)
+    public static String generateJSON(boolean confirm, List<AnnotationGeometry> geometries, int width, int height, String desc, float[] cameraPos, Quaternion cameraRot)
     {
+        List<AnnotationStroke> strokes = new ArrayList<>();
+        for(AnnotationGeometry g : geometries)
+            if(g instanceof AnnotationStroke)
+                strokes.add((AnnotationStroke)g);
+
         return "{\n" +
                 "   \"action\": \"finishAnnotation\",\n" +
                 "   \"data\": {\n" +
                 "       \"cameraPos\": " + Vector3.toString(cameraPos) + ",\n" +
                 "       \"cameraRot\": " + cameraRot.toString() + ",\n" +
                 "       \"confirm\": " + (confirm ? "true" : "false") + ",\n" +
+                "       \"description\": " + JSONObject.quote(desc) + ",\n" +
                 "       \"width\": " + width + ",\n" +
                 "       \"height\": " + height + ",\n" +
                 "       \"strokes\": " + generateStrokesJSON(strokes, 8) + "\n" +

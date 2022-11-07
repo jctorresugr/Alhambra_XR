@@ -385,7 +385,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                     byte[] newRGBA = MinimumRectImage(colorScreenShot.GetRawTextureData<byte>(), colorScreenShot.width, colorScreenShot.height, out newWidth, out newHeight);
 
                     //Save that information for later reuses (e.g., to send back on disconnection)
-                    Annotation annot = new Annotation(annotationColor, newRGBA, newWidth, newHeight);
+                    Annotation annot = new Annotation(annotationColor, newRGBA, newWidth, newHeight, detailedMsg.data.description);
                     lock (this)
                         m_annotations.Add(annot);
 

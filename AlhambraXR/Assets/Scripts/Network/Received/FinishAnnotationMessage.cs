@@ -59,5 +59,5 @@ public class FinishAnnotationMessage
     /// <summary>
     /// The message associated with this annotation
     /// </summary>
-    public String message;
+    public String description;
 }

@@ -7,6 +7,29 @@ using UnityEngine;
 
 public class JSONMessage
 {
+    public static String QuoteString(String s)
+    {
+        StringBuilder res = new StringBuilder();
+        res.Append('"');
+        for(int i = 0; i < s.Length; i++)
+        {
+            if (s[i] == '\\')
+                res.Append("\\\\");
+            else if (s[i] == '\n')
+                res.Append("\\n");
+            else if (s[i] == '\t')
+                res.Append("\\t");
+            else if (s[i] == '"')
+                res.Append("\\\"");
+            else if (s[i] == '/')
+                res.Append("\\/");
+            else
+                res.Append(s[i]);
+        }
+        res.Append('"');
+        return res.ToString();
+    }
+
     /// <summary>
     /// Create the JSON message corresponding to a selection from a picked color from the index color
     /// </summary>
@@ -72,7 +95,8 @@ public class JSONMessage
            $"        \"snapshotBase64\": \"{System.Convert.ToBase64String(annot.SnapshotRGBA)}\",\n" +
            $"        \"snapshotWidth\":  {annot.SnapshotWidth},\n" +
            $"        \"snapshotHeight\": {annot.SnapshotHeight},\n" +
-           $"        \"annotationColor\": [{annot.Color.r}, {annot.Color.g}, {annot.Color.b}, {annot.Color.a}]" +
+           $"        \"annotationColor\": [{annot.Color.r}, {annot.Color.g}, {annot.Color.b}, {annot.Color.a}],\n" +
+           $"        \"description\": {QuoteString(annot.Description)}" +
             "    }\n" +
             "}";
     }

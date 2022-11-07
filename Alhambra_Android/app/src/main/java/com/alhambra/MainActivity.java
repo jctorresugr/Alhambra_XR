@@ -282,8 +282,8 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
     @Override
     public void onConfirmAnnotation(AnnotationFragment frag)
     {
-        m_socket.push(FinishAnnotation.generateJSON(true, frag.getAnnotationCanvasData().getStrokes(), frag.getAnnotationCanvasData().getWidth(), frag.getAnnotationCanvasData().getHeight(),
-                                                    frag.getCameraPos(), frag.getCameraRot()));
+        m_socket.push(FinishAnnotation.generateJSON(true, frag.getAnnotationCanvasData().getGeometries(), frag.getAnnotationCanvasData().getWidth(), frag.getAnnotationCanvasData().getHeight(),
+                                                    frag.getAnnotationDescription(), frag.getCameraPos(), frag.getCameraRot()));
         frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);
     }
@@ -291,8 +291,8 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
     @Override
     public void onCancelAnnotation(AnnotationFragment frag)
     {
-        m_socket.push(FinishAnnotation.generateJSON(false, frag.getAnnotationCanvasData().getStrokes(), frag.getAnnotationCanvasData().getWidth(), frag.getAnnotationCanvasData().getHeight(),
-                                                    frag.getCameraPos(), frag.getCameraRot()));
+        m_socket.push(FinishAnnotation.generateJSON(false, frag.getAnnotationCanvasData().getGeometries(), frag.getAnnotationCanvasData().getWidth(), frag.getAnnotationCanvasData().getHeight(),
+                                                    frag.getAnnotationDescription(), frag.getCameraPos(), frag.getCameraRot()));
         frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);
     }
