@@ -1,9 +1,5 @@
 package com.sereno.view;
 
-
-import android.graphics.Color;
-import android.graphics.Point;
-
 import java.util.ArrayList;
 
 /** Class containing an annotation stroke information*/

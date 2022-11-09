@@ -337,7 +337,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 RTCamera.transform.position = new Vector3(detailedMsg.data.cameraPos[0], detailedMsg.data.cameraPos[1], detailedMsg.data.cameraPos[2]);
                 RTCamera.transform.rotation = new Quaternion(detailedMsg.data.cameraRot[1], detailedMsg.data.cameraRot[2], detailedMsg.data.cameraRot[3], detailedMsg.data.cameraRot[0]);
 
-                Mesh lines = GenerateMeshFromStrokesPolygons(detailedMsg.data.strokes, detailedMsg.data.polygons, detailedMsg.data.width, detailedMsg.data.height); //Generate the mesh from the strokes and polygons.
+                Mesh mesh = GenerateMeshFromStrokesPolygons(detailedMsg.data.strokes, detailedMsg.data.polygons, detailedMsg.data.width, detailedMsg.data.height); //Generate the mesh from the strokes and polygons.
 
                 //Create the texture that we will read, and a RenderTexture that the camera will render into for UV mappings
                 Texture2D uvScreenShot = new Texture2D(2048, 2048, TextureFormat.RGBAFloat, false);
@@ -352,7 +352,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 //Render the specific mesh from the camera position in the render texture (and thus in the linked screenShot texture)
                 CommandBuffer buf = new CommandBuffer();
                 buf.SetRenderTarget(new RenderTargetIdentifier[2] { uvRT, colorRT }, uvRT, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
-                buf.DrawMesh(lines, Matrix4x4.identity, StencilMaskMaterial, 0, -1);
+                buf.DrawMesh(mesh, Matrix4x4.identity, StencilMaskMaterial, 0, -1);
                 buf.DrawMesh(PickPanoModel.Mesh, PickPanoModel.transform.localToWorldMatrix, UVMaterial, 0, -1);
                 RTCamera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
                 RTCamera.Render();
