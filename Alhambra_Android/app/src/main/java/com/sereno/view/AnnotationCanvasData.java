@@ -1,6 +1,7 @@
 package com.sereno.view;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,10 +11,20 @@ public class AnnotationCanvasData
     /** Listener of the class AnnotationData*/
     public interface IAnnotationDataListener
     {
+        /** Method called when the color to apply to newly added geometries has been set
+         * @param data the AnnotationData firing this call
+         * @param color the ARGB8888 32-bits color to apply*/
+        void onSetCurrentColor(AnnotationCanvasData data, int color);
+
         /** Method called when a new stroke has been added
          * @param data the AnnotationData firing this call
          * @param stroke  the stroke added*/
         void onAddStroke(AnnotationCanvasData data, AnnotationStroke stroke);
+
+        /** Method called when a new polygon has been added
+         * @param data the AnnotationData firing this call
+         * @param polygon  the polygon added*/
+        void onAddPolygon(AnnotationCanvasData data, AnnotationPolygon polygon);
 
         /** Method called when all the geometries are erased
          * @param data the AnnotationData firing this call
@@ -39,6 +50,9 @@ public class AnnotationCanvasData
 
     /** the texture height where this annotation belongs to*/
     private int    m_height;
+
+    /** The current color to use for newly created geometries*/
+    private int    m_curColor = Color.BLACK;
 
     /** The background Bitmap associated with the annotation canvas view */
     private Bitmap m_background = null;
@@ -90,13 +104,40 @@ public class AnnotationCanvasData
         return m_height;
     }
 
+    /** Get the current ARGB8888 color to use for newly added geometries
+     * @return the ARGB8888 32-bits color to apply*/
+    public int getCurrentColor() {return m_curColor;}
+
+    /** Set the current ARGB8888 color to use for newly added geometries
+     * @param color the ARGB8888 32-bits color to apply*/
+    public void setCurrentColor(int color)
+    {
+        if(m_curColor != color)
+        {
+            m_curColor = color;
+            for(int i = 0; i < m_listeners.size(); i++)
+                m_listeners.get(i).onSetCurrentColor(this, color);
+        }
+    }
+
     /** Add a new stroke to the annotation stroke list
      * @param s the new stroke to add*/
     public void addStroke(AnnotationStroke s)
     {
         m_geometries.add(s);
+        s.setColor(m_curColor);
         for(int i = 0; i < m_listeners.size(); i++)
             m_listeners.get(i).onAddStroke(this, s);
+    }
+
+    /** Add a new polygon to the annotation polygon list
+     * @param p the new polygon to add*/
+    public void addPolygon(AnnotationPolygon p)
+    {
+        m_geometries.add(p);
+        p.setColor(m_curColor);
+        for(int i = 0; i < m_listeners.size(); i++)
+            m_listeners.get(i).onAddPolygon(this, p);
     }
 
     /** Get the list of geometries. Do not modify the list!

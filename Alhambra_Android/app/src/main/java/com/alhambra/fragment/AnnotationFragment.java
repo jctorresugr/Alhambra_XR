@@ -14,11 +14,15 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.alhambra.R;
+import com.sereno.color.Color;
+import com.sereno.color.HSVColor;
 import com.sereno.math.Quaternion;
 import com.sereno.view.AnnotationCanvasData;
 import com.sereno.view.AnnotationCanvasView;
 import com.sereno.view.AnnotationGeometry;
+import com.sereno.view.AnnotationPolygon;
 import com.sereno.view.AnnotationStroke;
+import com.sereno.view.ColorPickerData;
 import com.sereno.view.ColorPickerView;
 
 import java.lang.annotation.Annotation;
@@ -111,6 +115,8 @@ public class AnnotationFragment extends AlhambraFragment
             return false;
         });
 
+        m_colorPicker.getModel().addListener((data, color) -> m_canvas.getModel().setCurrentColor(color));
+
         m_drawingMethod.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id)
@@ -124,7 +130,18 @@ public class AnnotationFragment extends AlhambraFragment
 
         m_canvas.getModel().addListener(new AnnotationCanvasData.IAnnotationDataListener() {
             @Override
+            public void onSetCurrentColor(AnnotationCanvasData data, int color)
+            {
+                //HSVColor c = new HSVColor(0,1,1,1);
+                //c.setFromRGB(Color.fromARGB8888(color));
+                //m_colorPicker.getModel().setColor(c);
+            }
+
+            @Override
             public void onAddStroke(AnnotationCanvasData data, AnnotationStroke stroke) { stroke.setColor(m_currentStrokeColor); }
+
+            @Override
+            public void onAddPolygon(AnnotationCanvasData data, AnnotationPolygon polygon) {}
 
             @Override
             public void onClearGeometries(AnnotationCanvasData data, List<AnnotationGeometry> geometries) {}

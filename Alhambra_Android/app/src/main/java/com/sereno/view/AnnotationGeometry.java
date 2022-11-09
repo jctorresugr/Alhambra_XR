@@ -82,4 +82,10 @@ public class AnnotationGeometry
             m_listeners.get(i).onSetColor(this, color);
     }
 
+    /** Is the geometry correctly constructed (i.e., can it be drawn based on its stored data)?
+     * @return true is yes, false otherwise*/
+    public boolean isValid()
+    {
+        return true;
+    }
 }

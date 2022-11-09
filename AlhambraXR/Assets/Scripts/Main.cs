@@ -337,7 +337,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 RTCamera.transform.position = new Vector3(detailedMsg.data.cameraPos[0], detailedMsg.data.cameraPos[1], detailedMsg.data.cameraPos[2]);
                 RTCamera.transform.rotation = new Quaternion(detailedMsg.data.cameraRot[1], detailedMsg.data.cameraRot[2], detailedMsg.data.cameraRot[3], detailedMsg.data.cameraRot[0]);
 
-                Mesh lines = GenerateMeshFromStrokes(detailedMsg.data.strokes, detailedMsg.data.width, detailedMsg.data.height); //Generate the mesh from the strokes. The line width should be parametreable at one point...
+                Mesh lines = GenerateMeshFromStrokesPolygons(detailedMsg.data.strokes, detailedMsg.data.polygons, detailedMsg.data.width, detailedMsg.data.height); //Generate the mesh from the strokes and polygons.
 
                 //Create the texture that we will read, and a RenderTexture that the camera will render into for UV mappings
                 Texture2D uvScreenShot = new Texture2D(2048, 2048, TextureFormat.RGBAFloat, false);
@@ -490,20 +490,22 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     }
 
     /// <summary>
-    /// Generate a mesh containing triangles (which form quads) from a list of strokes
+    /// Generate a mesh containing triangles (which form quads) from a list of strokes and triangulate a set of polygons
     /// </summary>
     /// <param name="strokes">The list of strokes to convert to triangles</param>
+    /// <param name="polygons">The list of polygons to convert to triangles</param>
     /// <param name="imgWidth">The original width of the image where the strokes were drawn upon, to normalize the coordinate of the different points of the strokes</param>
     /// <param name="imgHeight">The original height of the image where the strokes were drawn upon, to normalize the coordinate of the different points of the strokes</param>
     /// <returns>The generated mesh containing triangles representing strokes with a given width in the camera space</returns>
     [BurstCompile(FloatPrecision.Medium, FloatMode.Fast)]
-    private Mesh GenerateMeshFromStrokes(Stroke[] strokes, int imgWidth, int imgHeight)
+    private Mesh GenerateMeshFromStrokesPolygons(Stroke[] strokes, Polygon[] polygons, int imgWidth, int imgHeight)
     {
-        //Create quad from lines
-        Mesh lines = new Mesh();
+        //Create triangles from strokes and polygons
+        Mesh triangles = new Mesh();
         List<Vector3> vertices = new List<Vector3>();
         List<int> indices = new List<int>();
 
+        //Create quads from strokes...
         foreach (Stroke stroke in strokes)
         {
             float lineWidth = stroke.width / Math.Min(imgWidth, imgHeight) * 2.0f;
@@ -556,12 +558,33 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 indices.Add(vertices.Count - 2);
             }
         }
-        lines.vertices = vertices.ToArray();
-        lines.indexFormat = IndexFormat.UInt32;
-        lines.SetIndices(indices.ToArray(), MeshTopology.Triangles, 0);
-        lines.RecalculateBounds();
 
-        return lines;
+        //Create triangles from polygons...
+        foreach(Polygon polygon in polygons)
+        {
+            int originalCount = vertices.Count;
+
+            Vector2[] points = new Vector2[polygon.points.Length / 2];
+            for (int i = 0; i < points.Length; i++)
+                points[i] = new Vector2(polygon.points[2 * i], polygon.points[2 * i + 1]);
+
+            foreach (Vector2 p in points)
+                vertices.Add(new Vector3(2 * p.x / imgWidth - 1, 
+                                         2 * p.y / imgHeight - 1,
+                                         0));
+
+            int[] polygonIndices = Triangulator.Triangulate(points);
+            foreach(int i in polygonIndices)
+                indices.Add(originalCount + i);
+        }
+
+        //Finally, send all the data to the graphics card
+        triangles.vertices = vertices.ToArray();
+        triangles.indexFormat = IndexFormat.UInt32;
+        triangles.SetIndices(indices.ToArray(), MeshTopology.Triangles, 0);
+        triangles.RecalculateBounds();
+
+        return triangles;
     }
 
     public void OnSetCurrentAction(Model model, CurrentAction action)

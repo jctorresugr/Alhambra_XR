@@ -2,10 +2,14 @@ package com.sereno.color;
 
 public class HSVColor
 {
-    public float h; /**!< The Hue between 0 and 360°*/
-    public float s; /**!< The Saturation*/
-    public float v; /**!< The value*/
-    public float a; /**!< The alpha*/
+    /** The Hue between 0 and 360°*/
+    public float h;
+    /** The Saturation*/
+    public float s;
+    /** The value*/
+    public float v;
+    /** The alpha*/
+    public float a;
 
     /** \brief Constructor
      * @param _h the hue

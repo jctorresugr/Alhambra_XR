@@ -21,6 +21,21 @@ public class Stroke
 }
 
 /// <summary>
+/// The data about one polygon
+/// </summary>
+[Serializable]
+public class Polygon
+{
+    /// <summary>
+    /// The points of the polygon
+    /// Number of points: points.Length/2
+    /// Position of point ID i: {x=points[2*i], y=points[2*i+1]}
+    /// Points should be between (0, 0) and (annotationWidth, annotationHeight)
+    /// </summary>
+    public float[] points;
+}
+
+/// <summary>
 /// Data part of the message to finish the annotation process
 /// </summary>
 [Serializable]
@@ -45,6 +60,11 @@ public class FinishAnnotationMessage
     /// The strokes to anchor back to the environment
     /// </summary>
     public Stroke[] strokes;
+
+    /// <summary>
+    /// The polygons to anchor back to the environment
+    /// </summary>
+    public Polygon[] polygons;
 
     /// <summary>
     /// The width of the image where the strokes were captured
