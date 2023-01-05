@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
             public void onDisconnection(SocketManager socket)
             {
                 Log.w(TAG, "Disconnected");
-                m_dataset.clearServerAnnotations();
+                MainActivity.this.runOnUiThread(() -> m_dataset.clearServerAnnotations());
             }
 
             @Override
