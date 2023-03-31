@@ -15,6 +15,7 @@ using UnityEngine.Rendering;
 /// </summary>
 public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickPano.IPickPanoListener, Client.IClientListener, Model.IModelListener, IMixedRealityInputActionHandler
 {
+    private const int LIGHT_ALL_INDEX= 255;
     /// <summary>
     /// The server application
     /// </summary>
@@ -109,6 +110,11 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     /// Any text that has to be displayed
     /// </summary>
     public UnityEngine.UI.Text RandomText;
+
+    /// <summary>
+    /// A better navigator? in progress
+    /// </summary>
+    public LineNavigator lineNavigator;
 
     private void Awake()
     {
@@ -226,10 +232,21 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         if(m_curAnnotation != null)
         {
             PointingArrow.SetActive(true);
-            PointingArrow.transform.rotation = Quaternion.LookRotation(PickPanoModel.transform.localToWorldMatrix.MultiplyPoint3x4(m_curAnnotation.Center) - Camera.main.transform.position, new Vector3(0, 1, 0));
+            Vector3 annotationPos = PickPanoModel.transform.localToWorldMatrix.MultiplyPoint3x4(m_curAnnotation.Center);
+
+            PointingArrow.transform.rotation = Quaternion.LookRotation(annotationPos - Camera.main.transform.position, new Vector3(0, 1, 0));
+            lineNavigator.Visible = true;
+            //lineNavigator.SetPositions(Camera.main.transform.position+Camera.main.transform.forward*0.5f, annotationPos+m_curAnnotation.Normal*0.5f);
+            //debug normal:
+            lineNavigator.SetPositions(annotationPos,annotationPos + m_curAnnotation.Normal * 0.5f);
+
         }
         else
+        {
             PointingArrow.SetActive(false);
+            lineNavigator.Visible = false;
+        }
+            
     }
 
     /// <summary>
@@ -247,6 +264,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     public void OnConnectionStatus(AlhambraServer server, ConnectionStatus status)
     {
         //Show the IP address of the device in case of a disconnection. Otherwise, hide it.
+        Debug.Log("Connection status:" + status);
         if(status == ConnectionStatus.DISCONNECTED)
         {
             lock(this)
@@ -288,15 +306,15 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         CommonMessage commonMsg = CommonMessage.FromJSON(msg);
 
         //Handle the highlight action type
-        if(commonMsg.action == "highlight")
+        if (commonMsg.action == "highlight")
         {
             ReceivedMessage<HighlightMessage> detailedMsg = ReceivedMessage<HighlightMessage>.FromJSON(msg);
-            m_model.CurrentAction          = CurrentAction.IN_HIGHLIGHT;
-            m_model.CurrentHighlightMain   = new PairLayerID() { Layer = detailedMsg.data.layer, ID = detailedMsg.data.id };
-            m_model.CurrentHighlightSecond = new PairLayerID() { Layer = -1, ID = -1};
+            m_model.CurrentAction = CurrentAction.IN_HIGHLIGHT;
+            m_model.CurrentHighlightMain = new PairLayerID() { Layer = detailedMsg.data.layer, ID = detailedMsg.data.id };
+            m_model.CurrentHighlightSecond = new PairLayerID() { Layer = -1, ID = -1 };
         }
 
-        else if(commonMsg.action == "startAnnotation")
+        else if (commonMsg.action == "startAnnotation")
         {
             //Display instruction to the user
             lock (this)
@@ -311,15 +329,25 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
             m_model.CurrentAction = CurrentAction.START_ANNOTATION;
             if (oldAction != CurrentAction.IN_HIGHLIGHT)
             {
-                m_model.CurrentHighlightMain   = new PairLayerID() { Layer = -1, ID = -1 };
+                m_model.CurrentHighlightMain = new PairLayerID() { Layer = -1, ID = -1 };
                 m_model.CurrentHighlightSecond = new PairLayerID() { Layer = -1, ID = -1 };
             }
         }
 
-        else if(commonMsg.action == "finishAnnotation")
+        else if (commonMsg.action == "finishAnnotation")
         {
             ReceivedMessage<FinishAnnotationMessage> detailedMsg = ReceivedMessage<FinishAnnotationMessage>.FromJSON(msg);
             HandleFinishAction(detailedMsg);
+        }
+
+        else if (commonMsg.action == "showAllAnnotation")
+        {
+            HandleShowAll();
+        }
+
+        else if(commonMsg.action == "stopShowAllAnnotation")
+        {
+            HandleStopShowAll();
         }
     }
 
@@ -739,5 +767,19 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
             }
         }
         file.Close();
+    }
+
+    private void HandleShowAll()
+    {
+        m_model.CurrentAction = CurrentAction.IN_HIGHLIGHT;
+        m_model.CurrentHighlightMain = new PairLayerID() { Layer = LIGHT_ALL_INDEX, ID = -1 };
+        m_model.CurrentHighlightSecond = new PairLayerID() { Layer = -1, ID = -1 };
+    }
+
+    private void HandleStopShowAll()
+    {
+        m_model.CurrentAction = CurrentAction.DEFAULT;
+        m_model.CurrentHighlightMain = new PairLayerID() { Layer = -1, ID = -1 };
+        m_model.CurrentHighlightSecond = new PairLayerID() { Layer = -1, ID = -1 };
     }
 }

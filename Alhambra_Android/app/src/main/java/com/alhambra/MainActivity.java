@@ -9,6 +9,7 @@ import android.view.View;
 
 import com.alhambra.fragment.AlhambraFragment;
 import com.alhambra.fragment.AnnotationFragment;
+import com.alhambra.fragment.OverviewFragment;
 import com.alhambra.fragment.PageViewer;
 import com.alhambra.fragment.PreviewFragment;
 import com.alhambra.fragment.ViewPagerAdapter;
@@ -18,6 +19,7 @@ import com.alhambra.network.receivingmsg.SelectionMessage;
 import com.alhambra.network.SocketManager;
 import com.alhambra.network.sendingmsg.FinishAnnotation;
 import com.alhambra.network.sendingmsg.HighlightDataChunk;
+import com.alhambra.network.sendingmsg.OverviewMessage;
 import com.alhambra.network.sendingmsg.StartAnnotation;
 import com.google.android.material.tabs.TabLayout;
 
@@ -32,7 +34,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 /** The Main Activity of this application. This is the first thing that is suppose to start*/
-public class MainActivity extends AppCompatActivity implements AlhambraFragment.IFragmentListener, PreviewFragment.IPreviewFragmentListener, AnnotationFragment.IAnnotationFragmentListener
+public class MainActivity
+        extends AppCompatActivity
+        implements
+            AlhambraFragment.IFragmentListener,
+            PreviewFragment.IPreviewFragmentListener,
+            AnnotationFragment.IAnnotationFragmentListener,
+            OverviewFragment.OverviewFragmentListener
 {
     /** The TAG to use for logging information*/
     public static final String TAG = "Alhambra";
@@ -63,6 +71,9 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
 
     /** The annotation tab*/
     private AnnotationFragment m_annotationFragment = null;
+
+    /** The overview tab*/
+    private OverviewFragment m_overviewFragment = null;
 
     /*--------------------------------------*/
     /*-----Initialization of everything-----*/
@@ -227,6 +238,12 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
         m_annotationFragment.addListener((AnnotationFragment.IAnnotationFragmentListener)this);
         adapter.addFragment(m_annotationFragment, "Annotation");
 
+        //Add Overview tab
+        m_overviewFragment = new OverviewFragment();
+        m_overviewFragment.addListener((OverviewFragment.OverviewFragmentListener) this);
+        adapter.addFragment(m_overviewFragment, "Overview");
+
+
         //Link the PageViewer with the adapter, and link the TabLayout with the PageViewer
         m_viewPager.setAdapter(adapter);
         m_tabLayout = (TabLayout)findViewById(R.id.tabs);
@@ -295,5 +312,15 @@ public class MainActivity extends AppCompatActivity implements AlhambraFragment.
                                                     frag.getAnnotationDescription(), frag.getCameraPos(), frag.getCameraRot()));
         frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);
+    }
+
+    @Override
+    public void showAllAnnotation(OverviewFragment frag) {
+        m_socket.push(OverviewMessage.generateShowAllJSON());
+    }
+
+    @Override
+    public void stopShowAllAnnotation(OverviewFragment frag) {
+        m_socket.push(OverviewMessage.generateStopShowAllJSON());
     }
 }

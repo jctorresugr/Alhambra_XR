@@ -32,6 +32,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         /// </summary>
         public float[] BoundingMax { get; set; }
 
+        public Vector3 Normal { get; set; }
+
         /// <summary>
         /// The central position of this annotation in the local space of the 3D model.
         /// </summary>
@@ -95,10 +97,14 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     /// </summary>
     private float[] m_uvToPositionPixels = null;
 
+    private float[] m_uvToNormalPixels = null;
+
     /// <summary>
     /// The Material to map UV coordinates to the 3D positions in local space.
     /// </summary>
     public Material UVToPosition;
+
+    public Material UVToNormal;
 
     /// <summary>
     /// The camera used to render data on RenderTexture
@@ -129,7 +135,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         //Render the specific mesh from the camera position in the render texture (and thus in the linked screenShot texture)
         CommandBuffer buf = new CommandBuffer();
         buf.SetRenderTarget(colorRT, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
-        buf.DrawMesh(Mesh, Matrix4x4.identity, UVToPosition, 0, -1);
+        buf.DrawMesh(Mesh, Matrix4x4.identity, UVToPosition, 0, -1); // This shader maps [0,1] to [-1,1]
         RTCamera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
         RTCamera.Render();
         RTCamera.RemoveCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
@@ -138,13 +144,28 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         RenderTexture.active = colorRT;
         colorScreenShot.ReadPixels(new Rect(0, 0, colorScreenShot.width, colorScreenShot.height), 0, 0);
 
+
+        //Save the pixels for later usages
+        m_uvToPositionPixels = colorScreenShot.GetRawTextureData<float>().ToArray();
+
+        // added by Yucheng: generate normal map
+        //m_normalTexture = new Texture2D(indexTexture.width, indexTexture.height, TextureFormat.RGBAFloat, false);// maybe RGB565 for optimization?
+        CommandBuffer buf2 = new CommandBuffer();
+        buf.SetRenderTarget(colorRT, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
+        buf.DrawMesh(Mesh, Matrix4x4.identity, UVToNormal, 0, -1); 
+        RTCamera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
+        RTCamera.Render();
+        RTCamera.RemoveCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
+
+        //Read back the pixels from the render texture to the texture
+        RenderTexture.active = colorRT;
+        colorScreenShot.ReadPixels(new Rect(0, 0, colorScreenShot.width, colorScreenShot.height), 0, 0);
+        m_uvToNormalPixels = colorScreenShot.GetRawTextureData<float>().ToArray();
+
         //Clean up our messes
         RTCamera.targetTexture = null;
         RenderTexture.active = null;
         Destroy(colorRT);
-
-        //Save the pixels for later usages
-        m_uvToPositionPixels = colorScreenShot.GetRawTextureData<float>().ToArray();
 
         /*********************************************************************/
         /*************Second -- Determine the known annotations***************/
@@ -158,20 +179,21 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             (i, state, partialRes) =>
             {
                 int idx = 4*i;
-                if (srcRGBA[idx + 3] > 0 && m_uvToPositionPixels[idx+3] > 0)
+                if (srcRGBA[idx + 3] > 0 && m_uvToPositionPixels[idx+3] > 0) // if exists annotation in this pixel
                 {
                     Annotation srcAnnot = partialRes.Find((annot) => annot.Color.r == srcRGBA[idx + 0] &&
                                                                      annot.Color.g == srcRGBA[idx + 1] &&
-                                                                     annot.Color.b == srcRGBA[idx + 2]);
+                                                                     annot.Color.b == srcRGBA[idx + 2]); // find annotation we stored here
 
-                    if (srcAnnot == null)
-                        partialRes.Add(new Annotation()
+                    if (srcAnnot == null) // cannot find :(
+                        partialRes.Add(new Annotation() // add the annotation to the record list
                         {
                             Color = new Color32(srcRGBA[idx + 0],
                                                 srcRGBA[idx + 1],
                                                 srcRGBA[idx + 2], 255),
                             BoundingMin = new float[3] { m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2] },
-                            BoundingMax = new float[3] { m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2] }
+                            BoundingMax = new float[3] { m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2] },
+                            Normal = new Vector3(m_uvToNormalPixels[idx + 0], m_uvToNormalPixels[idx + 1], m_uvToNormalPixels[idx + 2])
                         });
                     else
                     {
@@ -180,6 +202,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
                             srcAnnot.BoundingMin[j] = Math.Min(srcAnnot.BoundingMin[j], m_uvToPositionPixels[idx + j]);
                             srcAnnot.BoundingMax[j] = Math.Max(srcAnnot.BoundingMax[j], m_uvToPositionPixels[idx + j]);
                         }
+                        srcAnnot.Normal += new Vector3(m_uvToNormalPixels[idx + 0], m_uvToNormalPixels[idx + 1], m_uvToNormalPixels[idx + 2]);
                     }
                 }
 
@@ -197,7 +220,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
                             m_annotations.Add(annot);
                         else //Merge annotations in the parallel computation
                         {
-                            for(int i = 0; i < 3; i++) 
+                            for(int i = 0; i < 3; i++) //merge bounding box information
                             {
                                 srcAnnot.BoundingMax[i] = Math.Max(srcAnnot.BoundingMax[i], annot.BoundingMax[i]);
                                 srcAnnot.BoundingMin[i] = Math.Min(srcAnnot.BoundingMin[i], annot.BoundingMin[i]);
@@ -207,6 +230,12 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
                 }
             }
         );
+
+        Parallel.ForEach(m_annotations,
+            (annot) =>
+            {
+                annot.Normal = annot.Normal.normalized;
+            });
 
         //Debug purposes, to check that annotations are anchored at their correct position.
         //GameObject originGO = GameObject.Find("Origin");
@@ -473,7 +502,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         { 
             Color = layerColor, 
             BoundingMin = new float[3] { float.MaxValue, float.MaxValue, float.MaxValue }, 
-            BoundingMax = new float[3] { float.MinValue, float.MinValue, float.MinValue }
+            BoundingMax = new float[3] { float.MinValue, float.MinValue, float.MinValue },
+            Normal = Vector3.zero
         };
 
         //Now that we know on which layer to put that annotation, anchor it
@@ -503,6 +533,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
                         partialRes[k]   = Math.Min(m_uvToPositionPixels[srcIdx + k], partialRes[k]);
                         partialRes[k+3] = Math.Max(m_uvToPositionPixels[srcIdx + k], partialRes[k+3]);
                     }
+                    
                 }
                 return partialRes;
             },
@@ -518,6 +549,37 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
                 }
             }
         );
+
+        Parallel.For(0, uvHeight,
+            () => new Vector3(0,0,0),
+            (j, state, partialRes) =>
+            {
+                for (int i = 0; i < uvWidth; i++)
+                {
+                    if (newRGBA[j * uvWidth + i].a == 0) //Transparent UV
+                        continue;
+
+                    int srcJ = (int)(newRGBA[j * uvWidth + i].g * srcHeight);
+                    int srcI = (int)(newRGBA[j * uvWidth + i].r * srcWidth);
+                    int srcIdx = (srcJ * srcWidth + srcI)*4;
+
+                    if (m_uvToPositionPixels[srcIdx + 3] == 0) //Unknown 3D position
+                        continue;
+
+                    partialRes += new Vector3(m_uvToNormalPixels[srcIdx], m_uvToNormalPixels[srcIdx+1], m_uvToNormalPixels[srcIdx+2]);
+
+                }
+                return partialRes;
+            },
+            (partialRes) =>
+            {
+                lock (annot)
+                {
+                    annot.Normal += partialRes;
+                }
+            }
+        );
+        annot.Normal = annot.Normal.normalized;
         Debug.Log($"Finish to add annotation Color {layerColor}");
         m_annotations.Add(annot);
 

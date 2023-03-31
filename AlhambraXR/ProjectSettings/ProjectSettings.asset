@@ -173,6 +173,9 @@ PlayerSettings:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -681,6 +684,7 @@ PlayerSettings:
     WindowsStoreApps:
       GazeInput: True
       MusicLibrary: False
+      PrivateNetworkClientServer: True
       InternetClientServer: True
       SpatialPerception: True
       InternetClient: True
