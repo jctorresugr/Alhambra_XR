@@ -11,6 +11,8 @@ public class Annotation
     /// </summary>
     private Color32 m_color;
 
+    private AnnotationID m_annotationID;
+
     /// <summary>
     /// The snapshot RGBA32 pixel image
     /// </summary>
@@ -44,6 +46,7 @@ public class Annotation
         if (snapshotRGBA.Length < 4 * snapshotHeight * snapshotWidth)
             throw new InvalidOperationException($"The snapshot RGBA byte array contains {snapshotRGBA.Length} byte instead of {4*snapshotHeight*snapshotWidth}, according to the snapshot width and height");
         m_color          = color;
+        m_annotationID = new AnnotationID(color);
         m_snapshotRGBA   = snapshotRGBA;
         m_snapshotWidth  = snapshotWidth;
         m_snapshotHeight = snapshotHeight;

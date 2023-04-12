@@ -1,118 +1,56 @@
-package com.alhambra;
+package com.alhambra.dataset;
 
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 
+import com.alhambra.dataset.data.AnnotationData;
 import com.alhambra.network.receivingmsg.AddAnnotationMessage;
 import com.sereno.CSVReader;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
 /** Class parsing the whole dataset for later uses*/
-public class Dataset
+public class AnnotationDataset
 {
     /** Basic listener to monitor changes in the dataset status*/
     public interface IDatasetListener
     {
         /** Function called when the main entry index of the dataset has been changed
-         * @param dataset the dataset calling this function
+         * @param annotationDataset the dataset calling this function
          * @param index the new entry Index*/
-        void onSetMainEntryIndex(Dataset dataset, int index);
+        void onSetMainEntryIndex(AnnotationDataset annotationDataset, int index);
 
         /** Function called when the active highlighting selection of the dataset has been changed
-         * @param dataset the dataset calling this function
+         * @param annotationDataset the dataset calling this function
          * @param selections the new indexes to highlight. If selections.length == 0, then there is nothing to highlight*/
-        void onSetSelection(Dataset dataset, int[] selections);
+        void onSetSelection(AnnotationDataset annotationDataset, int[] selections);
 
         /** Function called when a new data chunk was added to the dataset
-         * @param dataset the dataset calling this function
-         * @param data  the newly added data chunk. This data chunk can have been created on the server's requests, and can later be deleted if needed*/
-        void onAddDataChunk(Dataset dataset, Data data);
+         * @param annotationDataset the dataset calling this function
+         * @param annotationData  the newly added data chunk. This data chunk can have been created on the server's requests, and can later be deleted if needed*/
+        void onAddDataChunk(AnnotationDataset annotationDataset, AnnotationData annotationData);
 
         /** Function called when a data chunk was removed from the dataset
-         * @param dataset the dataset calling this function
-         * @param data  the data chunk that is being removed. This data chunk is not part of the original dataset (that is immutable)*/
-        void onRemoveDataChunk(Dataset dataset, Data data);
+         * @param annotationDataset the dataset calling this function
+         * @param annotationData  the data chunk that is being removed. This data chunk is not part of the original dataset (that is immutable)*/
+        void onRemoveDataChunk(AnnotationDataset annotationDataset, AnnotationData annotationData);
     }
 
-    /** This class describes the chunk of data as saved in the database
-     * Each chunk of data is readonly once it is created.*/
-    public static class Data
-    {
-        /** The index of this chunk of data*/
-        private int    m_index = 0;
 
-        /** The ID of this chunk of data*/
-        private int    m_id = 0;
-
-        /** The layer ID to which this chunk of data belongs to*/
-        private int    m_layer = 0;
-
-        /** The color representing this chunk of data*/
-        private int    m_color = 0;
-
-        /** The text associated with this chunk of data*/
-        private String m_text = "";
-
-        /** The image associated with this chunk of data*/
-        private Drawable m_drawable = null;
-
-        /** Constructor
-         * @param index the Index of this chunk of data
-         * @param id  The ID of this chunk of data inside its layer
-         * @param layer The layer ID to which this chunk of data belongs to
-         * @param color  The color representing this chunk of data
-         * @param text The text associated with this chunk of data
-         * @param img The image drawable describing this data chunk*/
-        public Data(int index, int layer, int id, int color, String text, Drawable img)
-        {
-            m_index    = index;
-            m_layer    = layer;
-            m_id       = id;
-            m_color    = color;
-            m_text     = text;
-            m_drawable = img;
-        }
-
-        /** Get the index of this chunk of data*/
-        public int getIndex() {return m_index;}
-
-        /** Get the ID of this chunk of data*/
-        public int getID() {return m_id;}
-
-        /** Get the layer ID to which this chunk of data belongs to*/
-        public int getLayer() {return m_layer;}
-
-        /** Get the color representing this chunk of data*/
-        public int getColor() {return m_color;}
-
-        /** Get the text associated with this chunk of data*/
-        public String getText() {return m_text;}
-
-        /** Get the image drawable describing this data chunk*/
-        public Drawable getImage() {return m_drawable;}
-    }
 
     /** All the stored chunks of data
      * Key: Index
      * Value: Data*/
-    private HashMap<Integer, Data> m_data = new HashMap<>();
+    private HashMap<Integer, AnnotationData> m_data = new HashMap<>();
 
     /** The Indexes of the data chunks the server created*/
     private ArrayList<Integer> m_serverAnnotations = new ArrayList<>();
@@ -120,10 +58,10 @@ public class Dataset
     /** The HashMap of all available Layers and their underlying data. We prefer to pre-compute this list for fast access
      * Key: Layer ID
      * Value: List of Data chunk*/
-    private HashMap<Integer, List<Data>> m_layers = new HashMap<>();
+    private HashMap<Integer, List<AnnotationData>> m_layers = new HashMap<>();
 
     /** The general default data*/
-    private Data m_defaultData = null;
+    private AnnotationData m_defaultAnnotationData = null;
 
     /** The listeners to notify changes*/
     private ArrayList<IDatasetListener> m_listeners = new ArrayList<IDatasetListener>();
@@ -137,7 +75,7 @@ public class Dataset
     /** Constructor. Read, from the asset manager, the dataset described by assetHeader
      * @param assetManager the asset manager to read text data directly stored in the "assets" directory
      * @param assetHeader  the main file describing the dataset*/
-    public Dataset(AssetManager assetManager, String assetHeader) throws IOException, IllegalArgumentException
+    public AnnotationDataset(AssetManager assetManager, String assetHeader) throws IOException, IllegalArgumentException
     {
         InputStream dataset = assetManager.open(assetHeader);
 
@@ -192,10 +130,10 @@ public class Dataset
                 //If default: No color and no layer and add the data chunk
                 if(isDefault)
                 {
-                    if(m_defaultData != null)
+                    if(m_defaultAnnotationData != null)
                         throw new IllegalArgumentException("The dataset contains multiple default data entry");
-                    m_defaultData = new Data(index, -1, -1, 0x00, text.toString("UTF-8"), img);
-                    m_data.put(index, m_defaultData);
+                    m_defaultAnnotationData = new AnnotationData(index, -1, -1, 0x00, text.toString("UTF-8"), img);
+                    m_data.put(index, m_defaultAnnotationData);
                 }
 
                 //Else, read color + layer and add the data chunk
@@ -217,14 +155,14 @@ public class Dataset
                         colorRGBA += Math.max(0, Math.min(255, Integer.parseInt(colorArray[j]))) << (byte)(4*j);
 
                     //Save the content
-                    Data data = new Data(index, layer, id, colorRGBA, text.toString("UTF-8"), img);
-                    m_data.put(index, data);
+                    AnnotationData annotationData = new AnnotationData(index, layer, id, colorRGBA, text.toString("UTF-8"), img);
+                    m_data.put(index, annotationData);
                     if(m_layers.containsKey(layer))
-                        m_layers.get(layer).add(data);
+                        m_layers.get(layer).add(annotationData);
                     else
                     {
-                        ArrayList<Data> arr = new ArrayList<>();
-                        arr.add(data);
+                        ArrayList<AnnotationData> arr = new ArrayList<>();
+                        arr.add(annotationData);
                         m_layers.put(layer, arr);
                     }
                 }
@@ -274,13 +212,13 @@ public class Dataset
                                          (argbImg[4*srcIdx+1] << 8)  +
                                          (argbImg[4*srcIdx+2]);
             }
-        Data data = new Data(m_data.size()+1, layer, id, msg.getARGB8888Color(), msg.getDescription(),
+        AnnotationData annotationData = new AnnotationData(m_data.size()+1, layer, id, msg.getARGB8888Color(), msg.getDescription(),
                              new BitmapDrawable(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888)));
-        m_data.put(data.getIndex(), data);
-        m_serverAnnotations.add(data.getIndex());
+        m_data.put(annotationData.getIndex(), annotationData);
+        m_serverAnnotations.add(annotationData.getIndex());
 
         for(IDatasetListener l : m_listeners)
-            l.onAddDataChunk(this, data);
+            l.onAddDataChunk(this, annotationData);
         return true;
     }
 
@@ -337,7 +275,7 @@ public class Dataset
     /** Get the datachunk at ID==id
      * @param index the index to look for
      * @return the data that contains this, normally, unique ID. See isIndexValid before calling this function to check that the ID is a valid one*/
-    public Data getDataFromIndex(int index)
+    public AnnotationData getDataFromIndex(int index)
     {
         return m_data.get(index);
     }
@@ -345,7 +283,7 @@ public class Dataset
     /** Get all the data contained in layer == layer
      * @param layer the layer to look for
      * @return the list of of data this layer contains. An empty list is returned if the layer is not found (see also isLayerValid and getLayers)*/
-    public List<Data> getDataAtLayer(int layer)
+    public List<AnnotationData> getDataAtLayer(int layer)
     {
         if(m_layers.containsKey(layer))
             return m_layers.get(layer);
@@ -358,7 +296,7 @@ public class Dataset
      * @return -1 if the data is not found, the index otherwise*/
     public int getIndexFromID(int layer, int id)
     {
-        for(Data d : m_data.values())
+        for(AnnotationData d : m_data.values())
             if(d.getLayer() == layer && d.getID() == id)
                 return d.getIndex();
         return -1;
@@ -388,7 +326,7 @@ public class Dataset
      * @return true if the pair of (layer, id) is valid, false otherwise*/
     public boolean setMainEntryID(int layer, int id)
     {
-        for(Data d : m_data.values())
+        for(AnnotationData d : m_data.values())
             if(d.getLayer() == layer && d.getID() == id)
                 return setMainEntryIndex(d.getIndex());
         return false;

@@ -10,7 +10,8 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.alhambra.Dataset;
+import com.alhambra.dataset.data.AnnotationData;
+import com.alhambra.dataset.AnnotationDataset;
 import com.alhambra.R;
 import com.sereno.Tree;
 import com.sereno.view.TreeView;
@@ -18,19 +19,19 @@ import com.sereno.view.TreeView;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class PreviewFragment extends AlhambraFragment implements Dataset.IDatasetListener
+public class PreviewFragment extends AlhambraFragment implements AnnotationDataset.IDatasetListener
 {
     /** Interface containing events fired from the PreviewFragment*/
     public interface IPreviewFragmentListener
     {
         /** Highlight a particular data chunk
          * @param fragment the fragment calling this event
-         * @param data the data chunk to highlight*/
-        void onHighlightDataChunk(PreviewFragment fragment, Dataset.Data data);
+         * @param annotationData the data chunk to highlight*/
+        void onHighlightDataChunk(PreviewFragment fragment, AnnotationData annotationData);
     }
 
     /** The dataset associated with this application*/
-    private Dataset m_dataset = null;
+    private AnnotationDataset m_Annotation_dataset = null;
 
     /** All the entries shown in the Previous tree object*/
     private HashMap<Integer, Tree<View>> m_datasetEntries = new HashMap<>();
@@ -91,13 +92,13 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
 
     /** Set the dataset to manipulate and render
      * @param d the new dataset*/
-    public void setDataset(Dataset d)
+    public void setDataset(AnnotationDataset d)
     {
         //Set the dataset
-        if(m_dataset != null)
-            m_dataset.removeListener(this);
-        m_dataset = d;
-        m_dataset.addListener(this);
+        if(m_Annotation_dataset != null)
+            m_Annotation_dataset.removeListener(this);
+        m_Annotation_dataset = d;
+        m_Annotation_dataset.addListener(this);
 
         //Cannot update the layout...
         if(m_ctx == null)
@@ -108,7 +109,7 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         m_datasetEntries.clear();
 
         //Populate the preview tree
-        for(Integer i : m_dataset.getIndexes())
+        for(Integer i : m_Annotation_dataset.getIndexes())
             addDataChunk(i);
 
         //Setup the view based on the model information
@@ -133,11 +134,11 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
 
         //Configure the preview image
         ImageView imageView = preview.findViewById(R.id.preview_key_entry_drawable);
-        imageView.setImageDrawable(m_dataset.getDataFromIndex(idx).getImage());
+        imageView.setImageDrawable(m_Annotation_dataset.getDataFromIndex(idx).getImage());
 
         //Put that in the tree view and set all the interactive listeners
         Tree<View> idTree = new Tree<>(preview);
-        preview.setOnClickListener(view -> m_dataset.setMainEntryIndex(idx));
+        preview.setOnClickListener(view -> m_Annotation_dataset.setMainEntryIndex(idx));
         treeModel.addChild(idTree, -1);
         m_datasetEntries.put(idx, idTree);
     }
@@ -158,27 +159,27 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         //Initialize Listeners
         m_previousBtn.setOnClickListener(view -> {
             if(m_currentSelection != null)
-                m_dataset.setMainEntryIndex(findPreviousID());
+                m_Annotation_dataset.setMainEntryIndex(findPreviousID());
         });
 
         m_nextBtn.setOnClickListener(view -> {
             if(m_currentSelection != null)
-                m_dataset.setMainEntryIndex(findNextID());
+                m_Annotation_dataset.setMainEntryIndex(findNextID());
         });
 
         m_quitSelectionBtn.setOnClickListener(view -> {
             if(m_currentSelection != null)
-                m_dataset.setCurrentSelection(new int[0]);
+                m_Annotation_dataset.setCurrentSelection(new int[0]);
         });
 
         m_highlightBtn.setOnClickListener(view -> {
-            if(m_dataset.getMainEntryIndex() != -1)
+            if(m_Annotation_dataset.getMainEntryIndex() != -1)
                 for(IPreviewFragmentListener l : m_listeners)
-                    l.onHighlightDataChunk(this, m_dataset.getDataFromIndex(m_dataset.getMainEntryIndex()));
+                    l.onHighlightDataChunk(this, m_Annotation_dataset.getDataFromIndex(m_Annotation_dataset.getMainEntryIndex()));
         });
 
         //Reinit the dataset if needed
-        setDataset(m_dataset);
+        setDataset(m_Annotation_dataset);
     }
 
     @Override
@@ -194,10 +195,10 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
      * @return true if yes (the entry is not in m_currentGroup and m_currentGroup.length > 0), false otherwise*/
     public boolean isEntryGreyed(int entry)
     {
-        if(m_dataset.getCurrentSelection().length == 0)
+        if(m_Annotation_dataset.getCurrentSelection().length == 0)
             return false;
 
-        for(int i : m_dataset.getCurrentSelection())
+        for(int i : m_Annotation_dataset.getCurrentSelection())
             if(i == entry)
                 return false;
         return true;
@@ -207,38 +208,38 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
      * @return -1 if there is nothing to select next, the next ID to select otherwise*/
     private int findNextID()
     {
-        if(m_dataset == null)
+        if(m_Annotation_dataset == null)
             return -1;
 
-        int[] currentGroup = m_dataset.getCurrentSelection();
+        int[] currentGroup = m_Annotation_dataset.getCurrentSelection();
         for(int i = 0; i < currentGroup.length-1; i++)
             if(currentGroup[i] == m_currentSelection)
-                return (m_dataset.isIndexValid(currentGroup[i+1]) ? currentGroup[i+1] : -1);
+                return (m_Annotation_dataset.isIndexValid(currentGroup[i+1]) ? currentGroup[i+1] : -1);
 
         if(currentGroup.length > 0) return -1;
             //return (m_dataset.isIndexValid(currentGroup[0]) ? currentGroup[0] : -1);
-        return (m_dataset.isIndexValid(m_currentSelection+1) ? m_currentSelection+1 : -1);
+        return (m_Annotation_dataset.isIndexValid(m_currentSelection+1) ? m_currentSelection+1 : -1);
     }
 
     /** Find the previous ID to select based on m_currentSelection and m_currentGroup
      * @return -1 if there is nothing to select before, the previous ID to select otherwise*/
     private int findPreviousID()
     {
-        if(m_dataset == null)
+        if(m_Annotation_dataset == null)
             return -1;
 
-        int[] currentGroup = m_dataset.getCurrentSelection();
+        int[] currentGroup = m_Annotation_dataset.getCurrentSelection();
         for(int i = 1; i < currentGroup.length; i++)
             if(currentGroup[i] == m_currentSelection)
-                return (m_dataset.isIndexValid(currentGroup[i-1]) ? currentGroup[i-1] : -1);
+                return (m_Annotation_dataset.isIndexValid(currentGroup[i-1]) ? currentGroup[i-1] : -1);
 
         if(currentGroup.length > 0) return -1;
             //return (m_dataset.isIndexValid(currentGroup[currentGroup.length-1]) ? currentGroup[currentGroup.length-1] : -1);
-        return (m_dataset.isIndexValid(m_currentSelection-1) ? m_currentSelection-1 : -1);
+        return (m_Annotation_dataset.isIndexValid(m_currentSelection-1) ? m_currentSelection-1 : -1);
     }
 
     @Override
-    public void onSetMainEntryIndex(Dataset d, int i)
+    public void onSetMainEntryIndex(AnnotationDataset d, int i)
     {
         //Nothing to be done, UI-wise
         if(m_ctx == null)
@@ -257,10 +258,10 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         }
 
         //Select the new one
-        Dataset.Data data  = m_dataset.getDataFromIndex(i);
+        AnnotationData annotationData = m_Annotation_dataset.getDataFromIndex(i);
         m_currentSelection = i;
-        m_mainImageView.setImageDrawable(data.getImage());
-        m_mainTextView.setText(data.getText());
+        m_mainImageView.setImageDrawable(annotationData.getImage());
+        m_mainTextView.setText(annotationData.getText());
 
         //And highlight its entry
         Tree<View> current = m_datasetEntries.get(i);
@@ -269,7 +270,7 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
     }
 
     @Override
-    public void onSetSelection(Dataset d, int[] selections)
+    public void onSetSelection(AnnotationDataset d, int[] selections)
     {
         //Nothing to be done UI-wise
         if(m_ctx == null)
@@ -287,28 +288,28 @@ public class PreviewFragment extends AlhambraFragment implements Dataset.IDatase
         m_quitSelectionBtn.setVisibility(View.VISIBLE); //Show the quit selection button
 
         //Grey out all the data that are not part of group selection
-        for(Integer dataID : m_dataset.getIndexes())
+        for(Integer dataID : m_Annotation_dataset.getIndexes())
         {
             Tree<View> view = m_datasetEntries.get(dataID);
             view.value.setBackgroundResource(isEntryGreyed(dataID) ? R.color.dark : 0);
         }
 
         //Set the selection to the first group
-        m_dataset.setMainEntryIndex(selections[0]);
+        m_Annotation_dataset.setMainEntryIndex(selections[0]);
     }
 
     @Override
-    public void onAddDataChunk(Dataset dataset, Dataset.Data data)
+    public void onAddDataChunk(AnnotationDataset annotationDataset, AnnotationData annotationData)
     {
-        addDataChunk(data.getIndex());
+        addDataChunk(annotationData.getIndex());
     }
 
     @Override
-    public void onRemoveDataChunk(Dataset dataset, Dataset.Data data)
+    public void onRemoveDataChunk(AnnotationDataset annotationDataset, AnnotationData annotationData)
     {
         final Tree<View> treeModel = m_treeView.getModel();
 
-        Tree<View> entry = m_datasetEntries.get(data.getIndex());
+        Tree<View> entry = m_datasetEntries.get(annotationData.getIndex());
         treeModel.removeChild(entry);
     }
 }

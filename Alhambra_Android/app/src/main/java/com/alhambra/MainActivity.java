@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
+import com.alhambra.dataset.data.AnnotationData;
+import com.alhambra.dataset.AnnotationDataset;
 import com.alhambra.fragment.AlhambraFragment;
 import com.alhambra.fragment.AnnotationFragment;
 import com.alhambra.fragment.OverviewFragment;
@@ -55,7 +57,7 @@ public class MainActivity
     private Configuration m_config = null;
 
     /** The dataset*/
-    private Dataset m_dataset = null;
+    private AnnotationDataset m_Annotation_dataset = null;
 
     /** The client socket manager*/
     private SocketManager m_socket = null;
@@ -120,7 +122,7 @@ public class MainActivity
     {
         //Read the whole dataset
         try {
-            m_dataset = new Dataset(getAssets(), "SpotList.txt");
+            m_Annotation_dataset = new AnnotationDataset(getAssets(), "SpotList.txt");
         }
         catch(Exception e) {
             Log.e(TAG, e.toString());
@@ -140,7 +142,7 @@ public class MainActivity
             public void onDisconnection(SocketManager socket)
             {
                 Log.w(TAG, "Disconnected");
-                MainActivity.this.runOnUiThread(() -> m_dataset.clearServerAnnotations());
+                MainActivity.this.runOnUiThread(() -> m_Annotation_dataset.clearServerAnnotations());
             }
 
             @Override
@@ -163,7 +165,7 @@ public class MainActivity
                             ArrayList<Integer> indexes = new ArrayList<>();
                             for(SelectionMessage.PairLayerID id: selection.getIDs())
                             {
-                                int index = m_dataset.getIndexFromID(id.layer, id.id);
+                                int index = m_Annotation_dataset.getIndexFromID(id.layer, id.id);
                                 if(index != -1)
                                     indexes.add(index);
                             }
@@ -177,9 +179,9 @@ public class MainActivity
                                 mainEntryIndex = indexArr[0];
 
                             //Set the current selection and jump to the preview fragment on the tablet to highlight that the action is made
-                            m_dataset.setCurrentSelection(indexArr);
+                            m_Annotation_dataset.setCurrentSelection(indexArr);
                             if(mainEntryIndex != -1)
-                                m_dataset.setMainEntryIndex(mainEntryIndex);
+                                m_Annotation_dataset.setMainEntryIndex(mainEntryIndex);
                             m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
                         });
                     }
@@ -200,7 +202,7 @@ public class MainActivity
                     {
                         final AddAnnotationMessage addAnnotation = new AddAnnotationMessage(reader.getJSONObject("data"));
                         MainActivity.this.runOnUiThread(() -> {
-                            m_dataset.addServerAnnotation(addAnnotation);
+                            m_Annotation_dataset.addServerAnnotation(addAnnotation);
                         });
                     }
                 }
@@ -252,7 +254,7 @@ public class MainActivity
         //disableAnnotationTab();
 
         //Set the dataset on the UI thread for redoing all the widgets of the PreviewFragment
-        this.runOnUiThread(() -> m_previewFragment.setDataset(m_dataset));
+        this.runOnUiThread(() -> m_previewFragment.setDataset(m_Annotation_dataset));
     }
 
     /** Disable the annotation tab. This will lock the application in the preview tab (works because we only have two tabs here)*/
@@ -286,9 +288,9 @@ public class MainActivity
     }
 
     @Override
-    public void onHighlightDataChunk(PreviewFragment fragment, Dataset.Data data)
+    public void onHighlightDataChunk(PreviewFragment fragment, AnnotationData annotationData)
     {
-        m_socket.push(HighlightDataChunk.generateJSON(data.getLayer(), data.getID()));
+        m_socket.push(HighlightDataChunk.generateJSON(annotationData.getLayer(), annotationData.getID()));
     }
 
     @Override

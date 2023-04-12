@@ -47,4 +47,21 @@ public class Vector3
     {
         return "[" + vec[0] + ", " + vec[1] + ", " + vec[2] + "]";
     }
+
+    public float x,y,z;
+
+    public Vector3() {
+        this(0,0,0);
+    }
+
+    public Vector3(float x, float y, float z) {
+        this.x=x;
+        this.y=y;
+        this.z=z;
+    }
+
+    public float[] toFloats(){
+        return new float[]{x,y,z};
+    }
+
 }
