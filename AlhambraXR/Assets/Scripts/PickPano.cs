@@ -12,48 +12,6 @@ using UnityEngine.Rendering;
 
 public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IModelListener
 {
-    /// <summary>
-    /// Class used to register annotations
-    /// </summary>
-    public class Annotation
-    {
-        /// <summary>
-        /// The color of the annotation
-        /// </summary>
-        public Color32 Color { get; set; }
-
-        /// <summary>
-        /// The bounding box (min XYZ position) in the local space of the 3D model where this annotation belongs to.
-        /// </summary>
-        public float[] BoundingMin { get; set; }
-
-        /// <summary>
-        /// The bounding box (max XYZ position) in the local space of the 3D model where this annotation belongs to.
-        /// </summary>
-        public float[] BoundingMax { get; set; }
-
-        public Vector3 Normal { get; set; }
-
-        /// <summary>
-        /// The central position of this annotation in the local space of the 3D model.
-        /// </summary>
-        public Vector3 Center
-        {
-            get => new Vector3(0.5f * (BoundingMax[0] - BoundingMin[0]) + BoundingMin[0],
-                               0.5f * (BoundingMax[1] - BoundingMin[1]) + BoundingMin[1],
-                               0.5f * (BoundingMax[2] - BoundingMin[2]) + BoundingMin[2]);
-        }
-
-        /// <summary>
-        /// Constructor. Initialize everything with default values.
-        /// </summary>
-        public Annotation()
-        {
-            BoundingMin = new float[3] { 0, 0, 0 };
-            BoundingMax = new float[3] { 0, 0, 0 };
-            Color       = new Color32(0, 0, 0, 0);
-        }
-    }
 
     /// <summary>
     /// Listener for events launched from PickPano
@@ -89,7 +47,9 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     /// <summary>
     /// all the registered annotation
     /// </summary>
-    private List<Annotation> m_annotations = new List<Annotation>();
+    //private List<AnnotationRenderInfo> m_annotations = new List<AnnotationRenderInfo>();
+
+    public DataManager data;
 
     /// <summary>
     /// The RGBAFloat texture to read to map UV mapping to 3D positions. Useful to know where annotations are anchored in the 3D space.
@@ -175,33 +135,30 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         NativeArray<byte> srcRGBA = indexTexture.GetRawTextureData<byte>();
 
         Parallel.For(0, indexTexture.width * indexTexture.height,
-            () => new List<Annotation>(),
+            () => new List<AnnotationRenderInfo>(),
             (i, state, partialRes) =>
             {
                 int idx = 4*i;
                 if (srcRGBA[idx + 3] > 0 && m_uvToPositionPixels[idx+3] > 0) // if exists annotation in this pixel
                 {
-                    Annotation srcAnnot = partialRes.Find((annot) => annot.Color.r == srcRGBA[idx + 0] &&
+                    AnnotationRenderInfo srcAnnot = partialRes.Find((annot) => annot.Color.r == srcRGBA[idx + 0] &&
                                                                      annot.Color.g == srcRGBA[idx + 1] &&
                                                                      annot.Color.b == srcRGBA[idx + 2]); // find annotation we stored here
 
                     if (srcAnnot == null) // cannot find :(
-                        partialRes.Add(new Annotation() // add the annotation to the record list
+                        partialRes.Add(new AnnotationRenderInfo() // add the annotation to the record list
                         {
                             Color = new Color32(srcRGBA[idx + 0],
                                                 srcRGBA[idx + 1],
                                                 srcRGBA[idx + 2], 255),
-                            BoundingMin = new float[3] { m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2] },
-                            BoundingMax = new float[3] { m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2] },
+                            BoundingMin = new Vector3 ( m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2] ),
+                            BoundingMax = new Vector3 ( m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2] ),
                             Normal = new Vector3(m_uvToNormalPixels[idx + 0], m_uvToNormalPixels[idx + 1], m_uvToNormalPixels[idx + 2])
                         });
                     else
                     {
-                        for(int j = 0; j < 3; j++)
-                        {
-                            srcAnnot.BoundingMin[j] = Math.Min(srcAnnot.BoundingMin[j], m_uvToPositionPixels[idx + j]);
-                            srcAnnot.BoundingMax[j] = Math.Max(srcAnnot.BoundingMax[j], m_uvToPositionPixels[idx + j]);
-                        }
+                        Vector3 newPos = new Vector3(m_uvToPositionPixels[idx], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2]);
+                        srcAnnot.Bounds.Encapsulate(newPos);
                         srcAnnot.Normal += new Vector3(m_uvToNormalPixels[idx + 0], m_uvToNormalPixels[idx + 1], m_uvToNormalPixels[idx + 2]);
                     }
                 }
@@ -212,29 +169,30 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             {
                 lock(this)
                 { 
-                    foreach(Annotation annot in partialRes)
+                    foreach(AnnotationRenderInfo annot in partialRes)
                     {
-                        Color32 c = annot.Color;
-                        Annotation srcAnnot = m_annotations.Find((annot) => annot.Color.r == c.r && annot.Color.g == c.g && annot.Color.b == c.b);
-                        if(srcAnnot == null)
-                            m_annotations.Add(annot);
+                        AnnotationID c = (AnnotationID)annot.Color;
+
+                        Annotation srcAnnot = data.FindID(c);
+
+                        if (srcAnnot == null)
+                        {
+                            data.AddAnnoationRenderInfo(annot);
+                        }
+                            //m_annotations.Add(annot);
                         else //Merge annotations in the parallel computation
                         {
-                            for(int i = 0; i < 3; i++) //merge bounding box information
-                            {
-                                srcAnnot.BoundingMax[i] = Math.Max(srcAnnot.BoundingMax[i], annot.BoundingMax[i]);
-                                srcAnnot.BoundingMin[i] = Math.Min(srcAnnot.BoundingMin[i], annot.BoundingMin[i]);
-                            }
+                            srcAnnot.renderInfo.Bounds.Encapsulate(annot.Bounds);
                         }
                     }
                 }
             }
         );
 
-        Parallel.ForEach(m_annotations,
+        Parallel.ForEach(data.annotations,
             (annot) =>
             {
-                annot.Normal = annot.Normal.normalized;
+                annot.renderInfo.Normal = annot.renderInfo.Normal.normalized;
             });
 
         //Debug purposes, to check that annotations are anchored at their correct position.
@@ -356,7 +314,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     /// <returns>true if something is to be highlighted, false otherwise</returns>
     private bool SetShaderLayerParams(Color c, Handedness hand)
     {
-        PairLayerID? ret;
+        AnnotationID? ret;
 
         int ir = Mathf.RoundToInt(c.r * 255);
         int ig = Mathf.RoundToInt(c.g * 255);
@@ -367,13 +325,13 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
 
         //Depending on where we hit, highlight a particular part of the game object if any layer information is there
         if (ir > 0)
-            ret = new PairLayerID() { ID = ir, Layer = 0 };
+            ret = new AnnotationID(0, ir);// { ID = ir, Layer = 0 };
         else if (ig > 0)
-            ret = new PairLayerID() { ID = ig, Layer = 1 };
+            ret = new AnnotationID(1, ig);// { ID = ig, Layer = 1 };
         else if (ib > 0)
-            ret = new PairLayerID() { ID = ib, Layer = 2 };
+            ret = new AnnotationID(2, ib);// { ID = ib, Layer = 2 };
         else
-            ret = new PairLayerID() { ID = -1, Layer = -1 };
+            ret = new AnnotationID(-1, -1);// { ID = -1, Layer = -1 };
 
         if (hand == Handedness.RIGHT)
             m_model.CurrentHighlightMain = ret.Value;
@@ -441,7 +399,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             int r = 1;
             for(; r < (1<<8); r++)
             { 
-                if(!m_annotations.Exists((annot) => annot.Color.r == r))
+                //if(!m_annotations.Exists((annot) => annot.Color.r == r))
+                if(!data.annotations.Exists((annot) => annot.renderInfo.Color.r == r))
                 {
                     layerColor.r = (byte)r;
                     break;
@@ -460,8 +419,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             int g = 1;
             for (; g < (1 << 8); g++) //Search that layer (g, b) does not exist first
             {
-                if(!m_annotations.Exists((annot) => annot.Color.r == 0 &&
-                                                    annot.Color.g == g))
+                //if(!m_annotations.Exists((annot) => annot.Color.r == 0 &&
+                //                                    annot.Color.g == g))
+                if(!data.annotations.Exists((annot) => annot.renderInfo.Color.r == 0 &&
+                                                    annot.renderInfo.Color.g == g))
                 {
                     layerColor.g = (byte)g;
                     break;
@@ -480,9 +441,12 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             int b = 1;
             for (; b < (1 << 8); b++) //Search that layer (b) does not exist first
             {
-                if(!m_annotations.Exists((annot) => annot.Color.r == 0 &&
-                                                    annot.Color.g == 0 &&
-                                                    annot.Color.b == b))
+                //if(!m_annotations.Exists((annot) => annot.Color.r == 0 &&
+                //                                    annot.Color.g == 0 &&
+                //                                    annot.Color.b == b))
+                if (!data.annotations.Exists((annot) => annot.renderInfo.Color.r == 0 &&
+                                                     annot.renderInfo.Color.g == 0 &&
+                                                     annot.renderInfo.Color.b == b))
                 {
                     layerColor.b = (byte)b;
                     break;
@@ -498,11 +462,11 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         }
 
         //Initialize the new annotation to register
-        Annotation annot = new Annotation() 
+        AnnotationRenderInfo annot = new AnnotationRenderInfo() 
         { 
             Color = layerColor, 
-            BoundingMin = new float[3] { float.MaxValue, float.MaxValue, float.MaxValue }, 
-            BoundingMax = new float[3] { float.MinValue, float.MinValue, float.MinValue },
+            //BoundingMin = new float[3] { float.MaxValue, float.MaxValue, float.MaxValue }, 
+            //BoundingMax = new float[3] { float.MinValue, float.MinValue, float.MinValue },
             Normal = Vector3.zero
         };
 
@@ -541,11 +505,13 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             {
                 lock(annot)
                 {
-                    for(int i = 0; i < 3; i++)
+                    annot.Bounds.Encapsulate(new Vector3(partialRes[0], partialRes[1], partialRes[2]));
+                    annot.Bounds.Encapsulate(new Vector3(partialRes[3], partialRes[4], partialRes[5]));
+                    /*for(int i = 0; i < 3; i++)
                     {
                         annot.BoundingMin[i] = Math.Min(annot.BoundingMin[i], partialRes[i]);
                         annot.BoundingMax[i] = Math.Max(annot.BoundingMax[i], partialRes[i+3]);
-                    }
+                    }*/
                 }
             }
         );
@@ -581,7 +547,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         );
         annot.Normal = annot.Normal.normalized;
         Debug.Log($"Finish to add annotation Color {layerColor}");
-        m_annotations.Add(annot);
+        //m_annotations.Add(annot);
+        data.AddAnnoationRenderInfo(annot);
 
         srcAnnotationTexture.Apply();
         gameObject.GetComponent<MeshRenderer>().sharedMaterial.SetTexture("_IndexTex", srcAnnotationTexture);
@@ -639,7 +606,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         m_updateHighlight = true;
     }
 
-    public void OnSetCurrentHighlight(Model model, PairLayerID mainID, PairLayerID secondMainID)
+    public void OnSetCurrentHighlight(Model model, AnnotationID mainID, AnnotationID secondMainID)
     {
         m_updateHighlight = true;
     }
@@ -655,8 +622,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     /// <summary>
     /// The list of all registered annotations
     /// </summary>
-    public List<Annotation> Annotations
-    {
-        get => m_annotations;
-    }
+    //public List<AnnotationRenderInfo> Annotations
+    //{
+    //    get => m_annotations;
+    //}
 }

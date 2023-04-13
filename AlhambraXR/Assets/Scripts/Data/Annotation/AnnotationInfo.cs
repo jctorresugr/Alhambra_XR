@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
 /// Immutable class describing registered annotations
 /// </summary>
-public class Annotation
+public class AnnotationInfo
 {
     /// <summary>
     /// The RGBA color representing this annotation in the target index texture
@@ -31,7 +32,9 @@ public class Annotation
     /// <summary>
     /// The textual description of the annotation
     /// </summary>
-    private String m_description;
+    private string m_description;
+
+    public List<AnnotationJoint> joints;
 
     /// <summary>
     /// Constructor, initialize a read-only annotation
@@ -41,7 +44,7 @@ public class Annotation
     /// <param name="snapshotWidth">The snapshot image width</param>
     /// <param name="snapshotHeight">The snapshot image height</param>
     /// <param name="description">The textual description of the annotation</param>
-    public Annotation(Color32 color, byte[] snapshotRGBA, int snapshotWidth, int snapshotHeight, String description)
+    public AnnotationInfo(Color32 color, byte[] snapshotRGBA, int snapshotWidth, int snapshotHeight, string description)
     {
         if (snapshotRGBA.Length < 4 * snapshotHeight * snapshotWidth)
             throw new InvalidOperationException($"The snapshot RGBA byte array contains {snapshotRGBA.Length} byte instead of {4*snapshotHeight*snapshotWidth}, according to the snapshot width and height");
@@ -59,6 +62,11 @@ public class Annotation
     public Color32 Color
     {
         get => m_color;
+    }
+
+    public AnnotationID ID
+    {
+        get => m_annotationID;
     }
 
     /// <summary>
@@ -88,7 +96,7 @@ public class Annotation
     /// <summary>
     /// The textual description of the annotation
     /// </summary>
-    public String Description
+    public string Description
     {
         get => m_description;
     }

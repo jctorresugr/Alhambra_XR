@@ -85,7 +85,7 @@ public class JSONMessage
     /// <param name="annot">The annotation data</param>
     /// <returns>The "addAnnotation" JSON message to be sent to, e.g., tablet client</returns>
     /// </summary>
-    public static String AddAnnotationToJSON(Annotation annot)
+    public static String AddAnnotationToJSON(AnnotationInfo annot)
     {
         return 
             "{" +

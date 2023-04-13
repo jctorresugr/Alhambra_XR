@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 
+
 /// <summary>
 /// The different types of action handled by this application
 /// </summary>
@@ -40,7 +41,8 @@ public enum Handedness
 /// <summary>
 /// A pair of layer--ID to identify a data chunk
 /// </summary>
-public struct PairLayerID
+/*
+public struct AnnotationID
 {
     /// <summary>
     /// The layer where this data chunk belongs to
@@ -51,7 +53,7 @@ public struct PairLayerID
     /// Its ID inside this layer
     /// </summary>
     public int ID;
-}
+}*/
 
 /// <summary>
 /// The Model class of this application keeping track of all data shared by the different modules of the overall application
@@ -84,7 +86,7 @@ public class Model
         /// For the moment, this information is only needed in CurrentAction == CurrentAction.DEFAULT
         /// Note that if Layer == -1 or ID == -1, then there is nothing to highlight
         /// </param>
-        void OnSetCurrentHighlight(Model model, PairLayerID mainID, PairLayerID secondID);
+        void OnSetCurrentHighlight(Model model, AnnotationID mainID, AnnotationID secondID);
     }
 
     /// <summary>
@@ -100,12 +102,12 @@ public class Model
     /// <summary>
     /// The main data chunk to highlight if the current action needs such an information
     /// </summary>
-    private PairLayerID m_currentHighlightMain = new PairLayerID(){ Layer= -1, ID= -1 };
+    private AnnotationID m_currentHighlightMain = AnnotationID.INVALID_ID;
 
     /// <summary>
     /// The second data chunk to highlight if the current action needs such an information
     /// </summary>
-    private PairLayerID m_currentHighlightSecond = new PairLayerID() { Layer = -1, ID = -1 };
+    private AnnotationID m_currentHighlightSecond = AnnotationID.INVALID_ID;
 
     /// <summary>
     /// Add a new listener to notify events
@@ -143,7 +145,7 @@ public class Model
     /// The main data chunk to highlight if the CurrentAction needs such an information.
     /// For the moment, this information is only needed in CurrentAction == CurrentAction.IN_HIGHLIGHT and in CurrentAction == CurrentAction.DEFAULT
     /// </summary>
-    public PairLayerID CurrentHighlightMain
+    public AnnotationID CurrentHighlightMain
     {
         get => m_currentHighlightMain;
         set
@@ -158,7 +160,7 @@ public class Model
     /// The second data chunk to highlight if the CurrentAction needs such an information.
     /// For the moment, this information is only needed in CurrentAction == CurrentAction.DEFAULT
     /// </summary>
-    public PairLayerID CurrentHighlightSecond
+    public AnnotationID CurrentHighlightSecond
     {
         get => m_currentHighlightSecond;
         set

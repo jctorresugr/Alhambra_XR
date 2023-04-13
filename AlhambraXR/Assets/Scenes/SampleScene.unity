@@ -281,6 +281,7 @@ GameObject:
   m_Component:
   - component: {fileID: 293561424}
   - component: {fileID: 293561423}
+  - component: {fileID: 293561425}
   m_Layer: 0
   m_Name: Main
   m_TagString: Untagged
@@ -300,6 +301,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 846e35ead63133f42b46a56efbfd2d7d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  data: {fileID: 293561425}
   PickPanoModel: {fileID: 7568032346716495948}
   PointingArrow: {fileID: 600857965}
   UVMaterial: {fileID: 2100000, guid: c7069d79f1e96f24aad06f92e8f5b24f, type: 2}
@@ -323,6 +325,18 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &293561425
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 293561422}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2bf013cdd3f3c0549a02b33be472bbb3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &600857965
 GameObject:
   m_ObjectHideFlags: 0
@@ -1709,6 +1723,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed6aaab21e1c6114fa9a3e4e96fe2acd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  data: {fileID: 293561425}
   UVToPosition: {fileID: 2100000, guid: 5788994866c8191439b5797547b43547, type: 2}
   UVToNormal: {fileID: 2100000, guid: e95498ecb6d84584c93069c789f2d173, type: 2}
   RTCamera: {fileID: 1055798508}

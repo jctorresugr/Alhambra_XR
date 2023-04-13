@@ -15,16 +15,21 @@ using UnityEngine.Rendering;
 /// </summary>
 public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickPano.IPickPanoListener, Client.IClientListener, Model.IModelListener, IMixedRealityInputActionHandler
 {
-    private const int LIGHT_ALL_INDEX= 255;
+    
     /// <summary>
     /// The server application
     /// </summary>
     private AlhambraServer m_server = new AlhambraServer();
 
     /// <summary>
+    /// Store all data here!
+    /// </summary>
+    public DataManager data;
+
+    /// <summary>
     /// All the additional annotations the tablet client created
     /// </summary>
-    private List<Annotation> m_annotations = new List<Annotation>();
+    //private List<AnnotationInfo> m_annotations = new List<AnnotationInfo>();
     
     /// <summary>
     /// Should we enable the IPText?
@@ -69,7 +74,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     /// <summary>
     /// The current annotation highlighted
     /// </summary>
-    private PickPano.Annotation m_curAnnotation = null;
+    private AnnotationRenderInfo m_curAnnotation = null;
 
     /// <summary>
     /// The MonoBehaviour script handling the panel picking of the Alhambra model
@@ -142,6 +147,8 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         {
             Debug.LogWarning("Issue with ARGBFloat or ARGB32 textures... This device cannot anchor annotations correctly.");
         }
+
+        data.Init();
 
         m_server.Launch();
         m_server.AddListener(this);
@@ -285,8 +292,12 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
             //Send annotation data
             lock (this)
             {
-                foreach(Annotation annot in m_annotations)
-                    m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annot));
+                foreach(Annotation annot in data.annotations)
+                {
+                    //TODO: resolve uncomment annotation
+                    m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annot.info));
+                }
+                    
             }
         }
     }
@@ -310,8 +321,8 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         {
             ReceivedMessage<HighlightMessage> detailedMsg = ReceivedMessage<HighlightMessage>.FromJSON(msg);
             m_model.CurrentAction = CurrentAction.IN_HIGHLIGHT;
-            m_model.CurrentHighlightMain = new PairLayerID() { Layer = detailedMsg.data.layer, ID = detailedMsg.data.id };
-            m_model.CurrentHighlightSecond = new PairLayerID() { Layer = -1, ID = -1 };
+            m_model.CurrentHighlightMain = new AnnotationID(detailedMsg.data.layer, detailedMsg.data.id);
+            m_model.CurrentHighlightSecond = AnnotationID.INVALID_ID;
         }
 
         else if (commonMsg.action == "startAnnotation")
@@ -329,8 +340,8 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
             m_model.CurrentAction = CurrentAction.START_ANNOTATION;
             if (oldAction != CurrentAction.IN_HIGHLIGHT)
             {
-                m_model.CurrentHighlightMain = new PairLayerID() { Layer = -1, ID = -1 };
-                m_model.CurrentHighlightSecond = new PairLayerID() { Layer = -1, ID = -1 };
+                m_model.CurrentHighlightMain = AnnotationID.INVALID_ID;
+                m_model.CurrentHighlightSecond = AnnotationID.INVALID_ID;
             }
         }
 
@@ -413,9 +424,10 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                     byte[] newRGBA = MinimumRectImage(colorScreenShot.GetRawTextureData<byte>(), colorScreenShot.width, colorScreenShot.height, out newWidth, out newHeight);
 
                     //Save that information for later reuses (e.g., to send back on disconnection)
-                    Annotation annot = new Annotation(annotationColor, newRGBA, newWidth, newHeight, detailedMsg.data.description);
+                    AnnotationInfo annot = new AnnotationInfo(annotationColor, newRGBA, newWidth, newHeight, detailedMsg.data.description);
                     lock (this)
-                        m_annotations.Add(annot);
+                        data.AddAnnotationInfo(annot);
+                        //m_annotations.Add(annot);
 
                     //Send the information back to the tablet, if any.
                     Task.Run(() =>
@@ -622,22 +634,24 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 m_curAnnotation = null; //Nothing to highlight. Cancel the current annotation
     }
 
-    public void OnSetCurrentHighlight(Model model, PairLayerID mainID, PairLayerID secondID)
+    public void OnSetCurrentHighlight(Model model, AnnotationID mainID, AnnotationID secondID)
     {
         if(model.CurrentAction == CurrentAction.IN_HIGHLIGHT)
         {
-            PickPano.Annotation annot = null;
+            //AnnotationRenderInfo annot = null;
 
+            Annotation annot = data.FindID(mainID);
             //Search per layer the annotation data corresponding the demand of highlight
+            /*
             if (mainID.Layer == 0)
                 annot = PickPanoModel.Annotations.Find((annot) => annot.Color.r == mainID.ID);
             else if(mainID.Layer == 1)
                 annot = PickPanoModel.Annotations.Find((annot) => annot.Color.r == 0 && annot.Color.g == mainID.ID);
             else if(mainID.Layer == 2)
                 annot = PickPanoModel.Annotations.Find((annot) => annot.Color.r == 0 && annot.Color.g == 0 && annot.Color.b == mainID.ID);
-
+            */
             lock(this)
-                m_curAnnotation = annot;
+                m_curAnnotation = annot.renderInfo;
         }
     }
 
@@ -772,14 +786,14 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     private void HandleShowAll()
     {
         m_model.CurrentAction = CurrentAction.IN_HIGHLIGHT;
-        m_model.CurrentHighlightMain = new PairLayerID() { Layer = LIGHT_ALL_INDEX, ID = -1 };
-        m_model.CurrentHighlightSecond = new PairLayerID() { Layer = -1, ID = -1 };
+        m_model.CurrentHighlightMain = AnnotationID.LIGHTALL_ID;
+        m_model.CurrentHighlightSecond = AnnotationID.INVALID_ID;
     }
 
     private void HandleStopShowAll()
     {
         m_model.CurrentAction = CurrentAction.DEFAULT;
-        m_model.CurrentHighlightMain = new PairLayerID() { Layer = -1, ID = -1 };
-        m_model.CurrentHighlightSecond = new PairLayerID() { Layer = -1, ID = -1 };
+        m_model.CurrentHighlightMain = AnnotationID.INVALID_ID;
+        m_model.CurrentHighlightSecond = AnnotationID.INVALID_ID;
     }
 }
