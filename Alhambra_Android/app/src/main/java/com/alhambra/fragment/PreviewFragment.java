@@ -10,7 +10,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.alhambra.dataset.data.AnnotationData;
+import com.alhambra.dataset.data.AnnotationInfo;
 import com.alhambra.dataset.AnnotationDataset;
 import com.alhambra.R;
 import com.sereno.Tree;
@@ -26,8 +26,8 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
     {
         /** Highlight a particular data chunk
          * @param fragment the fragment calling this event
-         * @param annotationData the data chunk to highlight*/
-        void onHighlightDataChunk(PreviewFragment fragment, AnnotationData annotationData);
+         * @param annotationInfo the data chunk to highlight*/
+        void onHighlightDataChunk(PreviewFragment fragment, AnnotationInfo annotationInfo);
     }
 
     /** The dataset associated with this application*/
@@ -258,10 +258,10 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
         }
 
         //Select the new one
-        AnnotationData annotationData = m_Annotation_dataset.getDataFromIndex(i);
+        AnnotationInfo annotationInfo = m_Annotation_dataset.getDataFromIndex(i);
         m_currentSelection = i;
-        m_mainImageView.setImageDrawable(annotationData.getImage());
-        m_mainTextView.setText(annotationData.getText());
+        m_mainImageView.setImageDrawable(annotationInfo.getImage());
+        m_mainTextView.setText(annotationInfo.getText());
 
         //And highlight its entry
         Tree<View> current = m_datasetEntries.get(i);
@@ -299,17 +299,17 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
     }
 
     @Override
-    public void onAddDataChunk(AnnotationDataset annotationDataset, AnnotationData annotationData)
+    public void onAddDataChunk(AnnotationDataset annotationDataset, AnnotationInfo annotationInfo)
     {
-        addDataChunk(annotationData.getIndex());
+        addDataChunk(annotationInfo.getIndex());
     }
 
     @Override
-    public void onRemoveDataChunk(AnnotationDataset annotationDataset, AnnotationData annotationData)
+    public void onRemoveDataChunk(AnnotationDataset annotationDataset, AnnotationInfo annotationInfo)
     {
         final Tree<View> treeModel = m_treeView.getModel();
 
-        Tree<View> entry = m_datasetEntries.get(annotationData.getIndex());
+        Tree<View> entry = m_datasetEntries.get(annotationInfo.getIndex());
         treeModel.removeChild(entry);
     }
 }

@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+
 using UnityEngine;
 
 public class Utils
@@ -16,4 +15,45 @@ public class Utils
         }
         return comp;
     }
+
+    //Slow conversion, you can use C# unsafe function to convert it forcely.
+    //In c you can directly cast the pointer :(
+    public static byte[] ArrayColor32ToByte(Color32[] c)
+    {
+        byte[] bytes = new byte[c.Length * 4];
+        for(int i=0;i<c.Length;i++)
+        {
+            int i2 = i << 2;
+            bytes[i2] = c[i].r;
+            bytes[i2+1] = c[i].g;
+            bytes[i2+2] = c[i].b;
+            bytes[i2+3] = c[i].a;
+        }
+        return bytes;
+    }
+
+    //Force the texture to be readable
+    //Consuming but at least we can read texture!
+    //why we cannot read image directly to cpu memory in the unity???????????????????????????????
+    //ImageConversion only support compressed byte array flow??? (where is rgba???)
+    public static Texture2D MakeTextureReadable(Texture2D source)
+    {
+        RenderTexture renderTex = RenderTexture.GetTemporary(
+                    source.width,
+                    source.height,
+                    0,
+                    RenderTextureFormat.Default,
+                    RenderTextureReadWrite.Linear);
+
+        Graphics.Blit(source, renderTex);
+        RenderTexture previous = RenderTexture.active;
+        RenderTexture.active = renderTex;
+        Texture2D readableText = new Texture2D(source.width, source.height);
+        readableText.ReadPixels(new Rect(0, 0, renderTex.width, renderTex.height), 0, 0);
+        readableText.Apply();
+        RenderTexture.active = previous;
+        RenderTexture.ReleaseTemporary(renderTex);
+        return readableText;
+    }
+
 }

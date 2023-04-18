@@ -7,7 +7,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
-import com.alhambra.dataset.data.AnnotationData;
+import com.alhambra.dataset.data.AnnotationInfo;
 import com.alhambra.dataset.AnnotationDataset;
 import com.alhambra.fragment.AlhambraFragment;
 import com.alhambra.fragment.AnnotationFragment;
@@ -288,9 +288,9 @@ public class MainActivity
     }
 
     @Override
-    public void onHighlightDataChunk(PreviewFragment fragment, AnnotationData annotationData)
+    public void onHighlightDataChunk(PreviewFragment fragment, AnnotationInfo annotationInfo)
     {
-        m_socket.push(HighlightDataChunk.generateJSON(annotationData.getLayer(), annotationData.getID()));
+        m_socket.push(HighlightDataChunk.generateJSON(annotationInfo.getLayer(), annotationInfo.getID()));
     }
 
     @Override

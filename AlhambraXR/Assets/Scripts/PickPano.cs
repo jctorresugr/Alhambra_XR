@@ -134,6 +134,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         //Read the index texture to know which colors (at which positions) are used (parallelize the reading to speed up the process)
         NativeArray<byte> srcRGBA = indexTexture.GetRawTextureData<byte>();
 
+        //TODO: check if this the w h of texture affect position mapping calculation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         Parallel.For(0, indexTexture.width * indexTexture.height,
             () => new List<AnnotationRenderInfo>(),
             (i, state, partialRes) =>
@@ -157,9 +158,12 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
                         });
                     else
                     {
-                        Vector3 newPos = new Vector3(m_uvToPositionPixels[idx], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2]);
-                        srcAnnot.Bounds.Encapsulate(newPos);
-                        srcAnnot.Normal += new Vector3(m_uvToNormalPixels[idx + 0], m_uvToNormalPixels[idx + 1], m_uvToNormalPixels[idx + 2]);
+                        //lock(srcAnnot)
+                        {
+                            srcAnnot.Bounds.Encapsulate(new Vector3(m_uvToPositionPixels[idx], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2]));
+                            srcAnnot.Normal += new Vector3(m_uvToNormalPixels[idx + 0], m_uvToNormalPixels[idx + 1], m_uvToNormalPixels[idx + 2]);
+                        }
+                        
                     }
                 }
 
@@ -331,7 +335,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
         else if (ib > 0)
             ret = new AnnotationID(2, ib);// { ID = ib, Layer = 2 };
         else
-            ret = new AnnotationID(-1, -1);// { ID = -1, Layer = -1 };
+            ret = AnnotationID.INVALID_ID;// { ID = -1, Layer = -1 };
 
         if (hand == Handedness.RIGHT)
             m_model.CurrentHighlightMain = ret.Value;
@@ -505,6 +509,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             {
                 lock(annot)
                 {
+                    if(annot.Bounds.min[0]==float.MinValue)
+                    {
+                        annot.Bounds.SetMinMax(new Vector3(partialRes[0], partialRes[1], partialRes[2]), new Vector3(partialRes[3], partialRes[4], partialRes[5]));
+                    }
                     annot.Bounds.Encapsulate(new Vector3(partialRes[0], partialRes[1], partialRes[2]));
                     annot.Bounds.Encapsulate(new Vector3(partialRes[3], partialRes[4], partialRes[5]));
                     /*for(int i = 0; i < 3; i++)

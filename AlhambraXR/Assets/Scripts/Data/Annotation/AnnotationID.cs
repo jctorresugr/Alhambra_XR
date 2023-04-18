@@ -18,6 +18,8 @@ public struct AnnotationID : IEquatable<AnnotationID>
     [SerializeField]
     private int m_index;
 
+    private Color32 m_color;//debug
+
     public int Layer { get => m_layer; }
     public int ID { get => m_index; }
 
@@ -25,11 +27,21 @@ public struct AnnotationID : IEquatable<AnnotationID>
     {
         this.m_layer = layer;
         this.m_index = index;
+        if(m_layer<0)
+        {
+            m_color = new Color32(0, 0, 0, 0);
+        }
+        else
+        {
+            m_color = new Color32(0, 0, 0, 255);
+            m_color[layer] = (byte)index;
+        }
     }
 
     public AnnotationID(Color32 color)
     {
-        if(color.r>0)
+        m_color = color;
+        if (color.r > 0)
         {
             m_layer = 0;
             m_index = color.r;
@@ -47,9 +59,14 @@ public struct AnnotationID : IEquatable<AnnotationID>
         else
         {
             m_layer = -1; //Invalid annotation ID
-            m_index = 0;
+            m_index = -1;
             Debug.LogWarning("Create Invalid ID: " + this);
         }
+    }
+
+    public bool IsValid
+    {
+        get => 0 <= m_layer && m_layer <= 3 && m_index > 0 && m_index <= 255;
     }
 
     public static explicit operator Color32(AnnotationID id)
@@ -81,7 +98,7 @@ public struct AnnotationID : IEquatable<AnnotationID>
 
     public override string ToString()
     {
-        return String.Format("[ Layer= {0} , Index= {1}]", m_layer, m_index);
+        return String.Format("[ Layer= {0} , Index= {1}] <{2}>", m_layer, m_index, m_color);
     }
 
     public static bool operator == (AnnotationID a, AnnotationID b)

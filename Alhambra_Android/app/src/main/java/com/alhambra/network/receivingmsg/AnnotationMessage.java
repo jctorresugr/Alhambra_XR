@@ -7,8 +7,8 @@ import org.json.JSONObject;
 
 import androidx.annotation.NonNull;
 
+import com.alhambra.network.JSONUtils;
 import com.sereno.math.Quaternion;
-import com.sereno.math.Vector3;
 
 public class AnnotationMessage
 {

@@ -1,4 +1,6 @@
-package com.alhambra.network.receivingmsg;
+package com.alhambra.network;
+
+import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,5 +30,15 @@ public class JSONUtils
         for(int i = 0; i < arr.length(); i++)
             res[i] = (byte)arr.getInt(i);
         return res;
+    }
+
+    public static final Gson gson = new Gson();
+
+    public static String createActionJson(String actionName, Object data){
+        return "{\"action\":\""+actionName+"\",\"data\":"+gson.toJson(data)+"}";
+    }
+
+    public static String createActionJson(String actionName){
+        return "{\"action\":\""+actionName+"\",\"data\":{}}";
     }
 }

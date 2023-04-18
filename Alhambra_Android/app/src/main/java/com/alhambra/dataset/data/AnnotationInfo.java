@@ -2,9 +2,11 @@ package com.alhambra.dataset.data;
 
 import android.graphics.drawable.Drawable;
 
+import java.util.HashSet;
+
 /** This class describes the chunk of data as saved in the database
  * Each chunk of data is readonly once it is created.*/
-public class AnnotationData
+public class AnnotationInfo
 {
     /** The index of this chunk of data*/
     private int    m_index = 0;
@@ -20,6 +22,8 @@ public class AnnotationData
     /** The image associated with this chunk of data*/
     private Drawable m_drawable = null;
 
+    private HashSet<AnnotationJointData> m_joints = new HashSet<>();
+
     /** Constructor
      * @param index the Index of this chunk of data in Android fragment list
      * @param id  The ID of this chunk of data inside its layer ( part of Unity Shader's ID )
@@ -27,7 +31,7 @@ public class AnnotationData
      * @param color  The color representing this chunk of data (the whole Unity Shader's ID)
      * @param text The text associated with this chunk of data
      * @param img The image drawable describing this data chunk*/
-    public AnnotationData(int index, int layer, int id, int color, String text, Drawable img)
+    public AnnotationInfo(int index, int layer, int id, int color, String text, Drawable img)
     {
         m_index    = index;
         m_annotationID = new AnnotationID(layer,id);

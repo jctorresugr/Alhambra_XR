@@ -4,6 +4,8 @@ import android.util.Base64;
 
 import androidx.annotation.NonNull;
 
+import com.alhambra.network.JSONUtils;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 

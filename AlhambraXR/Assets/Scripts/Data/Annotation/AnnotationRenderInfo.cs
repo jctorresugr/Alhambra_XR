@@ -10,21 +10,21 @@ public class AnnotationRenderInfo
     public Color32 Color { get; set; }
 
 
-    private Bounds m_bounds;
-
+    public Bounds Bounds;
+    /*
     public Bounds Bounds
     {
         get => m_bounds;
         set => m_bounds = Bounds;
-    }
+    }*/
 
     /// <summary>
     /// The bounding box (min XYZ position) in the local space of the 3D model where this annotation belongs to.
     /// </summary>
     public Vector3 BoundingMin
     {
-        get => m_bounds.min;
-        set => m_bounds.min = value;
+        get => Bounds.min;
+        set => Bounds.min = value;
     }
 
     /// <summary>
@@ -32,8 +32,8 @@ public class AnnotationRenderInfo
     /// </summary>
     public Vector3 BoundingMax
     {
-        get => m_bounds.max;
-        set => m_bounds.max = value;
+        get => Bounds.max;
+        set => Bounds.max = value;
     }
 
     public Vector3 Normal { get; set; }
@@ -53,8 +53,8 @@ public class AnnotationRenderInfo
     /// </summary>
     public AnnotationRenderInfo()
     {
-        m_bounds.SetMinMax(new Vector3(float.MaxValue, float.MaxValue, float.MaxValue),
-            new Vector3(float.MinValue, float.MinValue, float.MinValue));
-        Color = new Color32(0, 0, 0, 0);
+       //Bounds.SetMinMax(new Vector3(float.MaxValue, float.MaxValue, float.MaxValue),
+         //   new Vector3(float.MinValue, float.MinValue, float.MinValue));
+        //Color = new Color32(0, 0, 0, 0);
     }
 }
