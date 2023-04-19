@@ -34,8 +34,6 @@ public class AnnotationInfo
     /// </summary>
     private string m_description;
 
-    private List<AnnotationJoint> joints;
-
     /// <summary>
     /// Constructor, initialize a read-only annotation
     /// </summary>

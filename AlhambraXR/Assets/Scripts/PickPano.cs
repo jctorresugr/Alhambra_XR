@@ -193,7 +193,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             }
         );
 
-        Parallel.ForEach(data.annotations,
+        Parallel.ForEach(data.Annotations,
             (annot) =>
             {
                 annot.renderInfo.Normal = annot.renderInfo.Normal.normalized;
@@ -404,7 +404,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             for(; r < (1<<8); r++)
             { 
                 //if(!m_annotations.Exists((annot) => annot.Color.r == r))
-                if(!data.annotations.Exists((annot) => annot.renderInfo.Color.r == r))
+                if(!data.ExistAnnotation((annot) => annot.renderInfo.Color.r == r))
                 {
                     layerColor.r = (byte)r;
                     break;
@@ -425,7 +425,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
             {
                 //if(!m_annotations.Exists((annot) => annot.Color.r == 0 &&
                 //                                    annot.Color.g == g))
-                if(!data.annotations.Exists((annot) => annot.renderInfo.Color.r == 0 &&
+                if(!data.ExistAnnotation((annot) => annot.renderInfo.Color.r == 0 &&
                                                     annot.renderInfo.Color.g == g))
                 {
                     layerColor.g = (byte)g;
@@ -448,7 +448,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
                 //if(!m_annotations.Exists((annot) => annot.Color.r == 0 &&
                 //                                    annot.Color.g == 0 &&
                 //                                    annot.Color.b == b))
-                if (!data.annotations.Exists((annot) => annot.renderInfo.Color.r == 0 &&
+                if (!data.ExistAnnotation((annot) => annot.renderInfo.Color.r == 0 &&
                                                      annot.renderInfo.Color.g == 0 &&
                                                      annot.renderInfo.Color.b == b))
                 {

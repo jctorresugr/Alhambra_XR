@@ -8,9 +8,30 @@ using UnityEngine;
 /// </summary>
 public class DataManager : MonoBehaviour
 {
-    public List<Annotation> annotations;
-    public List<AnnotationJoint> annotationJoints;
+    public delegate void AnnotationChangeFunc(Annotation annotation);
+    public delegate void AnnotationJointChangeFunc(AnnotationJoint annotationJoint);
+
+    public event AnnotationChangeFunc OnAnnotationAddEvent;
+    public event AnnotationChangeFunc OnAnnotationRemoveEvent;
+    public event AnnotationJointChangeFunc OnAnnotationJointAddEvent;
+    public event AnnotationJointChangeFunc OnAnnotationJointRemoveEvent;
+
+    private List<Annotation> annotations;
+    private List<AnnotationJoint> annotationJoints; 
     private bool isInited = false;
+
+    public IReadOnlyList<Annotation> Annotations => annotations;  
+    public IReadOnlyList<AnnotationJoint> AnnotationJoints => annotationJoints;
+
+    public Annotation FindAnnotation(Predicate<Annotation> predicate)
+    {
+        return annotations.Find(predicate);
+    }
+
+    public bool ExistAnnotation(Predicate<Annotation> predicate)
+    {
+        return FindAnnotation(predicate)!=null;
+    }
 
     public void Init()
     {
@@ -21,7 +42,18 @@ public class DataManager : MonoBehaviour
         isInited = true;
         annotationJoints = new List<AnnotationJoint>();
         annotations = new List<Annotation>();
-        //LoadData(this);
+        LoadData(this);
+
+        //TODO: test code, commnet it for real dataset
+        AnnotationJoint joint = AddAnnotationJoint("Test Joint 1");
+        joint.AddAnnotation(annotations[2]);
+        joint.AddAnnotation(annotations[3]);
+        joint.AddAnnotation(annotations[4]);
+
+        AnnotationJoint joint2 = AddAnnotationJoint("Test Joint 2");
+        joint2.AddAnnotation(annotations[5]);
+        joint2.AddAnnotation(annotations[6]);
+        joint2.AddAnnotation(annotations[7]);
     }
 
     public void Awake()
@@ -34,6 +66,11 @@ public class DataManager : MonoBehaviour
         return annotations.Find(x => x.ID == id);
     }
 
+    public AnnotationJoint FindJointID(int id)
+    {
+        return annotationJoints.Find(x => x.ID == id);
+    }
+
     public Annotation AddAnnotation(AnnotationID id)
     {
         Annotation annot = FindID(id);
@@ -41,6 +78,7 @@ public class DataManager : MonoBehaviour
         {
             annot = new Annotation(id);
             annotations.Add(annot);
+            OnAnnotationAddEvent?.Invoke(annot);
             return annot;
         }
         return null;
@@ -57,6 +95,7 @@ public class DataManager : MonoBehaviour
             newAnnotation.renderInfo = renderInfo;
             newAnnotation.info = new AnnotationInfo(renderInfo.Color, new byte[4], 1, 1, "Unknown annotation");
             annotations.Add(newAnnotation);
+            OnAnnotationAddEvent?.Invoke(newAnnotation);
             Debug.Log("Add annotation (render) " + id);
         }
         else
@@ -76,6 +115,7 @@ public class DataManager : MonoBehaviour
             newAnnotation.info = info;
             newAnnotation.renderInfo = new AnnotationRenderInfo();
             annotations.Add(newAnnotation);
+            OnAnnotationAddEvent?.Invoke(newAnnotation);
             Debug.Log("Add annotation (info) " + id);
         }
         else
@@ -86,6 +126,87 @@ public class DataManager : MonoBehaviour
     }
 
 
+    //Annotation Joint operations
+    public AnnotationJoint AddAnnotationJoint(string name)
+    {
+        AnnotationJoint aj;
+        int id = annotationJoints.Count - 1;
+        do
+        {
+            id++;
+            aj = FindJointID(id);
+        } while (aj != null);
+
+        aj = new AnnotationJoint(id, name);
+        OnAnnotationJointAddEvent?.Invoke(aj);
+        return aj;
+    }
+
+    public AnnotationJoint RemoveAnnotationJoint(int id)
+    {
+        AnnotationJoint aj = annotationJoints.Find(x => x.ID == id);
+        if(aj!=null)
+        {
+            _ = annotationJoints.Remove(aj);
+            RemoveJointInformation(aj);
+            OnAnnotationJointRemoveEvent?.Invoke(aj);
+            return aj;
+        }
+        return null;
+    }
+
+    public bool RemoveAnnotationJoint(AnnotationJoint aj)
+    {
+        bool result = annotationJoints.Remove(aj);
+        if(result)
+        {
+            RemoveJointInformation(aj);
+            OnAnnotationJointRemoveEvent?.Invoke(aj);
+        }
+        return result;
+    }
+
+    protected void RemoveJointInformation(AnnotationJoint aj)
+    {
+        foreach(Annotation a in aj.Annotations)
+        {
+            a.RemoveJoint(aj);
+        }
+    }
+
+    public Annotation RemoveAnnotation(AnnotationID id)
+    {
+        Annotation a = FindID(id);
+        if(RemoveAnnotation(a))
+        {
+            return a;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    public bool RemoveAnnotation(Annotation a)
+    {
+        bool result = annotations.Remove(a);
+        if(result)
+        {
+            RemoveAnnotationInfomation(a);
+            OnAnnotationRemoveEvent?.Invoke(a);
+            return true;
+        }
+        return false;
+    }
+
+    protected void RemoveAnnotationInfomation(Annotation a)
+    {
+        foreach(AnnotationJoint aj in a.Joints)
+        {
+            aj.RemoveAnnotation(a);
+        }
+    }
+
     public static void LoadData(DataManager dataManager)
     {
         const string folder = "Database/";
@@ -95,14 +216,6 @@ public class DataManager : MonoBehaviour
         {
             return;
         }
-
-        // InputStream dataset = assetManager.open(assetHeader);
-
-        //List<String[]> csvData = CSVReader.read(dataset);
-        //dataset.close();
-
-        //if (csvData.size() == 0)
-        //    return;
 
         HashSet<int> indexes = new HashSet<int>();
         //Check that we have 4 values per row FOR ALL ROWS
@@ -135,25 +248,9 @@ public class DataManager : MonoBehaviour
                 {
                     Debug.LogError("Cannot open " + folder + "text" + row[0]);
                 }
-                //InputStream textStream = assetManager.open("text" + row[0] + ".txt");
-                //ByteArrayOutputStream text = new ByteArrayOutputStream();
-
-                //byte[] buffer = new byte[1024];
-                //for (int length; (length = textStream.read(buffer)) != -1;)
-                //{
-                //    text.write(buffer, 0, length);
-                //}
-                //textStream.close();
                 //...and read the image associated to it
                 Texture2D img = Resources.Load<Texture2D>(folder + "img" + row[0]);
                 img = Utils.MakeTextureReadable(img);
-                //byte[] colors = Utils.ArrayColor32ToByte(img.GetPixels32(0));
-                //ImageConversion.LoadImage(img, imageAsset.bytes)
-                //img.ReadPixels(new Rect(0, 0, img.width, img.height), 0, 0);
-                //InputStream imgStream = assetManager.open("img" + row[0] + ".png");
-                //Drawable img = Drawable.createFromStream(imgStream, null);
-                //imgStream.close();
-
                 //Check if this chunk is the default entry describing the whole dataset
                 //If it is, then it is associated with no layer (layer == -1) and its color is set to transparency (color == 0x00000000)
                 bool isDefault = true;
@@ -209,6 +306,8 @@ public class DataManager : MonoBehaviour
         }
 
     }
+
+
 
 
 }

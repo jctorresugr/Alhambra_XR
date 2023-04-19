@@ -25,11 +25,6 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     /// Store all data here!
     /// </summary>
     public DataManager data;
-
-    /// <summary>
-    /// All the additional annotations the tablet client created
-    /// </summary>
-    //private List<AnnotationInfo> m_annotations = new List<AnnotationInfo>();
     
     /// <summary>
     /// Should we enable the IPText?
@@ -292,7 +287,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
             //Send annotation data
             lock (this)
             {
-                foreach(Annotation annot in data.annotations)
+                foreach(Annotation annot in data.Annotations)
                 {
                     //TODO: resolve uncomment annotation
                     m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annot.info));
