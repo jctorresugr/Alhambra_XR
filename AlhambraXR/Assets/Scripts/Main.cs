@@ -116,6 +116,9 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     /// </summary>
     public LineNavigator lineNavigator;
 
+    public AnnotationJointRenderBuilder annotationJointRenderBuilder;
+
+
     private void Awake()
     {
         //Parameterize Unity
@@ -144,12 +147,18 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         }
 
         data.Init();
+        // init ui first, add listeners
+        annotationJointRenderBuilder.Init();
 
-        m_server.Launch();
-        m_server.AddListener(this);
+        
         m_model.AddListener(this);
         PickPanoModel.Init(m_model);
         PickPanoModel.AddListener(this);
+
+        data.LoadDefaultData();
+
+        m_server.Launch();
+        m_server.AddListener(this);
 
         //Default text helpful to bind headset to tablet
         m_updateIPTexts = true;

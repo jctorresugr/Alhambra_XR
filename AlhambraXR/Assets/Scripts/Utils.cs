@@ -16,6 +16,24 @@ public class Utils
         return comp;
     }
 
+    // get component, if not exists, add the compoennt
+    public static T ForceToGetComponent<T>(GameObject obj, ref T comp) where T:Component
+    {
+        if(comp==null)
+        {
+            comp = obj.GetComponent<T>();
+            if (comp == null)
+            {
+                comp = obj.GetComponentInChildren<T>();
+                if(comp==null)
+                {
+                    comp = obj.gameObject.AddComponent<T>();
+                }
+            }
+        }
+        return comp;
+    }
+
     //Slow conversion, you can use C# unsafe function to convert it forcely.
     //In c you can directly cast the pointer :(
     public static byte[] ArrayColor32ToByte(Color32[] c)

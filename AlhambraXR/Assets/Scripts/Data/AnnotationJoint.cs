@@ -20,6 +20,7 @@ public class AnnotationJoint
     public event AnnotationAndJointChangeFunc OnJointAddAnnotationEvent;
     public event AnnotationAndJointChangeFunc OnJointRemoveAnnotationEvent;
     public IReadOnlyList<Annotation> Annotations => annotations;
+    public bool autoPosition = true;
 
     public int ID
     {
@@ -48,9 +49,21 @@ public class AnnotationJoint
         {
             return;
         }
+        Debug.Log("Add annotation " + annotation.ID + " to joint " + ID);
         annotations.Add(annotation);
-        range.Encapsulate(annotation.renderInfo.Bounds);
+        if(annotations.Count==1)
+        {
+            range.SetMinMax(annotation.renderInfo.BoundingMin, annotation.renderInfo.BoundingMax);
+        }
+        else
+        {
+            range.Encapsulate(annotation.renderInfo.Bounds);
+        }
         annotation.joints.Add(this);
+        if(autoPosition)
+        {
+            position = range.center;
+        }
         OnJointAddAnnotationEvent?.Invoke(this, annotation);
     }
 
@@ -59,6 +72,22 @@ public class AnnotationJoint
         bool result = annotations.Remove(annotation);
         if(result)
         {
+            Debug.Log("Remove annotation " + annotation.ID + " from joint " + ID);
+
+            //update range
+            if (annotations.Count > 0)
+            {
+                range.SetMinMax(annotations[0].renderInfo.BoundingMin, annotations[0].renderInfo.BoundingMax);
+                foreach(Annotation a in annotations)
+                {
+                    range.Encapsulate(a.renderInfo.Bounds);
+                }
+            }
+                
+            if (autoPosition)
+            {
+                position = range.center;
+            }
             OnJointRemoveAnnotationEvent?.Invoke(this,annotation);
         }
     }

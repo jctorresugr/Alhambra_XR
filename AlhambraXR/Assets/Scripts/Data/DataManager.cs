@@ -18,7 +18,6 @@ public class DataManager : MonoBehaviour
 
     private List<Annotation> annotations;
     private List<AnnotationJoint> annotationJoints; 
-    private bool isInited = false;
 
     public IReadOnlyList<Annotation> Annotations => annotations;  
     public IReadOnlyList<AnnotationJoint> AnnotationJoints => annotationJoints;
@@ -35,13 +34,12 @@ public class DataManager : MonoBehaviour
 
     public void Init()
     {
-        if(isInited)
-        {
-            return;
-        }
-        isInited = true;
         annotationJoints = new List<AnnotationJoint>();
         annotations = new List<Annotation>();
+    }
+
+    public void LoadDefaultData()
+    {
         LoadData(this);
 
         //TODO: test code, commnet it for real dataset
@@ -79,6 +77,7 @@ public class DataManager : MonoBehaviour
             annot = new Annotation(id);
             annotations.Add(annot);
             OnAnnotationAddEvent?.Invoke(annot);
+            Debug.Log("Add annotation " + id);
             return annot;
         }
         return null;
@@ -95,8 +94,8 @@ public class DataManager : MonoBehaviour
             newAnnotation.renderInfo = renderInfo;
             newAnnotation.info = new AnnotationInfo(renderInfo.Color, new byte[4], 1, 1, "Unknown annotation");
             annotations.Add(newAnnotation);
-            OnAnnotationAddEvent?.Invoke(newAnnotation);
             Debug.Log("Add annotation (render) " + id);
+            OnAnnotationAddEvent?.Invoke(newAnnotation);
         }
         else
         {
@@ -115,8 +114,8 @@ public class DataManager : MonoBehaviour
             newAnnotation.info = info;
             newAnnotation.renderInfo = new AnnotationRenderInfo();
             annotations.Add(newAnnotation);
-            OnAnnotationAddEvent?.Invoke(newAnnotation);
             Debug.Log("Add annotation (info) " + id);
+            OnAnnotationAddEvent?.Invoke(newAnnotation);
         }
         else
         {
@@ -138,6 +137,8 @@ public class DataManager : MonoBehaviour
         } while (aj != null);
 
         aj = new AnnotationJoint(id, name);
+        annotationJoints.Add(aj);
+        Debug.Log("Add annotation joint " + id);
         OnAnnotationJointAddEvent?.Invoke(aj);
         return aj;
     }
@@ -149,6 +150,7 @@ public class DataManager : MonoBehaviour
         {
             _ = annotationJoints.Remove(aj);
             RemoveJointInformation(aj);
+            Debug.Log("Remove annotation joint " + id);
             OnAnnotationJointRemoveEvent?.Invoke(aj);
             return aj;
         }
@@ -161,6 +163,7 @@ public class DataManager : MonoBehaviour
         if(result)
         {
             RemoveJointInformation(aj);
+            Debug.Log("Remove annotation joint " + aj.ID);
             OnAnnotationJointRemoveEvent?.Invoke(aj);
         }
         return result;
@@ -179,6 +182,9 @@ public class DataManager : MonoBehaviour
         Annotation a = FindID(id);
         if(RemoveAnnotation(a))
         {
+            RemoveAnnotationInfomation(a);
+            Debug.Log("Remove annotation "+id);
+            OnAnnotationRemoveEvent?.Invoke(a);
             return a;
         }
         else
@@ -193,6 +199,7 @@ public class DataManager : MonoBehaviour
         if(result)
         {
             RemoveAnnotationInfomation(a);
+            Debug.Log("Remove annotation " + a.ID);
             OnAnnotationRemoveEvent?.Invoke(a);
             return true;
         }
