@@ -3,17 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
+[Serializable]
 public class Annotation
 {
     // pure data
+    [SerializeField]
     public AnnotationInfo info = null;
+    [SerializeField]
     public AnnotationRenderInfo renderInfo = new AnnotationRenderInfo();
+
+    [NonSerialized]
     internal List<AnnotationJoint> joints = new List<AnnotationJoint>();
 
     // control data
     public IReadOnlyList<AnnotationJoint> Joints => joints;
 
+    [SerializeField]
     public AnnotationID ID
     {
         get;

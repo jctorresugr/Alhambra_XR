@@ -9,7 +9,7 @@ import java.util.HashSet;
 public class AnnotationInfo
 {
     /** The index of this chunk of data*/
-    private int    m_index = 0;
+    int    m_index = 0;
 
     private AnnotationID m_annotationID = null;
 
@@ -22,7 +22,7 @@ public class AnnotationInfo
     /** The image associated with this chunk of data*/
     private Drawable m_drawable = null;
 
-    private HashSet<AnnotationJointData> m_joints = new HashSet<>();
+    private HashSet<AnnotationJoint> m_joints = new HashSet<>();
 
     /** Constructor
      * @param index the Index of this chunk of data in Android fragment list
@@ -45,6 +45,8 @@ public class AnnotationInfo
 
     /** Get the ID of this chunk of data*/
     public int getID() {return m_annotationID.getId();}
+
+    public AnnotationID getAnnotationID() {return m_annotationID;}
 
     /** Get the layer ID to which this chunk of data belongs to*/
     public int getLayer() {return m_annotationID.getLayer();}

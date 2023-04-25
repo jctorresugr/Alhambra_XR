@@ -4,6 +4,7 @@ import android.util.Base64;
 
 import androidx.annotation.NonNull;
 
+import com.alhambra.dataset.data.AnnotationRenderInfo;
 import com.alhambra.network.JSONUtils;
 
 import org.json.JSONException;
@@ -27,6 +28,8 @@ public class AddAnnotationMessage
     /** The textual description of the annotation*/
     private final String m_desc;
 
+    private AnnotationRenderInfo renderInfo;
+
     /** Constructor
      * @param data the JSONObject representing the "data" entry of the received JSON object from the network*/
     public AddAnnotationMessage(@NonNull JSONObject data) throws JSONException
@@ -36,6 +39,7 @@ public class AddAnnotationMessage
         m_image  = Base64.decode(data.getString("snapshotBase64"), Base64.DEFAULT);
         m_color  = JSONUtils.jsonArrayToByteArray(data.getJSONArray("annotationColor"));
         m_desc   = data.getString("description");
+        renderInfo = JSONUtils.gson.fromJson(data.getString("renderInfo"),AnnotationRenderInfo.class);
 
         if(m_color.length != 4)
             throw new JSONException("The length of the JSON array corresponding to a Color (length 4) is: " + m_color.length);

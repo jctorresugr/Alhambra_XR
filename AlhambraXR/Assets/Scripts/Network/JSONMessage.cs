@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -85,19 +86,26 @@ public class JSONMessage
     /// <param name="annot">The annotation data</param>
     /// <returns>The "addAnnotation" JSON message to be sent to, e.g., tablet client</returns>
     /// </summary>
-    public static String AddAnnotationToJSON(AnnotationInfo annot)
+    public static String AddAnnotationToJSON(Annotation annot)
     {
         return 
             "{" +
             "    \"action\": \"addAnnotation\",\n" +
             "    \"data\":\n" +
             "    {\n" +
-           $"        \"snapshotBase64\": \"{System.Convert.ToBase64String(annot.SnapshotRGBA)}\",\n" +
-           $"        \"snapshotWidth\":  {annot.SnapshotWidth},\n" +
-           $"        \"snapshotHeight\": {annot.SnapshotHeight},\n" +
-           $"        \"annotationColor\": [{annot.Color.r}, {annot.Color.g}, {annot.Color.b}, {annot.Color.a}],\n" +
-           $"        \"description\": {QuoteString(annot.Description)}" +
+           $"        \"snapshotBase64\": \"{System.Convert.ToBase64String(annot.info.SnapshotRGBA)}\",\n" +
+           $"        \"snapshotWidth\":  {annot.info.SnapshotWidth},\n" +
+           $"        \"snapshotHeight\": {annot.info.SnapshotHeight},\n" +
+           $"        \"annotationColor\": [{annot.info.Color.r}, {annot.info.Color.g}, {annot.info.Color.b}, {annot.info.Color.a}],\n" +
+           $"        \"description\": {QuoteString(annot.info.Description)}," +
+           $"        \"renderInfo\": {JsonUtility.ToJson(annot.renderInfo)}" +
             "    }\n" +
             "}";
+    }
+
+    public static string ActionJSON<T>(string actionName, T data)
+    {
+        string dataString = JsonUtility.ToJson(data);
+        return string.Format($"{{\"action\":\"{actionName}\",\"data\":{dataString}}}");
     }
 }

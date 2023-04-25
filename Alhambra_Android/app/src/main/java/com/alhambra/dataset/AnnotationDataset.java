@@ -4,7 +4,10 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 
+import com.alhambra.dataset.data.Annotation;
+import com.alhambra.dataset.data.AnnotationID;
 import com.alhambra.dataset.data.AnnotationInfo;
 import com.alhambra.network.receivingmsg.AddAnnotationMessage;
 import com.sereno.CSVReader;
@@ -14,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -45,12 +49,13 @@ public class AnnotationDataset
         void onRemoveDataChunk(AnnotationDataset annotationDataset, AnnotationInfo annotationInfo);
     }
 
+    private static final String LOG_TAG = "AnnotationDataset";
 
 
     /** All the stored chunks of data
      * Key: Index
      * Value: Data*/
-    private HashMap<Integer, AnnotationInfo> m_data = new HashMap<>();
+    private HashMap<Integer, Annotation> m_data = new HashMap<>();
 
     /** The Indexes of the data chunks the server created*/
     private ArrayList<Integer> m_serverAnnotations = new ArrayList<>();
@@ -71,6 +76,54 @@ public class AnnotationDataset
 
     /** The current selections to consider*/
     private int[] m_currentSelection = new int[0];
+
+    public boolean hasAnnotation(AnnotationID id){
+        return getAnnotation(id)!=null;
+    }
+
+    public Annotation addAnnotation(int index, AnnotationID id){
+        Annotation annot = getAnnotation(id);
+        if(annot!=null){
+            Log.i(LOG_TAG, "Try to add duplicate Annotation (new): "+id);
+            return annot;
+        }else{
+            annot = new Annotation(id);
+            m_data.put(index,annot);
+            return annot;
+        }
+    }
+
+
+    /**
+     * Add annotation by define the AnnotationInfo
+     * Note: if the annotation is already exists, this function will replace the existing one
+     * the index will be kept.
+     * @param info
+     */
+    public void addAnnotationInfo(AnnotationInfo info){
+        AnnotationID id = info.getAnnotationID();
+        Annotation oldAnnot = getAnnotation(id);
+        if(oldAnnot!=null){
+            Log.i(LOG_TAG, "Try to add duplicate Annotation info: "+id+", replace it");
+            oldAnnot.info = new AnnotationInfo(oldAnnot.info.getIndex(),
+                    info.getLayer(),info.getID(),info.getColor(),info.getText(),info.getImage());
+            return;
+        }
+        Annotation annotation = new Annotation(id);
+        annotation.info=info;
+        annotation.renderInfo = null;
+        m_data.put(info.getIndex(),annotation);
+    }
+
+    public Annotation getAnnotation(AnnotationID id){
+        Collection<Annotation> values = m_data.values();
+        for(Annotation a:values){
+            if(a.id.equals(id)){
+                return a;
+            }
+        }
+        return null;
+    }
 
     /** Constructor. Read, from the asset manager, the dataset described by assetHeader
      * @param assetManager the asset manager to read text data directly stored in the "assets" directory
@@ -133,7 +186,8 @@ public class AnnotationDataset
                     if(m_defaultAnnotationInfo != null)
                         throw new IllegalArgumentException("The dataset contains multiple default data entry");
                     m_defaultAnnotationInfo = new AnnotationInfo(index, -1, -1, 0x00, text.toString("UTF-8"), img);
-                    m_data.put(index, m_defaultAnnotationInfo);
+                    this.addAnnotationInfo(m_defaultAnnotationInfo);
+                    //m_data.put(index, m_defaultAnnotationInfo);
                 }
 
                 //Else, read color + layer and add the data chunk
@@ -156,7 +210,8 @@ public class AnnotationDataset
 
                     //Save the content
                     AnnotationInfo annotationInfo = new AnnotationInfo(index, layer, id, colorRGBA, text.toString("UTF-8"), img);
-                    m_data.put(index, annotationInfo);
+                    this.addAnnotationInfo(annotationInfo);
+                    //m_data.put(index, annotationInfo);
                     if(m_layers.containsKey(layer))
                         m_layers.get(layer).add(annotationInfo);
                     else
@@ -214,7 +269,11 @@ public class AnnotationDataset
             }
         AnnotationInfo annotationInfo = new AnnotationInfo(m_data.size()+1, layer, id, msg.getARGB8888Color(), msg.getDescription(),
                              new BitmapDrawable(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888)));
-        m_data.put(annotationInfo.getIndex(), annotationInfo);
+        this.addAnnotationInfo(annotationInfo);
+
+        //m_data.put(annotationInfo.getIndex(), annotationInfo);
+        //this.addAnnotation(annotationInfo.getID(),annotationInfo.getAnnotationID());
+        this.addAnnotationInfo(annotationInfo);
         m_serverAnnotations.add(annotationInfo.getIndex());
 
         for(IDatasetListener l : m_listeners)
@@ -252,7 +311,7 @@ public class AnnotationDataset
         for(Integer i : m_serverAnnotations)
         {
             for(IDatasetListener l : m_listeners)
-                l.onRemoveDataChunk(this, m_data.get(i));
+                l.onRemoveDataChunk(this, m_data.get(i).info);
             m_data.remove(i);
         }
         m_serverAnnotations.clear();
@@ -277,7 +336,7 @@ public class AnnotationDataset
      * @return the data that contains this, normally, unique ID. See isIndexValid before calling this function to check that the ID is a valid one*/
     public AnnotationInfo getDataFromIndex(int index)
     {
-        return m_data.get(index);
+        return m_data.get(index).info;
     }
 
     /** Get all the data contained in layer == layer
@@ -296,9 +355,11 @@ public class AnnotationDataset
      * @return -1 if the data is not found, the index otherwise*/
     public int getIndexFromID(int layer, int id)
     {
-        for(AnnotationInfo d : m_data.values())
-            if(d.getLayer() == layer && d.getID() == id)
+        for(Annotation dd : m_data.values()) {
+            AnnotationInfo d = dd.info;
+            if (d.getLayer() == layer && d.getID() == id)
                 return d.getIndex();
+        }
         return -1;
     }
 
@@ -326,9 +387,11 @@ public class AnnotationDataset
      * @return true if the pair of (layer, id) is valid, false otherwise*/
     public boolean setMainEntryID(int layer, int id)
     {
-        for(AnnotationInfo d : m_data.values())
-            if(d.getLayer() == layer && d.getID() == id)
+        for(Annotation dd : m_data.values()) {
+            AnnotationInfo d = dd.info;
+            if (d.getLayer() == layer && d.getID() == id)
                 return setMainEntryIndex(d.getIndex());
+        }
         return false;
     }
 

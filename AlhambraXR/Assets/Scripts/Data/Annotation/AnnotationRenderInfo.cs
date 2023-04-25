@@ -1,15 +1,19 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 /// <summary>
 /// Class used to register annotations
 /// </summary>
+[Serializable]
 public class AnnotationRenderInfo
 {
     /// <summary>
     /// The color of the annotation
     /// </summary>
+    [SerializeField]
     public Color32 Color { get; set; }
 
 
+    [SerializeField]
     public Bounds Bounds;
     /*
     public Bounds Bounds
@@ -36,6 +40,7 @@ public class AnnotationRenderInfo
         set => Bounds.max = value;
     }
 
+    [SerializeField]
     public Vector3 Normal { get; set; }
 
     /// <summary>

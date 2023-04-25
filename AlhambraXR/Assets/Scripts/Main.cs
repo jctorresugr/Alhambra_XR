@@ -118,9 +118,14 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
     public AnnotationJointRenderBuilder annotationJointRenderBuilder;
 
+    public delegate void ProcessMessageFunc(Client c, string msg);
+
+    public Dictionary<string, ProcessMessageFunc> onReceiveMessage;
+
 
     private void Awake()
     {
+        onReceiveMessage = new Dictionary<string, ProcessMessageFunc>();
         //Parameterize Unity
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
         m_persistantPath = Application.persistentDataPath;
@@ -299,7 +304,12 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 foreach(Annotation annot in data.Annotations)
                 {
                     //TODO: resolve uncomment annotation
-                    m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annot.info));
+                    m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annot));
+                }
+
+                foreach (AnnotationJoint joint in data.AnnotationJoints)
+                {
+                    m_server.SendASCIIStringToClients(JSONMessage.ActionJSON("SyncAnnotationJoint", joint));
                 }
                     
             }
@@ -431,12 +441,12 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                     AnnotationInfo annot = new AnnotationInfo(annotationColor, newRGBA, newWidth, newHeight, detailedMsg.data.description);
                     lock (this)
                         data.AddAnnotationInfo(annot);
-                        //m_annotations.Add(annot);
-
+                    //m_annotations.Add(annot);
+                    Annotation annotation = data.FindID(annot.ID);
                     //Send the information back to the tablet, if any.
                     Task.Run(() =>
                     {
-                        m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annot));
+                        m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annotation));
                     });
                 }
                 Destroy(colorRT);

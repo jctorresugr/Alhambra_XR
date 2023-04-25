@@ -1,6 +1,9 @@
 package com.alhambra.network;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.sereno.json.BBoxJsonAdapter;
+import com.sereno.math.BBox;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,7 +35,12 @@ public class JSONUtils
         return res;
     }
 
-    public static final Gson gson = new Gson();
+    public static final Gson gson;
+    static {
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.registerTypeAdapter(BBox.class,new BBoxJsonAdapter());
+        gson = gsonBuilder.create();
+    }
 
     public static String createActionJson(String actionName, Object data){
         return "{\"action\":\""+actionName+"\",\"data\":"+gson.toJson(data)+"}";

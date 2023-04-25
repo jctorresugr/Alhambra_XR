@@ -28,7 +28,16 @@ public class AnnotationID {
         {
             AnnotationID o = (AnnotationID) obj;
             return o.layer==layer && id==o.id;
+        }else if(obj instanceof Annotation)
+        {
+            Annotation a = (Annotation) obj;
+            return a.id.layer==layer && id==a.id.id;
         }
         return super.equals(obj);
+    }
+
+    @Override
+    public int hashCode() {
+        return layer| (id<<2);
     }
 }

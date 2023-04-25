@@ -5,31 +5,41 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
+[Serializable]
 public class AnnotationJoint
 {
     public delegate void AnnotationAndJointChangeFunc(AnnotationJoint annotationJoint, Annotation annotation);
 
     // pure data
+    [SerializeField]
     public Vector3 position;
+    [SerializeField]
     public Bounds range;
+    [SerializeField]
     public string name;
-    private int m_id;
+    [SerializeField]
+    private int id;
+    [NonSerialized]
     private List<Annotation> annotations = new List<Annotation>();
+    //quick and dirty way to avoid endless loop
+    [SerializeField]
+    private List<AnnotationID> annotationsID = new List<AnnotationID>();
 
     // control data
     public event AnnotationAndJointChangeFunc OnJointAddAnnotationEvent;
     public event AnnotationAndJointChangeFunc OnJointRemoveAnnotationEvent;
     public IReadOnlyList<Annotation> Annotations => annotations;
+    [NonSerialized]
     public bool autoPosition = true;
 
     public int ID
     {
-        get => m_id;
+        get => id;
     }
 
     public AnnotationJoint(int id, string name)
     {
-        m_id = id;
+        this.id = id;
         this.name = name;
     }
 
@@ -51,6 +61,7 @@ public class AnnotationJoint
         }
         Debug.Log("Add annotation " + annotation.ID + " to joint " + ID);
         annotations.Add(annotation);
+        annotationsID.Add(annotation.ID);
         if(annotations.Count==1)
         {
             range.SetMinMax(annotation.renderInfo.BoundingMin, annotation.renderInfo.BoundingMax);
@@ -72,6 +83,7 @@ public class AnnotationJoint
         bool result = annotations.Remove(annotation);
         if(result)
         {
+            annotationsID.Remove(annotation.ID);
             Debug.Log("Remove annotation " + annotation.ID + " from joint " + ID);
 
             //update range

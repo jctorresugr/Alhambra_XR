@@ -52,6 +52,15 @@ public class DataManager : MonoBehaviour
         joint2.AddAnnotation(annotations[5]);
         joint2.AddAnnotation(annotations[6]);
         joint2.AddAnnotation(annotations[7]);
+
+        Debug.Log("Test code in Datamanager.cs:");
+        Debug.Log(JsonUtility.ToJson(annotations[1]));
+        Debug.Log(JsonUtility.ToJson(annotations[2]));
+        Debug.Log(JsonUtility.ToJson(annotations[3]));
+        Debug.Log(JsonUtility.ToJson(annotationJoints[0]));
+        Debug.Log(JsonUtility.ToJson(annotationJoints[1]));
+
+        Debug.Log(JSONMessage.AddAnnotationToJSON(annotations[1]));
     }
 
     public void Awake()

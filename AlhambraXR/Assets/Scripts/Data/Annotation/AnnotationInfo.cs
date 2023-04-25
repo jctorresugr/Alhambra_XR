@@ -5,33 +5,40 @@ using UnityEngine;
 /// <summary>
 /// Immutable class describing registered annotations
 /// </summary>
+[Serializable]
 public class AnnotationInfo
 {
     /// <summary>
     /// The RGBA color representing this annotation in the target index texture
     /// </summary>
+    [SerializeField]
     private Color32 m_color;
 
+    [SerializeField]
     private AnnotationID m_annotationID;
 
     /// <summary>
     /// The snapshot RGBA32 pixel image
     /// </summary>
+    //[SerializeField]
     private byte[]  m_snapshotRGBA;
 
     /// <summary>
     /// The snapshot image width
     /// </summary>
+    [SerializeField]
     private int     m_snapshotWidth;
 
     /// <summary>
     /// The snapshot image height
     /// </summary>
+    [SerializeField]
     private int     m_snapshotHeight;
 
     /// <summary>
     /// The textual description of the annotation
     /// </summary>
+    [SerializeField]
     private string m_description;
 
     /// <summary>
