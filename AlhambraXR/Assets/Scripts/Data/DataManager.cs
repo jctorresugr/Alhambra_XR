@@ -63,11 +63,6 @@ public class DataManager : MonoBehaviour
         Debug.Log(JSONMessage.AddAnnotationToJSON(annotations[1]));
     }
 
-    public void Awake()
-    {
-        Init();
-    }
-
     public Annotation FindID(AnnotationID id)
     {
         return annotations.Find(x => x.ID == id);

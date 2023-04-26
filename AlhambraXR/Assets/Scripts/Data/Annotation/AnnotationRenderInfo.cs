@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 /// <summary>
 /// Class used to register annotations
 /// </summary>
@@ -9,10 +10,13 @@ public class AnnotationRenderInfo
     /// <summary>
     /// The color of the annotation
     /// </summary>
+
     [SerializeField]
-    public Color32 Color { get; set; }
+    private Color32 color;
 
+    public Color32 Color { get=>color; set=>color=value; }
 
+    [FormerlySerializedAs("bounds")] // not worked, do not know why...
     [SerializeField]
     public Bounds Bounds;
     /*
@@ -41,7 +45,9 @@ public class AnnotationRenderInfo
     }
 
     [SerializeField]
-    public Vector3 Normal { get; set; }
+    private Vector3 normal;
+
+    public Vector3 Normal { get=>normal; set=>normal=value; }
 
     /// <summary>
     /// The central position of this annotation in the local space of the 3D model.

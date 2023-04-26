@@ -45,6 +45,10 @@ public class AddAnnotationMessage
             throw new JSONException("The length of the JSON array corresponding to a Color (length 4) is: " + m_color.length);
     }
 
+    public AnnotationRenderInfo getRenderInfo(){
+        return renderInfo;
+    }
+
     /** Get the width of the received snapshot image
      * @return the width of the snapshot image*/
     public int getSnapshotWidth() {return m_width;}

@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.alhambra.dataset.data.Annotation;
 import com.alhambra.dataset.data.AnnotationID;
@@ -267,13 +268,26 @@ public class AnnotationDataset
                                          (argbImg[4*srcIdx+1] << 8)  +
                                          (argbImg[4*srcIdx+2]);
             }
-        AnnotationInfo annotationInfo = new AnnotationInfo(m_data.size()+1, layer, id, msg.getARGB8888Color(), msg.getDescription(),
-                             new BitmapDrawable(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888)));
-        this.addAnnotationInfo(annotationInfo);
+        int curIndex = m_data.size()+1;
+        AnnotationID annotationID = new AnnotationID(layer,id);
+        AnnotationInfo annotationInfo;
+        //this.addAnnotationInfo(annotationInfo);
+        Annotation annotation = this.addAnnotation(curIndex,annotationID);
+        if(annotation.info!=null && annotation.info.getIndex()!=curIndex){
+            curIndex = annotation.info.getIndex();
+            annotationInfo = new AnnotationInfo(curIndex, layer, id, msg.getARGB8888Color(), msg.getDescription(),
+                    new BitmapDrawable(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888)));
+        }else{
+            annotationInfo = new AnnotationInfo(curIndex, layer, id, msg.getARGB8888Color(), msg.getDescription(),
+                    new BitmapDrawable(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888)));
+        }
+        annotation.info=annotationInfo;
+        annotation.renderInfo=msg.getRenderInfo();
+
 
         //m_data.put(annotationInfo.getIndex(), annotationInfo);
         //this.addAnnotation(annotationInfo.getID(),annotationInfo.getAnnotationID());
-        this.addAnnotationInfo(annotationInfo);
+        //this.addAnnotationInfo(annotationInfo);
         m_serverAnnotations.add(annotationInfo.getIndex());
 
         for(IDatasetListener l : m_listeners)

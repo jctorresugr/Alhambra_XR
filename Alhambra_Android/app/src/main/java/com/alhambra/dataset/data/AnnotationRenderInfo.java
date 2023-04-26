@@ -1,12 +1,16 @@
 package com.alhambra.dataset.data;
 
+import com.google.gson.annotations.SerializedName;
 import com.sereno.color.Color;
 import com.sereno.math.BBox;
 import com.sereno.math.Vector3;
 
 public class AnnotationRenderInfo {
+    @SerializedName("color")
     private Color m_color;
+    @SerializedName("Bounds")
     private BBox m_bounds;
+    @SerializedName("normal")
     private Vector3 m_normal;
 
     public AnnotationRenderInfo(Color m_color, BBox m_bounds, Vector3 m_normal) {

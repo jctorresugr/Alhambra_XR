@@ -106,6 +106,6 @@ public class JSONMessage
     public static string ActionJSON<T>(string actionName, T data)
     {
         string dataString = JsonUtility.ToJson(data);
-        return string.Format($"{{\"action\":\"{actionName}\",\"data\":{dataString}}}");
+        return $"{{\"action\":\"{actionName}\",\"data\":{dataString}}}";
     }
 }
