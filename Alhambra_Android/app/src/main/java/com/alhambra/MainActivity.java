@@ -275,6 +275,7 @@ public class MainActivity
         m_annotationFragment = new AnnotationFragment();
         m_annotationFragment.addListener((AlhambraFragment.IFragmentListener)this);
         m_annotationFragment.addListener((AnnotationFragment.IAnnotationFragmentListener)this);
+        m_annotationFragment.setDataset(m_Annotation_dataset);
         adapter.addFragment(m_annotationFragment, "Annotation");
 
         //Add Overview tab
@@ -339,8 +340,14 @@ public class MainActivity
     @Override
     public void onConfirmAnnotation(AnnotationFragment frag)
     {
-        m_socket.push(FinishAnnotation.generateJSON(true, frag.getAnnotationCanvasData().getGeometries(), frag.getAnnotationCanvasData().getWidth(), frag.getAnnotationCanvasData().getHeight(),
-                                                    frag.getAnnotationDescription(), frag.getCameraPos(), frag.getCameraRot()));
+        m_socket.push(FinishAnnotation.generateJSON(true,
+                frag.getAnnotationCanvasData().getGeometries(),
+                frag.getAnnotationCanvasData().getWidth(),
+                frag.getAnnotationCanvasData().getHeight(),
+                frag.getAnnotationDescription(),
+                frag.getCameraPos(),
+                frag.getCameraRot(),
+                frag.getSelectedAnnotationJointIDs()));
         frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);
     }
@@ -348,8 +355,16 @@ public class MainActivity
     @Override
     public void onCancelAnnotation(AnnotationFragment frag)
     {
-        m_socket.push(FinishAnnotation.generateJSON(false, frag.getAnnotationCanvasData().getGeometries(), frag.getAnnotationCanvasData().getWidth(), frag.getAnnotationCanvasData().getHeight(),
-                                                    frag.getAnnotationDescription(), frag.getCameraPos(), frag.getCameraRot()));
+        m_socket.push(FinishAnnotation.generateJSON(
+                false,
+                frag.getAnnotationCanvasData().getGeometries(),
+                frag.getAnnotationCanvasData().getWidth(),
+                frag.getAnnotationCanvasData().getHeight(),
+                frag.getAnnotationDescription(),
+                frag.getCameraPos(),
+                frag.getCameraRot(),
+                frag.getSelectedAnnotationJointIDs()
+                ));
         frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);
     }

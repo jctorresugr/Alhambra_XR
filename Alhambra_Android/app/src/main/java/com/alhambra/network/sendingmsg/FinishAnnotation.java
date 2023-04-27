@@ -2,6 +2,7 @@ package com.alhambra.network.sendingmsg;
 
 import android.graphics.Point;
 
+import com.alhambra.network.JSONUtils;
 import com.sereno.math.Quaternion;
 import com.sereno.math.Vector3;
 import com.sereno.view.AnnotationGeometry;
@@ -105,7 +106,15 @@ public class FinishAnnotation
      * @param cameraPos the camera position at the time of where the annotated image was taken
      * @param cameraRot the camera orientation at the time of where the annotated image was taken
      * @return the JSON message, curly brackets included.*/
-    public static String generateJSON(boolean confirm, List<AnnotationGeometry> geometries, int width, int height, String desc, float[] cameraPos, Quaternion cameraRot)
+    public static String generateJSON(
+            boolean confirm,
+            List<AnnotationGeometry> geometries,
+            int width,
+            int height,
+            String desc,
+            float[] cameraPos,
+            Quaternion cameraRot,
+            List<Integer> selectedJointID)
     {
         List<AnnotationStroke>  strokes = new ArrayList<>();
         List<AnnotationPolygon> polygons = new ArrayList<>();
@@ -129,7 +138,8 @@ public class FinishAnnotation
                 "       \"width\": " + width + ",\n" +
                 "       \"height\": " + height + ",\n" +
                 "       \"strokes\": " + generateStrokesJSON(strokes, 8) + ",\n" +
-                "       \"polygons\": " + generatePolygonsJSON(polygons, 8) + "\n" +
+                "       \"polygons\": " + generatePolygonsJSON(polygons, 8) + ",\n" +
+                "       \"selectedJointID\": " + JSONUtils.gson.toJson(selectedJointID) + "\n" +
                 "   }\n" +
                 "}";
     }

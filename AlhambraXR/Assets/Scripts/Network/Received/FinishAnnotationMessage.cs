@@ -80,4 +80,6 @@ public class FinishAnnotationMessage
     /// The message associated with this annotation
     /// </summary>
     public String description;
+
+    public int[] selectedJointID;
 }

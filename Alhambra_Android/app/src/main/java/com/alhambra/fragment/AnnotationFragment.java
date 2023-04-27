@@ -14,6 +14,10 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.alhambra.R;
+import com.alhambra.dataset.AnnotationDataset;
+import com.alhambra.dataset.data.AnnotationJoint;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.sereno.color.Color;
 import com.sereno.color.HSVColor;
 import com.sereno.math.Quaternion;
@@ -27,7 +31,10 @@ import com.sereno.view.ColorPickerView;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import androidx.annotation.NonNull;
 
@@ -89,6 +96,20 @@ public class AnnotationFragment extends AlhambraFragment
     /** Button to cancel the current annotation*/
     private Button m_cancelBtn  = null;
 
+    private ChipGroup m_chipGroup = null;
+    private HashMap<Integer,Chip> m_chipViews = new HashMap<>();
+
+    private AnnotationDataset m_dataset = null;
+
+
+    public AnnotationDataset getDataset() {
+        return m_dataset;
+    }
+
+    public void setDataset(AnnotationDataset dataset) {
+        this.m_dataset = dataset;
+    }
+
     /** Default constructor */
     public AnnotationFragment() { super(); }
 
@@ -103,6 +124,7 @@ public class AnnotationFragment extends AlhambraFragment
         m_cancelBtn          = v.findViewById(R.id.cancelAnnotation);
         m_startAnnotationTxt = v.findViewById(R.id.tapToAddAnnotationTxt);
         m_drawingMethod      = v.findViewById(R.id.drawingMethod);
+        m_chipGroup          = v.findViewById(R.id.annotationAddJointChipGroup);
         m_currentStrokeColor = m_colorPicker.getModel().getColor().toRGB().toARGB8888();
 
         m_canvas.setOnTouchListener((view, motionEvent) -> {
@@ -236,10 +258,29 @@ public class AnnotationFragment extends AlhambraFragment
         m_editText.setVisibility(View.VISIBLE);
         m_colorPicker.setVisibility(View.VISIBLE);
         m_drawingMethod.setVisibility(View.VISIBLE);
+        m_chipGroup.setVisibility(View.VISIBLE);
         m_cameraPos = cameraPos;
         m_cameraRot = cameraRot;
         m_startAnnotationTxt.setVisibility(View.GONE);
+        //TODO: process chipGroup
+        // dirty implementation
+        m_chipGroup.removeAllViews();
+        m_chipViews.clear();
+        for(AnnotationJoint aj: m_dataset.getAnnotationJoint()) {
+            Chip chip = addJointChip(m_chipGroup,aj);
+            m_chipViews.put(aj.getId(), chip);
+        }
+
         return true;
+    }
+
+    private Chip addJointChip(ChipGroup cg, AnnotationJoint aj) {
+        Chip chip = new Chip(cg.getContext());
+        chip.setText(aj.getName());
+        chip.setCheckable(true);
+        chip.setChecked(false);
+        cg.addView(chip);
+        return chip;
     }
 
     /** Clear the annotation snapshot on the fragment's view*/
@@ -252,6 +293,7 @@ public class AnnotationFragment extends AlhambraFragment
         m_editText.setVisibility(View.GONE);
         m_colorPicker.setVisibility(View.GONE);
         m_drawingMethod.setVisibility(View.GONE);
+        m_chipGroup.setVisibility(View.GONE);
     }
 
     /** The camera position at the time of where the annotation image was taken. null if no image is currently being annotated
@@ -278,5 +320,16 @@ public class AnnotationFragment extends AlhambraFragment
             callOnDisableSwiping();
         else if(motionEvent.getAction() == MotionEvent.ACTION_UP)
             callOnEnableSwiping();
+    }
+
+    public ArrayList<Integer> getSelectedAnnotationJointIDs(){
+        ArrayList<Integer> result = new ArrayList<>();
+        for(Map.Entry<Integer,Chip> item:m_chipViews.entrySet()){
+            Chip chip = item.getValue();
+            if(chip.isChecked()){
+                result.add(item.getKey());
+            }
+        }
+        return result;
     }
 }

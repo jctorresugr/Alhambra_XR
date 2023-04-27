@@ -445,6 +445,17 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                         data.AddAnnotationInfo(annot);
                     //m_annotations.Add(annot);
                     Annotation annotation = data.FindID(annot.ID);
+                    //add joint information
+                    foreach(int jointID in detailedMsg.data.selectedJointID)
+                    {
+                        AnnotationJoint selectedJoint = data.FindJointID(jointID);
+                        if(selectedJoint==null)
+                        {
+                            Debug.LogWarning("HandleAnnotationFinishAction: Cannot find selected joint id " + jointID);
+                            continue;
+                        }
+                        selectedJoint.AddAnnotation(annotation);
+                    }
                     //Send the information back to the tablet, if any.
                     Task.Run(() =>
                     {

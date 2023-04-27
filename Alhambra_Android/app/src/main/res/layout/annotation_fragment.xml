@@ -60,6 +60,13 @@
         android:layout_below="@id/colorPicker"
         android:layout_toEndOf="@id/annotationCanvasFrameLayout">
 
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/annotationAddJointChipGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        </com.google.android.material.chip.ChipGroup>
+
         <EditText
             android:layout_width="match_parent"
             android:layout_height="0dp"

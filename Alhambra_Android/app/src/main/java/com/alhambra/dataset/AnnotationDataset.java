@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -86,6 +87,14 @@ public class AnnotationDataset
 
     /** The current selections to consider*/
     private int[] m_currentSelection = new int[0];
+
+    public Collection<Annotation> getAnnotationList(){
+        return Collections.unmodifiableCollection(m_data.values());
+    }
+
+    public Collection<AnnotationJoint> getAnnotationJoint(){
+        return Collections.unmodifiableCollection(m_jointData.values());
+    }
 
     public void addAnnotationJoint(AnnotationJoint aj) {
         int id = aj.getId();
