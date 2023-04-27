@@ -10,6 +10,7 @@ import android.widget.Toast;
 import com.alhambra.dataset.data.Annotation;
 import com.alhambra.dataset.data.AnnotationID;
 import com.alhambra.dataset.data.AnnotationInfo;
+import com.alhambra.dataset.data.AnnotationJoint;
 import com.alhambra.network.receivingmsg.AddAnnotationMessage;
 import com.sereno.CSVReader;
 
@@ -48,6 +49,12 @@ public class AnnotationDataset
          * @param annotationDataset the dataset calling this function
          * @param annotationInfo  the data chunk that is being removed. This data chunk is not part of the original dataset (that is immutable)*/
         void onRemoveDataChunk(AnnotationDataset annotationDataset, AnnotationInfo annotationInfo);
+
+        void onAnnotationChange(Annotation annotation);
+
+        void onAddJoint(AnnotationJoint annotationJoint);
+        void onRemoveJoint(AnnotationJoint annotationJoint);
+        void onChangeJoint(AnnotationJoint annotationJoint);
     }
 
     private static final String LOG_TAG = "AnnotationDataset";
@@ -72,11 +79,70 @@ public class AnnotationDataset
     /** The listeners to notify changes*/
     private ArrayList<IDatasetListener> m_listeners = new ArrayList<IDatasetListener>();
 
+    private final HashMap<Integer, AnnotationJoint> m_jointData = new HashMap<>();
+
     /** The current main entry to consider*/
     private int m_currentEntryIndex = 0;
 
     /** The current selections to consider*/
     private int[] m_currentSelection = new int[0];
+
+    public void addAnnotationJoint(AnnotationJoint aj) {
+        int id = aj.getId();
+        if(m_jointData.containsKey(id)) {
+            Log.w(LOG_TAG,"Already exists joint id "+id);
+            m_jointData.put(id,aj);
+        }else{
+            m_jointData.put(id,aj);
+        }
+        notifyAnnotationJointChange(aj);
+        for(IDatasetListener l : m_listeners)
+            l.onAddJoint(aj);
+    }
+
+    public void notifyAnnotationJointChange(AnnotationJoint aj) {
+        for(AnnotationID aid: aj.getAnnotationsID()){
+            Annotation a = getAnnotation(aid);
+            if(a!=null){
+                notifyAnnotationChange(a);
+            }
+        }
+    }
+
+    public void notifyAnnotationChange(Annotation a) {
+        for(IDatasetListener l : m_listeners)
+            l.onAnnotationChange(a);
+    }
+
+    public void removeAnnotationJoint(int id) {
+        AnnotationJoint aj = m_jointData.get(id);
+        if(aj!=null){
+            m_jointData.remove(id);
+            for(AnnotationID aid: aj.getAnnotationsID()){
+                Annotation a = getAnnotation(aid);
+                if(a!=null){
+                    aj.removeAnnotation(a);
+                    notifyAnnotationChange(a);
+                }
+            }
+            for(IDatasetListener l : m_listeners)
+                l.onRemoveJoint(aj);
+        }
+    }
+
+    public void addAnnotationToJoint(AnnotationJoint aj, Annotation a) {
+        aj.addAnnotation(a);
+        for(IDatasetListener l : m_listeners)
+            l.onChangeJoint(aj);
+    }
+
+    public void removeAnnotationFromJoint(AnnotationJoint aj, Annotation a) {
+        aj.removeAnnotation(a);
+        for(IDatasetListener l : m_listeners)
+            l.onChangeJoint(aj);
+    }
+
+
 
     public boolean hasAnnotation(AnnotationID id){
         return getAnnotation(id)!=null;

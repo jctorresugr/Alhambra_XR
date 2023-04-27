@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
+import com.alhambra.controls.DatasetSync;
 import com.alhambra.dataset.data.AnnotationInfo;
 import com.alhambra.dataset.AnnotationDataset;
 import com.alhambra.fragment.AlhambraFragment;
@@ -15,6 +16,7 @@ import com.alhambra.fragment.OverviewFragment;
 import com.alhambra.fragment.PageViewer;
 import com.alhambra.fragment.PreviewFragment;
 import com.alhambra.fragment.ViewPagerAdapter;
+import com.alhambra.network.JSONUtils;
 import com.alhambra.network.receivingmsg.AddAnnotationMessage;
 import com.alhambra.network.receivingmsg.AnnotationMessage;
 import com.alhambra.network.receivingmsg.SelectionMessage;
@@ -24,6 +26,10 @@ import com.alhambra.network.sendingmsg.HighlightDataChunk;
 import com.alhambra.network.sendingmsg.OverviewMessage;
 import com.alhambra.network.sendingmsg.StartAnnotation;
 import com.google.android.material.tabs.TabLayout;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,7 +39,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /** The Main Activity of this application. This is the first thing that is suppose to start*/
 public class MainActivity
@@ -77,10 +85,29 @@ public class MainActivity
     /** The overview tab*/
     private OverviewFragment m_overviewFragment = null;
 
+    private HashMap<String, IReceiveMessageListener> m_receiveMessageListener = new HashMap<>();
+
+    private DatasetSync datasetSync;
+
     /*--------------------------------------*/
     /*-----Initialization of everything-----*/
     /*--------------------------------------*/
 
+
+    private void initFunctions(){
+        datasetSync = new DatasetSync();
+        datasetSync.reg(this);
+    }
+
+    public void regReceiveMessageListener(String actionName, IReceiveMessageListener l){
+        if(m_receiveMessageListener.containsKey(actionName)){
+            Log.w(TAG,"Already exists message listener, replace it: "+actionName);
+        }
+        if(l!=null && actionName!=null) {
+            m_receiveMessageListener.put(actionName,l);
+        }
+
+    }
     /** Read the configuration file "config.json"*/
     private void initConfiguration()
     {
@@ -205,6 +232,16 @@ public class MainActivity
                             m_Annotation_dataset.addServerAnnotation(addAnnotation);
                         });
                     }
+                    else if(m_receiveMessageListener.containsKey(action)) {
+                        IReceiveMessageListener iReceiveMessageListener = m_receiveMessageListener.get(action);
+                        if (iReceiveMessageListener != null) {
+                            JsonElement jsonElement = JsonParser.parseString(jsonMsg);
+                            JsonObject asJsonObject = jsonElement.getAsJsonObject();
+                            iReceiveMessageListener.OnReceiveMessage(MainActivity.this,asJsonObject.get("data"));
+                        }
+                    }else{
+                        Log.w(TAG,"Unknown socket information: "+jsonMsg);
+                    }
                 }
                 catch(JSONException e)
                 {
@@ -273,6 +310,7 @@ public class MainActivity
         initDataset();
         initLayout();
         initNetwork();
+        initFunctions();
     }
 
     @Override
@@ -324,5 +362,9 @@ public class MainActivity
     @Override
     public void stopShowAllAnnotation(OverviewFragment frag) {
         m_socket.push(OverviewMessage.generateStopShowAllJSON());
+    }
+
+    public AnnotationDataset getAnnotationDataset() {
+        return m_Annotation_dataset;
     }
 }

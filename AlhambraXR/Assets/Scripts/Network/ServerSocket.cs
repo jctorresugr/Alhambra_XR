@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Text;
+using UnityEngine;
 
 #if WINDOWS_UWP
 using Windows.System.Threading;
@@ -188,6 +189,7 @@ public class ServerSocket: Client.IClientListener
     /// <param name="s">The string to send.</param>
     public void SendASCIIStringToClients(String s)
     {
+        Debug.Log($"Send string (Len={s.Length}): {s}");
         byte[] data = new byte[4 + s.Length];
         Encoding.ASCII.GetBytes(s, 0, s.Length, data, 4);
         data[0] = (byte)(s.Length >> 24);

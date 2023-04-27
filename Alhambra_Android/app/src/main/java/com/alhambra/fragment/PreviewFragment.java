@@ -10,14 +10,20 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.alhambra.dataset.data.Annotation;
+import com.alhambra.dataset.data.AnnotationID;
 import com.alhambra.dataset.data.AnnotationInfo;
 import com.alhambra.dataset.AnnotationDataset;
 import com.alhambra.R;
+import com.alhambra.dataset.data.AnnotationJoint;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.sereno.Tree;
 import com.sereno.view.TreeView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 
 public class PreviewFragment extends AlhambraFragment implements AnnotationDataset.IDatasetListener
 {
@@ -61,6 +67,8 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
     /** The text of the selected entry*/
     private TextView m_mainTextView = null;
 
+    private ChipGroup m_chipGroup = null;
+
     /** The button to show the previous entry*/
     private ImageButton m_previousBtn = null;
 
@@ -69,6 +77,22 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
 
     /** The button to quit the selection */
     private Button m_quitSelectionBtn = null;
+
+    private HashMap<AnnotationID, PreviewUI> annotationUIMapping = new HashMap<>();
+
+    private static class PreviewUI{
+        public View preview;
+        public TextView textView;
+        public ImageView imageView;
+        //public ChipGroup chipGroup;
+
+        public PreviewUI(View preview) {
+            this.preview = preview;
+            textView = preview.findViewById(R.id.preview_key_entry_name);
+            imageView = preview.findViewById(R.id.preview_key_entry_drawable);
+            //chipGroup = preview.findViewById(R.id.preview_chip_group);
+        }
+    }
 
     /** Default constructor*/
     public PreviewFragment()
@@ -127,20 +151,28 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
         //Inflate the layout
         View preview = inflater.inflate(R.layout.preview_key_entry, null);
         preview.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        PreviewUI previewUI = new PreviewUI(preview);
 
         //Configure the text
-        TextView textView = preview.findViewById(R.id.preview_key_entry_name);
-        textView.setText(Integer.toString(idx));
+        previewUI.textView.setText(Integer.toString(idx));
 
         //Configure the preview image
-        ImageView imageView = preview.findViewById(R.id.preview_key_entry_drawable);
-        imageView.setImageDrawable(m_Annotation_dataset.getDataFromIndex(idx).getImage());
+        previewUI.imageView.setImageDrawable(m_Annotation_dataset.getDataFromIndex(idx).getImage());
 
+        //annotationUIMapping.put()
         //Put that in the tree view and set all the interactive listeners
         Tree<View> idTree = new Tree<>(preview);
         preview.setOnClickListener(view -> m_Annotation_dataset.setMainEntryIndex(idx));
         treeModel.addChild(idTree, -1);
         m_datasetEntries.put(idx, idTree);
+
+    }
+
+    private Chip addChip(ChipGroup cg, String text){
+        Chip chip = new Chip(cg.getContext());
+        chip.setText(text);
+        cg.addView(chip);
+        return chip;
     }
 
     /** Init the layout of the application
@@ -151,6 +183,7 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
         m_treeView         = v.findViewById(R.id.previewLayout);
         m_mainImageView    = v.findViewById(R.id.mainImageEntry);
         m_mainTextView     = v.findViewById(R.id.mainTextEntry);
+        m_chipGroup        = v.findViewById(R.id.mainAnnotationChipGroup);
         m_previousBtn      = v.findViewById(R.id.previousEntryButton);
         m_nextBtn          = v.findViewById(R.id.nextEntryButton);
         m_quitSelectionBtn = v.findViewById(R.id.quitSelectionButton);
@@ -258,15 +291,26 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
         }
 
         //Select the new one
-        AnnotationInfo annotationInfo = m_Annotation_dataset.getDataFromIndex(i);
         m_currentSelection = i;
-        m_mainImageView.setImageDrawable(annotationInfo.getImage());
-        m_mainTextView.setText(annotationInfo.getText());
+        updateCurrentAnnotation();
 
         //And highlight its entry
         Tree<View> current = m_datasetEntries.get(i);
         if(current != null) //Should not happen
             current.value.setBackgroundResource(R.drawable.round_rectangle_background);
+    }
+
+    public void updateCurrentAnnotation() {
+        AnnotationInfo annotationInfo = m_Annotation_dataset.getDataFromIndex(m_currentSelection);
+        m_mainImageView.setImageDrawable(annotationInfo.getImage());
+        m_mainTextView.setText(annotationInfo.getText());
+        //TODO: write here!
+        m_chipGroup.removeAllViews();
+        Annotation annotation = m_Annotation_dataset.getAnnotation(annotationInfo.getAnnotationID());
+        Set<AnnotationJoint> annotationJoints = annotation.getAnnotationJoints();
+        for(AnnotationJoint aj:annotationJoints){
+            addChip(m_chipGroup,aj.getName());
+        }
     }
 
     @Override
@@ -311,5 +355,28 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
 
         Tree<View> entry = m_datasetEntries.get(annotationInfo.getIndex());
         treeModel.removeChild(entry);
+    }
+
+    @Override
+    public void onAnnotationChange(Annotation annotation) {
+        AnnotationInfo dataFromIndex = m_Annotation_dataset.getDataFromIndex(m_currentSelection);
+        if(dataFromIndex.getAnnotationID().equals(annotation.info.getAnnotationID())){
+            updateCurrentAnnotation();
+        }
+    }
+
+    @Override
+    public void onAddJoint(AnnotationJoint annotationJoint) {
+
+    }
+
+    @Override
+    public void onRemoveJoint(AnnotationJoint annotationJoint) {
+
+    }
+
+    @Override
+    public void onChangeJoint(AnnotationJoint annotationJoint) {
+
     }
 }

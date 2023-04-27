@@ -2,13 +2,15 @@ package com.alhambra.dataset.data;
 
 import androidx.annotation.Nullable;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 public class Annotation {
     public AnnotationInfo info;
     public AnnotationRenderInfo renderInfo;
     public final AnnotationID id;
-    public HashSet<AnnotationJoint> joints;
+    HashSet<AnnotationJoint> joints;
 
     public Annotation(AnnotationID id)
     {
@@ -35,6 +37,10 @@ public class Annotation {
             return aid.equals(id);
         }
         return super.equals(obj);
+    }
+
+    public Set<AnnotationJoint> getAnnotationJoints(){
+        return Collections.unmodifiableSet(joints);
     }
 
     @Override

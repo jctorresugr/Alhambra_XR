@@ -305,11 +305,13 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                 {
                     //TODO: resolve uncomment annotation
                     m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annot));
+                    Debug.Log("Sync Annotation " + annot.ID);
                 }
 
                 foreach (AnnotationJoint joint in data.AnnotationJoints)
                 {
                     m_server.SendASCIIStringToClients(JSONMessage.ActionJSON("SyncAnnotationJoint", joint));
+                    Debug.Log("Sync AnnotationJoint " + joint.ID);
                 }
                     
             }
@@ -664,8 +666,17 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
             else if(mainID.Layer == 2)
                 annot = PickPanoModel.Annotations.Find((annot) => annot.Color.r == 0 && annot.Color.g == 0 && annot.Color.b == mainID.ID);
             */
-            lock(this)
-                m_curAnnotation = annot.renderInfo;
+            if(annot!=null)
+            {
+                lock (this)
+                    m_curAnnotation = annot.renderInfo;
+            }
+            else
+            {
+                lock (this)
+                    m_curAnnotation = null;
+            }
+            
         }
     }
 
@@ -801,7 +812,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     {
         m_model.CurrentAction = CurrentAction.IN_HIGHLIGHT;
         m_model.CurrentHighlightMain = AnnotationID.LIGHTALL_ID;
-        m_model.CurrentHighlightSecond = AnnotationID.INVALID_ID;
+        m_model.CurrentHighlightSecond = AnnotationID.LIGHTALL_ID;
     }
 
     private void HandleStopShowAll()
