@@ -160,13 +160,32 @@ public class AnnotationDataset
     public Annotation addAnnotation(int index, AnnotationID id){
         Annotation annot = getAnnotation(id);
         if(annot!=null){
-            Log.i(LOG_TAG, "Try to add duplicate Annotation (new): "+id);
+            Log.i(LOG_TAG, "Try to add duplicate Annotation (new): "+id+" | Intended Index="+index+" | actual Index="+annot.info.getIndex());
             return annot;
         }else{
             annot = new Annotation(id);
+            Log.i(LOG_TAG, "Try to add Annotation (new): "+id+" | Intended Index="+index);
             m_data.put(index,annot);
             return annot;
         }
+    }
+
+    public Annotation removeAnnotation(AnnotationID annotationID) {
+        Annotation annotation = getAnnotation(annotationID);
+        if(annotation!=null){
+            int index = annotation.info.getIndex();
+            Set<AnnotationJoint> annotationJoints = annotation.getAnnotationJoints();
+            for(AnnotationJoint aj: annotationJoints) {
+                aj.removeAnnotation(annotation);
+                for(IDatasetListener l : m_listeners)
+                    l.onChangeJoint(aj);
+            }
+            for(IDatasetListener l : m_listeners)
+                l.onRemoveDataChunk(this,annotation.info);
+            m_data.remove(index);
+            return annotation;
+        }
+        return null;
     }
 
 
@@ -373,9 +392,11 @@ public class AnnotationDataset
     /** Clear all the annotations (on, e.g., a disconnection) the server created*/
     public void clearServerAnnotations()
     {
+        //TODO: modify this function, also notice that the network turbulence will cause issues
         //Check the selection status...
 
         //...First the MainEntryIndex
+        /*
         if(m_serverAnnotations.contains(getMainEntryIndex()))
         {
             for(int j : m_data.keySet())
@@ -399,11 +420,12 @@ public class AnnotationDataset
         //Finally, delete everything
         for(Integer i : m_serverAnnotations)
         {
-            for(IDatasetListener l : m_listeners)
-                l.onRemoveDataChunk(this, m_data.get(i).info);
-            m_data.remove(i);
+            //for(IDatasetListener l : m_listeners)
+            //    l.onRemoveDataChunk(this, m_data.get(i).info);
+            Annotation annotation = m_data.get(i);
+            this.removeAnnotation(annotation.id);
         }
-        m_serverAnnotations.clear();
+        m_serverAnnotations.clear();*/
     }
 
     /** @brief Add a new listener

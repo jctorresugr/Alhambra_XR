@@ -2,6 +2,7 @@ package com.alhambra.fragment;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -78,7 +79,7 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
     /** The button to quit the selection */
     private Button m_quitSelectionBtn = null;
 
-    private HashMap<AnnotationID, PreviewUI> annotationUIMapping = new HashMap<>();
+    private final HashMap<AnnotationID, PreviewUI> annotationPreviewUIMapping = new HashMap<>();
 
     private static class PreviewUI{
         public View preview;
@@ -145,6 +146,20 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
      * @param idx the data chunk index in the linked dataset*/
     private void addDataChunk(int idx)
     {
+        if(m_ctx==null) {
+            Log.e("PreviewFragment","Null context in add data chunk! This should not happen >"+idx);
+            return;
+        }
+        AnnotationInfo dataInfo = m_Annotation_dataset.getDataFromIndex(idx);
+        AnnotationID annotationID = dataInfo.getAnnotationID();
+        // if exists, just update it, do not add a new one
+        if(annotationPreviewUIMapping.containsKey(annotationID)){
+            PreviewUI previewUI = annotationPreviewUIMapping.get(annotationID);
+            previewUI.textView.setText(Integer.toString(idx));
+            previewUI.imageView.setImageDrawable(dataInfo.getImage());
+            return;
+        }
+
         LayoutInflater inflater = LayoutInflater.from(m_ctx);
         final Tree<View> treeModel = m_treeView.getModel();
 
@@ -153,13 +168,14 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
         preview.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         PreviewUI previewUI = new PreviewUI(preview);
 
+
         //Configure the text
         previewUI.textView.setText(Integer.toString(idx));
 
         //Configure the preview image
-        previewUI.imageView.setImageDrawable(m_Annotation_dataset.getDataFromIndex(idx).getImage());
+        previewUI.imageView.setImageDrawable(dataInfo.getImage());
 
-        //annotationUIMapping.put()
+        annotationPreviewUIMapping.put(annotationID,previewUI);
         //Put that in the tree view and set all the interactive listeners
         Tree<View> idTree = new Tree<>(preview);
         preview.setOnClickListener(view -> m_Annotation_dataset.setMainEntryIndex(idx));
@@ -171,6 +187,7 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
     private Chip addChip(ChipGroup cg, String text){
         Chip chip = new Chip(cg.getContext());
         chip.setText(text);
+        chip.setCheckable(false);
         cg.addView(chip);
         return chip;
     }
@@ -359,6 +376,9 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
 
     @Override
     public void onAnnotationChange(Annotation annotation) {
+        if(m_currentSelection==null) {
+            return;
+        }
         AnnotationInfo dataFromIndex = m_Annotation_dataset.getDataFromIndex(m_currentSelection);
         if(dataFromIndex.getAnnotationID().equals(annotation.info.getAnnotationID())){
             updateCurrentAnnotation();

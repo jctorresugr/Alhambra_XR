@@ -103,6 +103,27 @@ public class JSONMessage
             "}";
     }
 
+    //test code
+    /*
+    public static String AddAnnotationToJSON(Annotation annot)
+    {
+        byte[] temp = new byte[4*8];
+        for (int i = 0; i < 32; i++) temp[i] = annot.info.SnapshotRGBA[i];
+        return
+            "{" +
+            "    \"action\": \"addAnnotation\",\n" +
+            "    \"data\":\n" +
+            "    {\n" +
+           $"        \"snapshotBase64\": \"{System.Convert.ToBase64String(temp)}\",\n" +
+           $"        \"snapshotWidth\":  {2},\n" +
+           $"        \"snapshotHeight\": {1},\n" +
+           $"        \"annotationColor\": [{annot.info.Color.r}, {annot.info.Color.g}, {annot.info.Color.b}, {annot.info.Color.a}],\n" +
+           $"        \"description\": {QuoteString(annot.info.Description)}," +
+           $"        \"renderInfo\": {JsonUtility.ToJson(annot.renderInfo)}" +
+            "    }\n" +
+            "}";
+    }*/
+
     public static string ActionJSON<T>(string actionName, T data)
     {
         string dataString = JsonUtility.ToJson(data);

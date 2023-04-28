@@ -197,6 +197,8 @@ public class SocketManager
                     synchronized (this)
                     {
                         close();
+                        Log.e("SocketManager","Error while read!"+e.toString());
+                        e.printStackTrace();
                     }
                 }
             }

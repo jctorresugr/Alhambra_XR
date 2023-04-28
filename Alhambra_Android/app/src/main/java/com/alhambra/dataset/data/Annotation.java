@@ -10,7 +10,7 @@ public class Annotation {
     public AnnotationInfo info;
     public AnnotationRenderInfo renderInfo;
     public final AnnotationID id;
-    HashSet<AnnotationJoint> joints;
+    transient HashSet<AnnotationJoint> joints;
 
     public Annotation(AnnotationID id)
     {
@@ -46,5 +46,9 @@ public class Annotation {
     @Override
     public int hashCode() {
         return id.hashCode();
+    }
+
+    public boolean hasJoint(AnnotationJoint aj) {
+        return joints.contains(aj);
     }
 }

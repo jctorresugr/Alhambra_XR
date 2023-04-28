@@ -181,7 +181,7 @@ public class MainActivity
 
                     //Determine the action to do
                     String action = reader.getString("action");
-
+                    Log.i(TAG,"receive action <"+action+">");
                     //Selection case
                     if(action.equals("selection"))
                     {

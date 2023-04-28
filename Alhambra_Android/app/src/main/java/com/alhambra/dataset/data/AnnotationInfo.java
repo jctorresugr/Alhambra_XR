@@ -22,7 +22,7 @@ public class AnnotationInfo
     /** The image associated with this chunk of data*/
     private Drawable m_drawable = null;
 
-    private HashSet<AnnotationJoint> m_joints = new HashSet<>();
+    //private HashSet<AnnotationJoint> m_joints = new HashSet<>();
 
     /** Constructor
      * @param index the Index of this chunk of data in Android fragment list

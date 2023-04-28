@@ -15,7 +15,7 @@ public class AnnotationJoint {
     private String name;
     private int id;
 
-    private final HashSet<Annotation> annotations = new HashSet<>();
+    private transient HashSet<Annotation> annotations = new HashSet<>();
     private final ArrayList<AnnotationID> annotationsID = new ArrayList<>();
 
     public AnnotationJoint(int id, String name)
@@ -61,11 +61,15 @@ public class AnnotationJoint {
         return annotationsID.contains(id);
     }
 
-    // add annotation that exists in annotationsID
+    // invoke this after deserialize
     public void syncAnnotations(List<Annotation> annotations){
+        this.annotations = new HashSet<Annotation>();
         for(Annotation annot: annotations) {
             if(hasAnnotationID(annot.id)) {
                 this.annotations.add(annot);
+                if(!annot.hasJoint(this)){
+                    annot.joints.add(this);
+                }
             }
         }
     }
