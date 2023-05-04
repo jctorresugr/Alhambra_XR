@@ -20,10 +20,10 @@ public class AnnotationJoint
     [SerializeField]
     private int id;
     [NonSerialized]
-    private List<Annotation> annotations = new List<Annotation>();
+    List<Annotation> annotations = new List<Annotation>();
     //quick and dirty way to avoid endless loop
     [SerializeField]
-    private List<AnnotationID> annotationsID = new List<AnnotationID>();
+    List<AnnotationID> annotationsID = new List<AnnotationID>();
 
     // control data
     public event AnnotationAndJointChangeFunc OnJointAddAnnotationEvent;
@@ -101,6 +101,22 @@ public class AnnotationJoint
                 position = range.center;
             }
             OnJointRemoveAnnotationEvent?.Invoke(this,annotation);
+        }
+    }
+
+    public void PostDeserialize(List<Annotation> annotations)
+    {
+        List<AnnotationID> aids = annotationsID;
+        annotationsID = new List<AnnotationID>();
+        foreach(AnnotationID aid in aids)
+        {
+            Annotation annotation = annotations.Find(x => x.ID == aid);
+            if(annotation==null)
+            {
+                Debug.LogWarning($"Unknown annotation ID {aid} when joint.PostDeserialize()");
+                continue;
+            }
+            this.AddAnnotation(annotation);
         }
     }
 }

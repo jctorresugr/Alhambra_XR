@@ -96,6 +96,14 @@ public class AnnotationDataset
         return Collections.unmodifiableCollection(m_jointData.values());
     }
 
+    public AnnotationJoint getAnnotationJoint(int id) {
+        return m_jointData.get(id);
+    }
+
+    public boolean hasAnnotationJoint(int id) {
+        return getAnnotationJoint(id)!=null;
+    }
+
     public void addAnnotationJoint(AnnotationJoint aj) {
         int id = aj.getId();
         if(m_jointData.containsKey(id)) {
@@ -107,6 +115,13 @@ public class AnnotationDataset
         notifyAnnotationJointChange(aj);
         for(IDatasetListener l : m_listeners)
             l.onAddJoint(aj);
+    }
+
+    public AnnotationJoint addAnnotationJoint(String name) {
+        int id = 0;
+        while(hasAnnotationJoint(id))
+            id++;
+        return new AnnotationJoint(id,name);
     }
 
     public void notifyAnnotationJointChange(AnnotationJoint aj) {
@@ -123,7 +138,7 @@ public class AnnotationDataset
             l.onAnnotationChange(a);
     }
 
-    public void removeAnnotationJoint(int id) {
+    public AnnotationJoint removeAnnotationJoint(int id) {
         AnnotationJoint aj = m_jointData.get(id);
         if(aj!=null){
             m_jointData.remove(id);
@@ -137,6 +152,7 @@ public class AnnotationDataset
             for(IDatasetListener l : m_listeners)
                 l.onRemoveJoint(aj);
         }
+        return aj;
     }
 
     public void addAnnotationToJoint(AnnotationJoint aj, Annotation a) {

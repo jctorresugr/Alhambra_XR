@@ -16,6 +16,7 @@ import android.widget.TextView;
 import com.alhambra.R;
 import com.alhambra.dataset.AnnotationDataset;
 import com.alhambra.dataset.data.AnnotationJoint;
+import com.alhambra.view.CustomChipTextEditorController;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.sereno.color.Color;
@@ -32,6 +33,7 @@ import com.sereno.view.ColorPickerView;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -96,6 +98,9 @@ public class AnnotationFragment extends AlhambraFragment
     /** Button to cancel the current annotation*/
     private Button m_cancelBtn  = null;
 
+    private EditText m_jointEditText = null;
+    private CustomChipTextEditorController m_jointEditTextController = null;
+
     private ChipGroup m_chipGroup = null;
     private HashMap<Integer,Chip> m_chipViews = new HashMap<>();
 
@@ -113,6 +118,10 @@ public class AnnotationFragment extends AlhambraFragment
     /** Default constructor */
     public AnnotationFragment() { super(); }
 
+    public HashSet<String> getJointTokens(){
+        return m_jointEditTextController.getTokens();
+    }
+
     /** Initialize the layout of the fragment once the view is created*/
     private void initLayout(View v)
     {
@@ -125,6 +134,8 @@ public class AnnotationFragment extends AlhambraFragment
         m_startAnnotationTxt = v.findViewById(R.id.tapToAddAnnotationTxt);
         m_drawingMethod      = v.findViewById(R.id.drawingMethod);
         m_chipGroup          = v.findViewById(R.id.annotationAddJointChipGroup);
+        m_jointEditText      = v.findViewById(R.id.editTextCustomJoint);
+        m_jointEditTextController = new CustomChipTextEditorController(m_jointEditText);
         m_currentStrokeColor = m_colorPicker.getModel().getColor().toRGB().toARGB8888();
 
         m_canvas.setOnTouchListener((view, motionEvent) -> {

@@ -129,4 +129,9 @@ public class JSONMessage
         string dataString = JsonUtility.ToJson(data);
         return $"{{\"action\":\"{actionName}\",\"data\":{dataString}}}";
     }
+
+    public static string FailJSON<T>(T data)
+    {
+        return ActionJSON("Fail", data);
+    }
 }

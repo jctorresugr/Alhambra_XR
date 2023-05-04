@@ -177,7 +177,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
                     {
                         AnnotationID c = (AnnotationID)annot.Color;
 
-                        Annotation srcAnnot = data.FindID(c);
+                        Annotation srcAnnot = data.FindAnnotationID(c);
 
                         if (srcAnnot == null)
                         {

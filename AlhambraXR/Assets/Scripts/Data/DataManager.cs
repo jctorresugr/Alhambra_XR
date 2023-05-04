@@ -16,6 +16,9 @@ public class DataManager : MonoBehaviour
     public event AnnotationJointChangeFunc OnAnnotationJointAddEvent;
     public event AnnotationJointChangeFunc OnAnnotationJointRemoveEvent;
 
+    public event AnnotationJoint.AnnotationAndJointChangeFunc OnJointAddAnnotationEvent;
+    public event AnnotationJoint.AnnotationAndJointChangeFunc OnJointRemoveAnnotationEvent;
+
     private List<Annotation> annotations;
     private List<AnnotationJoint> annotationJoints; 
 
@@ -63,7 +66,7 @@ public class DataManager : MonoBehaviour
         Debug.Log(JSONMessage.AddAnnotationToJSON(annotations[1]));
     }
 
-    public Annotation FindID(AnnotationID id)
+    public Annotation FindAnnotationID(AnnotationID id)
     {
         return annotations.Find(x => x.ID == id);
     }
@@ -75,7 +78,7 @@ public class DataManager : MonoBehaviour
 
     public Annotation AddAnnotation(AnnotationID id)
     {
-        Annotation annot = FindID(id);
+        Annotation annot = FindAnnotationID(id);
         if (annot==null)
         {
             annot = new Annotation(id);
@@ -91,7 +94,7 @@ public class DataManager : MonoBehaviour
     public void AddAnnoationRenderInfo(AnnotationRenderInfo renderInfo)
     {
         AnnotationID id = new AnnotationID(renderInfo.Color);
-        Annotation annot = FindID(id);
+        Annotation annot = FindAnnotationID(id);
         if (annot==null)
         {
             Annotation newAnnotation = new Annotation(id);
@@ -111,7 +114,7 @@ public class DataManager : MonoBehaviour
     public void AddAnnotationInfo(AnnotationInfo info)
     {
         AnnotationID id = new AnnotationID(info.Color);
-        Annotation annot = FindID(id);
+        Annotation annot = FindAnnotationID(id);
         if (annot == null)
         {
             Annotation newAnnotation = new Annotation(id);
@@ -141,10 +144,29 @@ public class DataManager : MonoBehaviour
         } while (aj != null);
 
         aj = new AnnotationJoint(id, name);
+        aj.OnJointAddAnnotationEvent += OnJointAddAnnotationEvent;
+        aj.OnJointRemoveAnnotationEvent += OnJointRemoveAnnotationEvent;
         annotationJoints.Add(aj);
         Debug.Log("Add annotation joint " + id);
         OnAnnotationJointAddEvent?.Invoke(aj);
         return aj;
+    }
+
+    public void AddAnnotationJoint(AnnotationJoint annotationJoint)
+    {
+        AnnotationJoint localJoint = FindJointID(annotationJoint.ID);
+        if(localJoint==null)
+        {
+            annotationJoints.Add(annotationJoint);
+            OnAnnotationJointAddEvent?.Invoke(annotationJoint);
+            annotationJoint.OnJointAddAnnotationEvent += OnJointAddAnnotationEvent;
+            annotationJoint.OnJointRemoveAnnotationEvent += OnJointRemoveAnnotationEvent;
+            annotationJoint.PostDeserialize(annotations);
+        }
+        else
+        {
+            Debug.LogWarning("Already exists annotation with the same id!");
+        }
     }
 
     public AnnotationJoint RemoveAnnotationJoint(int id)
@@ -183,7 +205,7 @@ public class DataManager : MonoBehaviour
 
     public Annotation RemoveAnnotation(AnnotationID id)
     {
-        Annotation a = FindID(id);
+        Annotation a = FindAnnotationID(id);
         if(RemoveAnnotation(a))
         {
             RemoveAnnotationInfomation(a);

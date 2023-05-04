@@ -20,6 +20,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     /// The server application
     /// </summary>
     private AlhambraServer m_server = new AlhambraServer();
+    public AlhambraServer Server => m_server;
 
     /// <summary>
     /// Store all data here!
@@ -110,6 +111,8 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     /// Any text that has to be displayed
     /// </summary>
     public UnityEngine.UI.Text RandomText;
+
+    public DataSync dataSync;
 
     /// <summary>
     /// A better navigator? in progress
@@ -444,7 +447,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                     lock (this)
                         data.AddAnnotationInfo(annot);
                     //m_annotations.Add(annot);
-                    Annotation annotation = data.FindID(annot.ID);
+                    Annotation annotation = data.FindAnnotationID(annot.ID);
                     //add joint information
                     foreach(int jointID in detailedMsg.data.selectedJointID)
                     {
@@ -460,6 +463,11 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
                     Task.Run(() =>
                     {
                         m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annotation));
+                        foreach(AnnotationJoint aj in annotation.Joints)
+                        {
+                            dataSync.SendAddAnnotationtoJoint(aj.ID, annotation.ID);
+                        }
+                        
                     });
                 }
                 Destroy(colorRT);
@@ -667,7 +675,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         {
             //AnnotationRenderInfo annot = null;
 
-            Annotation annot = data.FindID(mainID);
+            Annotation annot = data.FindAnnotationID(mainID);
             //Search per layer the annotation data corresponding the demand of highlight
             /*
             if (mainID.Layer == 0)

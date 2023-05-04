@@ -10,6 +10,7 @@ import android.view.View;
 import com.alhambra.controls.DatasetSync;
 import com.alhambra.dataset.data.AnnotationInfo;
 import com.alhambra.dataset.AnnotationDataset;
+import com.alhambra.dataset.data.AnnotationJoint;
 import com.alhambra.fragment.AlhambraFragment;
 import com.alhambra.fragment.AnnotationFragment;
 import com.alhambra.fragment.OverviewFragment;
@@ -42,6 +43,7 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /** The Main Activity of this application. This is the first thing that is suppose to start*/
 public class MainActivity
@@ -340,6 +342,11 @@ public class MainActivity
     @Override
     public void onConfirmAnnotation(AnnotationFragment frag)
     {
+        HashSet<String> jointTokens = frag.getJointTokens();
+        for(String token : jointTokens) {
+            AnnotationJoint annotationJoint = m_Annotation_dataset.addAnnotationJoint(token);
+            datasetSync.sendAddAnnotationJoint(annotationJoint);
+        }
         m_socket.push(FinishAnnotation.generateJSON(true,
                 frag.getAnnotationCanvasData().getGeometries(),
                 frag.getAnnotationCanvasData().getWidth(),
@@ -350,6 +357,14 @@ public class MainActivity
                 frag.getSelectedAnnotationJointIDs()));
         frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);
+    }
+
+    public void sendServerData(String s) {
+        m_socket.push(s);
+    }
+
+    public void sendServerAction(String actionName, Object data) {
+        m_socket.push(JSONUtils.createActionJson(actionName, data));
     }
 
     @Override
