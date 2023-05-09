@@ -118,7 +118,7 @@ public class AnnotationFragment extends AlhambraFragment
     /** Default constructor */
     public AnnotationFragment() { super(); }
 
-    public HashSet<String> getJointTokens(){
+    public ArrayList<String> getJointTokens(){
         return m_jointEditTextController.getTokens();
     }
 
@@ -212,6 +212,7 @@ public class AnnotationFragment extends AlhambraFragment
         m_editText.setVisibility(View.GONE);
         m_colorPicker.setVisibility(View.GONE);
         m_drawingMethod.setVisibility(View.GONE);
+        m_jointEditText.setVisibility(View.GONE);
     }
 
     /** @brief Add a new listener
@@ -270,6 +271,7 @@ public class AnnotationFragment extends AlhambraFragment
         m_colorPicker.setVisibility(View.VISIBLE);
         m_drawingMethod.setVisibility(View.VISIBLE);
         m_chipGroup.setVisibility(View.VISIBLE);
+        m_jointEditText.setVisibility(View.VISIBLE);
         m_cameraPos = cameraPos;
         m_cameraRot = cameraRot;
         m_startAnnotationTxt.setVisibility(View.GONE);
@@ -305,6 +307,8 @@ public class AnnotationFragment extends AlhambraFragment
         m_colorPicker.setVisibility(View.GONE);
         m_drawingMethod.setVisibility(View.GONE);
         m_chipGroup.setVisibility(View.GONE);
+        m_jointEditText.setVisibility(View.GONE);
+        m_jointEditTextController.clearText();
     }
 
     /** The camera position at the time of where the annotation image was taken. null if no image is currently being annotated

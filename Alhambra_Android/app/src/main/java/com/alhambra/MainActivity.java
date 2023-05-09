@@ -18,6 +18,7 @@ import com.alhambra.fragment.PageViewer;
 import com.alhambra.fragment.PreviewFragment;
 import com.alhambra.fragment.ViewPagerAdapter;
 import com.alhambra.network.JSONUtils;
+import com.alhambra.network.PackedJSONMessages;
 import com.alhambra.network.receivingmsg.AddAnnotationMessage;
 import com.alhambra.network.receivingmsg.AnnotationMessage;
 import com.alhambra.network.receivingmsg.SelectionMessage;
@@ -177,6 +178,12 @@ public class MainActivity
             @Override
             public void onRead(SocketManager socket, String jsonMsg)
             {
+                if(jsonMsg.length()>1000) {
+                    Log.i("Network",jsonMsg.substring(0,1000)+"> Truncated, Total "+jsonMsg.length());
+                }else{
+                    Log.i("Network",jsonMsg);
+                }
+
                 try
                 {
                     final JSONObject reader = new JSONObject(jsonMsg);
@@ -185,7 +192,15 @@ public class MainActivity
                     String action = reader.getString("action");
                     Log.i(TAG,"receive action <"+action+">");
                     //Selection case
-                    if(action.equals("selection"))
+                    if (action.equals(PackedJSONMessages.ACTION_NAME)) {
+                        JsonElement jsonElement = JsonParser.parseString(jsonMsg);
+                        JsonObject asJsonObject = jsonElement.getAsJsonObject();
+                        PackedJSONMessages messages = JSONUtils.gson.fromJson(asJsonObject.get("data"),PackedJSONMessages.class);
+                        for(String message:messages.actions) {
+                            onRead(socket,message);
+                        }
+                    }
+                    else if(action.equals("selection"))
                     {
                         final SelectionMessage selection = new SelectionMessage(reader.getJSONObject("data"));
                         MainActivity.this.runOnUiThread(() ->
@@ -239,7 +254,10 @@ public class MainActivity
                         if (iReceiveMessageListener != null) {
                             JsonElement jsonElement = JsonParser.parseString(jsonMsg);
                             JsonObject asJsonObject = jsonElement.getAsJsonObject();
-                            iReceiveMessageListener.OnReceiveMessage(MainActivity.this,asJsonObject.get("data"));
+                            MainActivity.this.runOnUiThread(() -> {
+                                iReceiveMessageListener.OnReceiveMessage(MainActivity.this,asJsonObject.get("data"));
+                                    });
+
                         }
                     }else{
                         Log.w(TAG,"Unknown socket information: "+jsonMsg);
@@ -342,11 +360,7 @@ public class MainActivity
     @Override
     public void onConfirmAnnotation(AnnotationFragment frag)
     {
-        HashSet<String> jointTokens = frag.getJointTokens();
-        for(String token : jointTokens) {
-            AnnotationJoint annotationJoint = m_Annotation_dataset.addAnnotationJoint(token);
-            datasetSync.sendAddAnnotationJoint(annotationJoint);
-        }
+        ArrayList<String> jointTokens = frag.getJointTokens();
         m_socket.push(FinishAnnotation.generateJSON(true,
                 frag.getAnnotationCanvasData().getGeometries(),
                 frag.getAnnotationCanvasData().getWidth(),
@@ -354,7 +368,8 @@ public class MainActivity
                 frag.getAnnotationDescription(),
                 frag.getCameraPos(),
                 frag.getCameraRot(),
-                frag.getSelectedAnnotationJointIDs()));
+                frag.getSelectedAnnotationJointIDs(),
+                jointTokens));
         frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);
     }
@@ -378,7 +393,8 @@ public class MainActivity
                 frag.getAnnotationDescription(),
                 frag.getCameraPos(),
                 frag.getCameraRot(),
-                frag.getSelectedAnnotationJointIDs()
+                frag.getSelectedAnnotationJointIDs(),
+                new ArrayList<>()
                 ));
         frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);

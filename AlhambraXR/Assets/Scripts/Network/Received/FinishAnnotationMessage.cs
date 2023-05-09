@@ -82,4 +82,5 @@ public class FinishAnnotationMessage
     public String description;
 
     public int[] selectedJointID;
+    public string[] createdJointName;
 }

@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.chip.Chip android:id="@+id/chip_dynamic_input"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    tools:layout_editor_absoluteX="1dp"
-    tools:layout_editor_absoluteY="1dp"
-    tools:closeIconEnabled="true"
+<chip
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    xmlns:tools="http://schemas.android.com/apk/res-auto" />
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    />

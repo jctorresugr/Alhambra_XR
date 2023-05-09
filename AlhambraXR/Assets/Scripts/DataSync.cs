@@ -63,6 +63,10 @@ public class DataSync : SocketDataBasic
         }
         else if(name.StartsWith("Send"))
         {
+            return name.Substring(4);
+        }
+        else if (name.StartsWith("Get"))
+        {
             return name.Substring(3);
         }
         Debug.LogWarning("Problem with method name: " + name);
@@ -103,9 +107,15 @@ public class DataSync : SocketDataBasic
         annotationJoint.AddAnnotation(annotation);
     }
 
-    public void SendAddAnnotationtoJoint(int jointID, AnnotationID annotationID)
+    public void SendAddAnnotationToJoint(int jointID, AnnotationID annotationID)
     {
-        SendClientAction(MethodBase.GetCurrentMethod().Name, new MessageAnnotationJointModify(jointID, annotationID));
+        SendClientAction(ProcessMethodName(MethodBase.GetCurrentMethod().Name), new MessageAnnotationJointModify(jointID, annotationID));
+    }
+
+    public string GetAddAnnotationToJoint(int jointID, AnnotationID annotationID)
+    {
+        return JSONMessage.ActionJSON(ProcessMethodName(MethodBase.GetCurrentMethod().Name),
+            new MessageAnnotationJointModify(jointID, annotationID));
     }
 
     public void OnReceiveRemoveAnnotationFromJoint(MessageAnnotationJointModify msg)
@@ -127,7 +137,13 @@ public class DataSync : SocketDataBasic
 
     public void SendRemoveAnnotationFromJoint(int jointID, AnnotationID annotationID)
     {
-        SendClientAction(MethodBase.GetCurrentMethod().Name, new MessageAnnotationJointModify(jointID, annotationID));
+        SendClientAction(ProcessMethodName(MethodBase.GetCurrentMethod().Name), new MessageAnnotationJointModify(jointID, annotationID));
+    }
+
+    public string GetRemoveAnnotationFromJoint(int jointID, AnnotationID annotationID)
+    {
+        return JSONMessage.ActionJSON(ProcessMethodName(MethodBase.GetCurrentMethod().Name),
+            new MessageAnnotationJointModify(jointID, annotationID));
     }
 
     public void OnReceiveRemoveAnnotationJoint(int jointID)
@@ -143,7 +159,12 @@ public class DataSync : SocketDataBasic
 
     public void SendRemoveAnnotationJoint(int jointID)
     {
-        SendClientAction(MethodBase.GetCurrentMethod().Name, jointID);
+        SendClientAction(ProcessMethodName(MethodBase.GetCurrentMethod().Name), jointID);
+    }
+
+    public string GetRemoveAnnotationJoint(int jointID)
+    {
+        return JSONMessage.ActionJSON(ProcessMethodName(MethodBase.GetCurrentMethod().Name), jointID);
     }
 
     public void OnReceiveAddAnnotationJoint(AnnotationJoint aj)
@@ -159,7 +180,12 @@ public class DataSync : SocketDataBasic
 
     public void SendAddAnnotationJoint(AnnotationJoint aj)
     {
-        SendClientAction(MethodBase.GetCurrentMethod().Name, aj);
+        SendClientAction(ProcessMethodName(MethodBase.GetCurrentMethod().Name), aj);
+    }
+
+    public string GetAddAnnotationJoint(AnnotationJoint aj)
+    {
+        return JSONMessage.ActionJSON(ProcessMethodName(MethodBase.GetCurrentMethod().Name), aj);
     }
 
 }

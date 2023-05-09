@@ -114,7 +114,8 @@ public class FinishAnnotation
             String desc,
             float[] cameraPos,
             Quaternion cameraRot,
-            List<Integer> selectedJointID)
+            List<Integer> selectedJointID,
+            List<String> createdJointName)
     {
         List<AnnotationStroke>  strokes = new ArrayList<>();
         List<AnnotationPolygon> polygons = new ArrayList<>();
@@ -139,7 +140,8 @@ public class FinishAnnotation
                 "       \"height\": " + height + ",\n" +
                 "       \"strokes\": " + generateStrokesJSON(strokes, 8) + ",\n" +
                 "       \"polygons\": " + generatePolygonsJSON(polygons, 8) + ",\n" +
-                "       \"selectedJointID\": " + JSONUtils.gson.toJson(selectedJointID) + "\n" +
+                "       \"selectedJointID\": " + JSONUtils.gson.toJson(selectedJointID) + ",\n" +
+                "       \"createdJointName\": " + JSONUtils.gson.toJson(createdJointName) + "\n" +
                 "   }\n" +
                 "}";
     }

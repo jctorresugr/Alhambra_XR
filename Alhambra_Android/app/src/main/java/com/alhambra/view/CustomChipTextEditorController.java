@@ -18,15 +18,19 @@ public class CustomChipTextEditorController implements TextWatcher, View.OnFocus
 
     public EditText editText;
     public char splitChar = ',';
-    private int lastLength = 0;
     private int currentNonSpanIndex = 0;
     private ArrayList<String> tokens = new ArrayList<>();
 
     public CustomChipTextEditorController(EditText editText) {
         this.editText=editText;
-        lastLength = editText.getText().length();
         this.editText.setOnFocusChangeListener(this);
         this.editText.addTextChangedListener(this);
+    }
+
+    public void clearText(){
+        editText.setText("");
+        currentNonSpanIndex=0;
+        tokens.clear();
     }
 
 
@@ -37,12 +41,6 @@ public class CustomChipTextEditorController implements TextWatcher, View.OnFocus
 
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
-        int newLength = s.length();
-        if(newLength<lastLength-1) {
-            //delete the span
-            tokens.remove(tokens.get(tokens.size()-1));
-            currentNonSpanIndex = newLength;
-        }
     }
 
     //TODO: test
@@ -50,15 +48,24 @@ public class CustomChipTextEditorController implements TextWatcher, View.OnFocus
     public void afterTextChanged(Editable s) {
         int oldNonSpanIndex = currentNonSpanIndex;
         int tokenIndex = tokens.size()-1;
-        int len = s.length();
+        int len = s.toString().length(); // do not use s.length(), it includes all inputs, include back space
         editText.removeTextChangedListener(this);
         while(true)
         {
             int i = currentNonSpanIndex;
-            while(i<len && s.charAt(i)!=splitChar) {
+            while(true) {
+                if(i>=len) { // exceed length!
+                    break;
+                }
+                if(s.charAt(i)==splitChar){ // encounter split character ,
+                    break;
+                }
                 i++;
             }
-            if(len<=i) {
+            if(len<=i) { // exceed length
+                break;
+            }
+            if(i==0 || i==currentNonSpanIndex) { // avoid speical case
                 break;
             }
             // [span]xxxx,
@@ -70,15 +77,19 @@ public class CustomChipTextEditorController implements TextWatcher, View.OnFocus
             // nonSpanIndex
             CharSequence token_cs = s.subSequence(currentNonSpanIndex, i);
             String token = token_cs.toString();
+            if(token.length()==0) {
+                currentNonSpanIndex = i;
+                continue;
+            }
             // add chip
-            ChipDrawable chip = ChipDrawable.createFromResource(editText.getContext(), R.xml.editable_chip);
+            ChipDrawable chip = ChipDrawable.createFromResource(editText.getContext(),R.xml.editable_chip);
             chip.setText(token);
             chip.setBounds(0,0,chip.getIntrinsicWidth(),chip.getIntrinsicHeight());
             ImageSpan span = new ImageSpan(chip);
-            s.setSpan(span,currentNonSpanIndex,i-1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            s.setSpan(span,currentNonSpanIndex,i, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             tokens.add(token.trim());
-            deleteCharacter(i);
-            currentNonSpanIndex = i;
+            //deleteCharacter(i);
+            currentNonSpanIndex = i+1;
         }
         editText.addTextChangedListener(this);
     }
@@ -88,8 +99,21 @@ public class CustomChipTextEditorController implements TextWatcher, View.OnFocus
     }
 
     //no duplication
-    public HashSet<String> getTokens() {
-        return new HashSet<>(tokens);
+    public ArrayList<String> getTokens() {
+        HashSet<String> realTokens = new HashSet<>();
+        String[] splits = editText.getText().toString().split(splitChar + "");
+        for(String splitString: splits) {
+            realTokens.add(splitString.trim());
+        }
+        /*
+        HashSet<String> finalTokens = new HashSet<>();
+        for(String token : tokens) {
+            if(realTokens.contains(token)){
+                finalTokens.add(token);
+            }
+        }*/
+        tokens = new ArrayList<>(realTokens);
+        return tokens;
     }
 
     @Override

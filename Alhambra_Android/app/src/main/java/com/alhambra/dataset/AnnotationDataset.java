@@ -112,16 +112,24 @@ public class AnnotationDataset
         }else{
             m_jointData.put(id,aj);
         }
-        notifyAnnotationJointChange(aj);
-        for(IDatasetListener l : m_listeners)
-            l.onAddJoint(aj);
+        //notifyAnnotationJointChange(aj);
+        notifyAnnotationJointAdd(aj);
     }
 
     public AnnotationJoint addAnnotationJoint(String name) {
         int id = 0;
         while(hasAnnotationJoint(id))
             id++;
-        return new AnnotationJoint(id,name);
+
+        AnnotationJoint aj = new AnnotationJoint(id,name);
+        m_jointData.put(id,aj);
+        notifyAnnotationJointAdd(aj);
+        return aj;
+    }
+
+    protected void notifyAnnotationJointAdd(AnnotationJoint aj){
+        for(IDatasetListener l : m_listeners)
+            l.onAddJoint(aj);
     }
 
     public void notifyAnnotationJointChange(AnnotationJoint aj) {

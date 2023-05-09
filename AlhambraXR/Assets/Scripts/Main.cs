@@ -128,6 +128,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
     private void Awake()
     {
+        Debug.Log("Main Awake");
         onReceiveMessage = new Dictionary<string, ProcessMessageFunc>();
         //Parameterize Unity
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
@@ -335,8 +336,18 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         //This adds a subtential overhead, but it does not require installation of a third party library
         CommonMessage commonMsg = CommonMessage.FromJSON(msg);
 
+        //read packed message
+        if(commonMsg.action == PackedJSONMessages.ACTION_NAME)
+        {
+            ReceivedMessage<PackedJSONMessages> messages = ReceivedMessage<PackedJSONMessages>.FromJSON(msg);
+            List<string> actions = messages.data.actions;
+            foreach(string action in actions)
+            {
+                OnRead(c, action);
+            }
+        }
         //Handle the highlight action type
-        if (commonMsg.action == "highlight")
+        else if (commonMsg.action == "highlight")
         {
             ReceivedMessage<HighlightMessage> detailedMsg = ReceivedMessage<HighlightMessage>.FromJSON(msg);
             m_model.CurrentAction = CurrentAction.IN_HIGHLIGHT;
@@ -444,30 +455,63 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
                     //Save that information for later reuses (e.g., to send back on disconnection)
                     AnnotationInfo annot = new AnnotationInfo(annotationColor, newRGBA, newWidth, newHeight, detailedMsg.data.description);
+                    Annotation annotation;
+                    List<AnnotationJoint> newJoints;
                     lock (this)
-                        data.AddAnnotationInfo(annot);
-                    //m_annotations.Add(annot);
-                    Annotation annotation = data.FindAnnotationID(annot.ID);
-                    //add joint information
-                    foreach(int jointID in detailedMsg.data.selectedJointID)
                     {
-                        AnnotationJoint selectedJoint = data.FindJointID(jointID);
-                        if(selectedJoint==null)
+                        data.AddAnnotationInfo(annot);
+                        annotation = data.FindAnnotationID(annot.ID);
+                        // add joint id to the annotation
+                        foreach (int jointID in detailedMsg.data.selectedJointID)
                         {
-                            Debug.LogWarning("HandleAnnotationFinishAction: Cannot find selected joint id " + jointID);
-                            continue;
+                            AnnotationJoint selectedJoint = data.FindJointID(jointID);
+                            if (selectedJoint == null)
+                            {
+                                Debug.LogWarning("HandleAnnotationFinishAction: Cannot find selected joint id " + jointID);
+                                continue;
+                            }
+                            selectedJoint.AddAnnotation(annotation);
                         }
-                        selectedJoint.AddAnnotation(annotation);
+                        newJoints = new List<AnnotationJoint>();
+                        // create new joint, and add it to the annotation
+                        foreach (string name in detailedMsg.data.createdJointName)
+                        {
+                            AnnotationJoint newJoint = data.AddAnnotationJoint(name);
+                            newJoint.AddAnnotation(annotation);
+                            newJoints.Add(newJoint);
+                        }
                     }
                     //Send the information back to the tablet, if any.
                     Task.Run(() =>
                     {
-                        m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annotation));
-                        foreach(AnnotationJoint aj in annotation.Joints)
+                        // send annotation information
+                        PackedJSONMessages pack = new PackedJSONMessages();
+                        pack.AddString(JSONMessage.AddAnnotationToJSON(annotation));
+                        //m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annotation));
+                        // send add joint
+                        foreach (int jointID in detailedMsg.data.selectedJointID)
                         {
-                            dataSync.SendAddAnnotationtoJoint(aj.ID, annotation.ID);
+                            AnnotationJoint selectedJoint = data.FindJointID(jointID);
+                            if (selectedJoint == null)
+                            {
+                                Debug.LogWarning("HandleAnnotationFinishAction: Cannot find selected joint id " + jointID);
+                                continue;
+                            }
+                            AnnotationID annotationID = annotation.ID;
+                            //dataSync.SendAddAnnotationToJoint(jointID, annotationID);
+                            pack.AddString(dataSync.GetAddAnnotationToJoint(jointID, annotationID));
                         }
-                        
+                        // send new joint, add annot to new joint
+                        foreach (AnnotationJoint newJoint in newJoints)
+                        {
+                            //dataSync.SendAddAnnotationJoint(newJoint);
+                            pack.AddString(dataSync.GetAddAnnotationJoint(newJoint));
+                            //dataSync.SendAddAnnotationToJoint(newJoint.ID, annotation.ID);
+                            pack.AddString(dataSync.GetAddAnnotationToJoint(newJoint.ID, annotation.ID));
+                        }
+                        m_server.SendASCIIStringToClients(pack.ToString());
+
+
                     });
                 }
                 Destroy(colorRT);

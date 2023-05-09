@@ -15,7 +15,7 @@ public class AnnotationJoint {
     private String name;
     private int id;
 
-    private transient HashSet<Annotation> annotations = new HashSet<>();
+    private HashSet<Annotation> annotations = new HashSet<>();
     private final ArrayList<AnnotationID> annotationsID = new ArrayList<>();
 
     public AnnotationJoint(int id, String name)
@@ -62,7 +62,7 @@ public class AnnotationJoint {
     }
 
     // invoke this after deserialize
-    public void syncAnnotations(List<Annotation> annotations){
+    public void syncAnnotations(Iterable<Annotation> annotations){
         this.annotations = new HashSet<Annotation>();
         for(Annotation annot: annotations) {
             if(hasAnnotationID(annot.id)) {

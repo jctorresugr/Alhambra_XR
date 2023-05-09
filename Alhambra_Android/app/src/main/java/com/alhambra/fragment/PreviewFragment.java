@@ -318,16 +318,22 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
     }
 
     public void updateCurrentAnnotation() {
-        AnnotationInfo annotationInfo = m_Annotation_dataset.getDataFromIndex(m_currentSelection);
-        m_mainImageView.setImageDrawable(annotationInfo.getImage());
-        m_mainTextView.setText(annotationInfo.getText());
-        //TODO: write here!
-        m_chipGroup.removeAllViews();
-        Annotation annotation = m_Annotation_dataset.getAnnotation(annotationInfo.getAnnotationID());
-        Set<AnnotationJoint> annotationJoints = annotation.getAnnotationJoints();
-        for(AnnotationJoint aj:annotationJoints){
-            addChip(m_chipGroup,aj.getName());
-        }
+        m_chipGroup.post(new Runnable() {
+            @Override
+            public void run() {
+                AnnotationInfo annotationInfo = m_Annotation_dataset.getDataFromIndex(m_currentSelection);
+                m_mainImageView.setImageDrawable(annotationInfo.getImage());
+                m_mainTextView.setText(annotationInfo.getText());
+                //TODO: write here!
+                m_chipGroup.removeAllViews();
+                Annotation annotation = m_Annotation_dataset.getAnnotation(annotationInfo.getAnnotationID());
+                Set<AnnotationJoint> annotationJoints = annotation.getAnnotationJoints();
+                for(AnnotationJoint aj:annotationJoints){
+                    addChip(m_chipGroup,aj.getName());
+                }
+            }
+        });
+
     }
 
     @Override

@@ -119,6 +119,7 @@ public class DatasetSync {
 
     public void onReceiveAddAnnotationJoint(AnnotationDataset dataset, JsonElement jsonElement) {
         AnnotationJoint msg = JSONUtils.gson.fromJson(jsonElement, AnnotationJoint.class);
+        msg.syncAnnotations(dataset.getAnnotationList());
         dataset.addAnnotationJoint(msg);
     }
 
