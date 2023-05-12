@@ -125,6 +125,8 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
     public Dictionary<string, ProcessMessageFunc> onReceiveMessage;
 
+    public LineNavigatorManager lineNavigatorManager;
+
 
     private void Awake()
     {
@@ -177,9 +179,9 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
         //Necessary because Main cannot be focused
         CoreServices.InputSystem?.RegisterHandler<IMixedRealityInputActionHandler>(this);
-
         //Debug messages
         //OnRead(null, "{\"action\": \"highlight\", \"data\": { \"layer\": 0, \"id\": 112} }");
+
     }
 
     private void Start()
@@ -303,22 +305,29 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
             server.TabletClient.AddListener(this);
 
             //Send annotation data
+            PackedJSONMessages pack = new PackedJSONMessages();
             lock (this)
             {
                 foreach(Annotation annot in data.Annotations)
                 {
+                    if (annot.isLocalData)
+                    {
+                        continue;
+                    }
+                    pack.AddString(JSONMessage.AddAnnotationToJSON(annot));
                     //TODO: resolve uncomment annotation
-                    m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annot));
+                    //m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annot));
                     Debug.Log("Sync Annotation " + annot.ID);
                 }
 
                 foreach (AnnotationJoint joint in data.AnnotationJoints)
                 {
-                    m_server.SendASCIIStringToClients(JSONMessage.ActionJSON("SyncAnnotationJoint", joint));
+                    pack.AddAction("SyncAnnotationJoint", joint);
+                    //m_server.SendASCIIStringToClients(JSONMessage.ActionJSON("SyncAnnotationJoint", joint));
                     Debug.Log("Sync AnnotationJoint " + joint.ID);
-                }
-                    
+                } 
             }
+            m_server.SendASCIIStringToClients(pack.ToString());
         }
     }
 
@@ -353,6 +362,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
             m_model.CurrentAction = CurrentAction.IN_HIGHLIGHT;
             m_model.CurrentHighlightMain = new AnnotationID(detailedMsg.data.layer, detailedMsg.data.id);
             m_model.CurrentHighlightSecond = AnnotationID.INVALID_ID;
+            lineNavigatorManager.SetAnnotations(data.FindAnnotationID(m_model.CurrentHighlightMain));
         }
 
         else if (commonMsg.action == "startAnnotation")
@@ -389,7 +399,17 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         else if(commonMsg.action == "stopShowAllAnnotation")
         {
             HandleStopShowAll();
+        }else
+        {
+            ProcessMessageFunc processMessageFunc = onReceiveMessage[commonMsg.action];
+            if(processMessageFunc==null)
+            {
+                Debug.LogWarning("Unknown Action " + commonMsg.action);
+                return;
+            }
+            processMessageFunc.Invoke(c, msg);
         }
+        //TODO: write here!!!!
     }
 
     /// <summary>

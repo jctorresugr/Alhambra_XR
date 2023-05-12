@@ -50,10 +50,9 @@ public class AnnotationJoint {
     }
 
     public void removeAllAnnotation() {
-        for(Annotation a:annotations) {
-            a.removeAnnotationJoint(this);
+        while(!annotations.isEmpty()) {
+            removeAnnotation(annotations.iterator().next());
         }
-        annotations.clear();
         annotationsID.clear();
     }
 

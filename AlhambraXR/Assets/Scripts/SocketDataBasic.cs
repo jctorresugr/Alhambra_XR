@@ -61,4 +61,42 @@ public class SocketDataBasic : MonoBehaviour
     {
         main.Server.SendASCIIStringToClients(JSONMessage.FailJSON(temp));
     }
+
+
+    // reg
+
+
+    protected string ProcessMethodName(string name)
+    {
+        if (name.StartsWith("OnReceive"))
+        {
+            return name.Substring(9);
+        }
+        else if (name.StartsWith("Send"))
+        {
+            return name.Substring(4);
+        }
+        else if (name.StartsWith("Get"))
+        {
+            return name.Substring(3);
+        }
+        Debug.LogWarning("Problem with method name: " + name);
+        return name;
+    }
+
+
+    // C# cannot infer generic type like C++ :(
+    protected void FastReg<T>(Action<T> action)
+    {
+        string name = ProcessMethodName(action.Method.Name);
+        //name = name.Replace("OnReceive", "");
+        RegReceiveInfo(name, (c, msg) => Parse(c, msg, action));
+        Debug.Log("Fast reg socket message: " + name);
+    }
+
+    protected void Parse<T>(Client c, string msg, Action<T> func)
+    {
+        Debug.Log("Process " + msg);
+        func(JsonUtility.FromJson<ReceivedMessage<T>>(msg).data);
+    }
 }

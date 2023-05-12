@@ -275,7 +275,6 @@ public class AnnotationFragment extends AlhambraFragment
         m_cameraPos = cameraPos;
         m_cameraRot = cameraRot;
         m_startAnnotationTxt.setVisibility(View.GONE);
-        //TODO: process chipGroup
         // dirty implementation
         m_chipGroup.removeAllViews();
         m_chipViews.clear();

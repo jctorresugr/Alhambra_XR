@@ -16,6 +16,19 @@ public class Utils
         return comp;
     }
 
+    public static T EnsureComponent<T>(GameObject obj, ref T comp)
+    {
+        if (comp == null)
+        {
+            comp = obj.GetComponent<T>();
+            if (comp == null)
+            {
+                Debug.LogWarning("Cannot init component for " + obj.ToString() + ", expect component: " + comp.GetType().Name);
+            }
+        }
+        return comp;
+    }
+
     // get component, if not exists, add the compoennt
     public static T ForceToGetComponent<T>(GameObject obj, ref T comp) where T:Component
     {
@@ -73,5 +86,16 @@ public class Utils
         RenderTexture.ReleaseTemporary(renderTex);
         return readableText;
     }
+
+    public static Vector3 MulVector3(Vector3 a, Vector3 b)
+    {
+        return new Vector3
+            (
+            a.x * b.x,
+            a.y * b.y,
+            a.z * b.z
+            );
+    }
+
 
 }

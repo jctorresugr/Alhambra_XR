@@ -7,16 +7,18 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
-import com.alhambra.controls.DatasetSync;
+import com.alhambra.dataset.SelectionData;
+import com.alhambra.interactions.DatasetSync;
 import com.alhambra.dataset.data.AnnotationInfo;
 import com.alhambra.dataset.AnnotationDataset;
-import com.alhambra.dataset.data.AnnotationJoint;
 import com.alhambra.fragment.AlhambraFragment;
 import com.alhambra.fragment.AnnotationFragment;
 import com.alhambra.fragment.OverviewFragment;
 import com.alhambra.fragment.PageViewer;
 import com.alhambra.fragment.PreviewFragment;
 import com.alhambra.fragment.ViewPagerAdapter;
+import com.alhambra.interactions.IInteraction;
+import com.alhambra.interactions.SelectionInteraction;
 import com.alhambra.network.JSONUtils;
 import com.alhambra.network.PackedJSONMessages;
 import com.alhambra.network.receivingmsg.AddAnnotationMessage;
@@ -27,11 +29,11 @@ import com.alhambra.network.sendingmsg.FinishAnnotation;
 import com.alhambra.network.sendingmsg.HighlightDataChunk;
 import com.alhambra.network.sendingmsg.OverviewMessage;
 import com.alhambra.network.sendingmsg.StartAnnotation;
+import com.google.android.material.chip.Chip;
 import com.google.android.material.tabs.TabLayout;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,10 +43,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
 /** The Main Activity of this application. This is the first thing that is suppose to start*/
 public class MainActivity
@@ -90,16 +90,26 @@ public class MainActivity
 
     private HashMap<String, IReceiveMessageListener> m_receiveMessageListener = new HashMap<>();
 
-    private DatasetSync datasetSync;
+    private ArrayList<IInteraction> interactions = new ArrayList<>();
+
+    public SelectionData selectionData = new SelectionData();
 
     /*--------------------------------------*/
     /*-----Initialization of everything-----*/
     /*--------------------------------------*/
 
+    public PreviewFragment getPreviewFragment(){
+        return m_previewFragment;
+    }
+
+    private void addInteraction(IInteraction interaction){
+        interaction.regNetworkIO(this);
+        interactions.add(interaction);
+    }
 
     private void initFunctions(){
-        datasetSync = new DatasetSync();
-        datasetSync.reg(this);
+        this.addInteraction(new DatasetSync());
+        this.addInteraction(new SelectionInteraction());
     }
 
     public void regReceiveMessageListener(String actionName, IReceiveMessageListener l){
@@ -312,7 +322,7 @@ public class MainActivity
         //disableAnnotationTab();
 
         //Set the dataset on the UI thread for redoing all the widgets of the PreviewFragment
-        this.runOnUiThread(() -> m_previewFragment.setDataset(m_Annotation_dataset));
+        this.runOnUiThread(() -> m_previewFragment.setDataset(m_Annotation_dataset,selectionData));
     }
 
     /** Disable the annotation tab. This will lock the application in the preview tab (works because we only have two tabs here)*/
@@ -350,6 +360,11 @@ public class MainActivity
     public void onHighlightDataChunk(PreviewFragment fragment, AnnotationInfo annotationInfo)
     {
         m_socket.push(HighlightDataChunk.generateJSON(annotationInfo.getLayer(), annotationInfo.getID()));
+    }
+
+    @Override
+    public void onClickChip(Chip chip, int annotationJoint) {
+
     }
 
     @Override

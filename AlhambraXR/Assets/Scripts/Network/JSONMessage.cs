@@ -91,16 +91,20 @@ public class JSONMessage
         return 
             "{" +
             "    \"action\": \"addAnnotation\",\n" +
-            "    \"data\":\n" +
-            "    {\n" +
+            "    \"data\":\n" +AddAnnotationJSONData(annot)+
+            "}";
+    }
+
+    public static string AddAnnotationJSONData(Annotation annot)
+    {
+        return "    {\n" +
            $"        \"snapshotBase64\": \"{System.Convert.ToBase64String(annot.info.SnapshotRGBA)}\",\n" +
            $"        \"snapshotWidth\":  {annot.info.SnapshotWidth},\n" +
            $"        \"snapshotHeight\": {annot.info.SnapshotHeight},\n" +
            $"        \"annotationColor\": [{annot.info.Color.r}, {annot.info.Color.g}, {annot.info.Color.b}, {annot.info.Color.a}],\n" +
            $"        \"description\": {QuoteString(annot.info.Description)}," +
            $"        \"renderInfo\": {JsonUtility.ToJson(annot.renderInfo)}" +
-            "    }\n" +
-            "}";
+            "    }\n";
     }
 
     //test code
@@ -134,4 +138,78 @@ public class JSONMessage
     {
         return ActionJSON("Fail", data);
     }
+
+
+    //Parse action string:
+    /*
+        {    "action": "highlight",
+            "data": {
+                "layer":2,
+                "id":12
+            }
+        }
+     */
+    /*
+    public static void ParseActionJson(in string msg, out string action, out string content)
+    {
+        try
+        {
+            int actionIndex = msg.IndexOf("\"action\"")+8;
+            MatchCharacter(msg, ref actionIndex, ':');
+            MatchCharacter(msg, ref actionIndex, '"');
+            int beginIndex = actionIndex;
+            MatchCharacter(msg, ref actionIndex, '"');
+            int endIndex = actionIndex;
+            action = msg.Substring(beginIndex, endIndex - beginIndex);
+
+            int curlyIndex = msg.Length - 1;
+            while(true)
+            {
+                if(msg[curlyIndex]=='}')
+                {
+                    break;
+                }
+                curlyIndex--;
+                if(curlyIndex<0)
+                {
+                    break;
+                }
+            }
+        }
+        catch(Exception e)
+        {
+            Debug.LogError(e);
+            action = null;
+            content = null;
+        }
+    }
+
+    private static void MatchCharacter(string msg, ref int curIndex, char character)
+    {
+        while(curIndex<msg.Length && msg[curIndex]!=character && (curIndex==0 || msg[curIndex - 1] != '\\'))
+        {
+            curIndex++;
+        }
+    }
+
+    private static void MatchSomeCharacters(string msg, ref int curIndex, string chars)
+    {
+        while (curIndex < msg.Length && chars.Contains(msg[curIndex])  && (curIndex == 0 || msg[curIndex - 1] != '\\'))
+        {
+            curIndex++;
+        }
+    }
+
+    private static void MatchCurlyBraces(string msg, ref int curIndex)
+    {
+        MatchCharacter(msg, ref curIndex, '{');
+        MatchCharacter(msg, ref curIndex, '}');
+    }
+
+    private static void MatchKeyValuePair(string msg, ref int curIndex)
+    {
+        MatchCharacter(msg, ref curIndex, '\"');
+        MatchCharacter(msg, ref curIndex, '\"');
+        MatchCharacter(msg, ref curIndex, ':');
+    }*/
 }

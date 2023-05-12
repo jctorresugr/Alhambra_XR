@@ -17,6 +17,10 @@ public class Annotation
     [NonSerialized]
     internal List<AnnotationJoint> joints = new List<AnnotationJoint>();
 
+    // if the annotation is stored in both sides, then we do not sync them
+    [NonSerialized]
+    internal bool isLocalData = false;
+
     // control data
     public IReadOnlyList<AnnotationJoint> Joints => joints;
 

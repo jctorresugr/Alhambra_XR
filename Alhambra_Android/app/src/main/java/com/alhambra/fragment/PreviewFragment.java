@@ -11,6 +11,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.alhambra.dataset.SelectionData;
 import com.alhambra.dataset.data.Annotation;
 import com.alhambra.dataset.data.AnnotationID;
 import com.alhambra.dataset.data.AnnotationInfo;
@@ -24,10 +25,37 @@ import com.sereno.view.TreeView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
-public class PreviewFragment extends AlhambraFragment implements AnnotationDataset.IDatasetListener
+public class PreviewFragment extends AlhambraFragment implements AnnotationDataset.IDatasetListener,SelectionData.ISelectionDataChange
 {
+    @Override
+    public void onGroupSelectionAdd(int newIndex, HashSet<Integer> groups) {
+        updateChip(newIndex);
+    }
+
+    @Override
+    public void onGroupSelectionRemove(int newIndex, HashSet<Integer> groups) {
+        updateChip(newIndex);
+    }
+
+    @Override
+    public void onGroupClear() {
+        for(Chip chip : m_chipMappings.values()) {
+            chip.setChecked(false);
+        }
+    }
+
+    private void updateChip(int index) {
+        Chip chip = m_chipMappings.get(index);
+        if(chip==null) {
+            Log.i("PreviewFragment","Not found: joint ui "+index);
+            return;
+        }
+        chip.setChecked(m_selection_data.containSelectedGroup(index));
+    }
+
     /** Interface containing events fired from the PreviewFragment*/
     public interface IPreviewFragmentListener
     {
@@ -35,10 +63,14 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
          * @param fragment the fragment calling this event
          * @param annotationInfo the data chunk to highlight*/
         void onHighlightDataChunk(PreviewFragment fragment, AnnotationInfo annotationInfo);
+
+        void onClickChip(Chip chip, int annotationJoint);
     }
 
     /** The dataset associated with this application*/
     private AnnotationDataset m_Annotation_dataset = null;
+
+    private SelectionData m_selection_data = null;
 
     /** All the entries shown in the Previous tree object*/
     private HashMap<Integer, Tree<View>> m_datasetEntries = new HashMap<>();
@@ -69,6 +101,8 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
     private TextView m_mainTextView = null;
 
     private ChipGroup m_chipGroup = null;
+    //private HashMap<Chip, Integer> m_chipMappings = new HashMap<>();
+    private HashMap<Integer,Chip> m_chipMappings = new HashMap<>();
 
     /** The button to show the previous entry*/
     private ImageButton m_previousBtn = null;
@@ -117,12 +151,14 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
 
     /** Set the dataset to manipulate and render
      * @param d the new dataset*/
-    public void setDataset(AnnotationDataset d)
+    public void setDataset(AnnotationDataset d, SelectionData selectionData)
     {
         //Set the dataset
         if(m_Annotation_dataset != null)
             m_Annotation_dataset.removeListener(this);
         m_Annotation_dataset = d;
+        m_selection_data = selectionData;
+        m_selection_data.subscriber.addListener(this);
         m_Annotation_dataset.addListener(this);
 
         //Cannot update the layout...
@@ -187,7 +223,7 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
     private Chip addChip(ChipGroup cg, String text){
         Chip chip = new Chip(cg.getContext());
         chip.setText(text);
-        chip.setCheckable(false);
+        chip.setCheckable(true);
         cg.addView(chip);
         return chip;
     }
@@ -229,7 +265,7 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
         });
 
         //Reinit the dataset if needed
-        setDataset(m_Annotation_dataset);
+        setDataset(m_Annotation_dataset,m_selection_data);
     }
 
     @Override
@@ -318,19 +354,23 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
     }
 
     public void updateCurrentAnnotation() {
-        m_chipGroup.post(new Runnable() {
-            @Override
-            public void run() {
-                AnnotationInfo annotationInfo = m_Annotation_dataset.getDataFromIndex(m_currentSelection);
-                m_mainImageView.setImageDrawable(annotationInfo.getImage());
-                m_mainTextView.setText(annotationInfo.getText());
-                //TODO: write here!
-                m_chipGroup.removeAllViews();
-                Annotation annotation = m_Annotation_dataset.getAnnotation(annotationInfo.getAnnotationID());
-                Set<AnnotationJoint> annotationJoints = annotation.getAnnotationJoints();
-                for(AnnotationJoint aj:annotationJoints){
-                    addChip(m_chipGroup,aj.getName());
-                }
+        m_chipGroup.post(() -> {
+            AnnotationInfo annotationInfo = m_Annotation_dataset.getDataFromIndex(m_currentSelection);
+            m_mainImageView.setImageDrawable(annotationInfo.getImage());
+            m_mainTextView.setText(annotationInfo.getText());
+            m_chipGroup.removeAllViews();
+            m_chipMappings.clear();
+            Annotation annotation = m_Annotation_dataset.getAnnotation(annotationInfo.getAnnotationID());
+            Set<AnnotationJoint> annotationJoints = annotation.getAnnotationJoints();
+            for(AnnotationJoint aj:annotationJoints){
+                Chip chip = addChip(m_chipGroup,aj.getName());
+                chip.setChecked(m_selection_data.containSelectedGroup(aj.getId()));
+                m_chipMappings.put(aj.getId(),chip);
+                chip.setOnClickListener(v -> {
+                    Chip chipClicked = (Chip) v;
+                    for(IPreviewFragmentListener l : m_listeners)
+                        l.onClickChip(chipClicked,aj.getId());
+                });
             }
         });
 
@@ -393,7 +433,6 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
 
     @Override
     public void onAddJoint(AnnotationJoint annotationJoint) {
-
     }
 
     @Override

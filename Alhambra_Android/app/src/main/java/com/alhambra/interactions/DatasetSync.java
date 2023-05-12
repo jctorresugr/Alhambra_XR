@@ -1,4 +1,4 @@
-package com.alhambra.controls;
+package com.alhambra.interactions;
 
 import android.util.Log;
 
@@ -13,13 +13,17 @@ import com.google.gson.JsonElement;
 import java.util.ArrayList;
 
 //Same as C# DataSync.cs
-public class DatasetSync {
+public class DatasetSync extends IInteraction{
 
     private static final String TAG = DatasetSync.class.getSimpleName();
-    public MainActivity mainActivity;
 
     public void OnReceiveSyncJoint(AnnotationDataset dataset, JsonElement jsonElement){
         AnnotationJoint joint = JSONUtils.gson.fromJson(jsonElement, AnnotationJoint.class);
+        if(dataset.hasAnnotationJoint(joint.getId())) {
+            Log.i("DatasetSync","Try to add duplication annotation joint "+joint.getId()+" replace its annotation links");
+            AnnotationJoint oldJoint = dataset.getAnnotationJoint(joint.getId());
+            oldJoint.removeAllAnnotation();
+        }
         ArrayList<Annotation> annotations = new ArrayList<>();
         for(AnnotationID annotationID: joint.getAnnotationsID()){
             Annotation annotation = dataset.getAnnotation(annotationID);
@@ -33,8 +37,7 @@ public class DatasetSync {
         dataset.addAnnotationJoint(joint);
     }
 
-    public void reg(MainActivity activity){
-        mainActivity=activity;
+    protected void reg(MainActivity activity){
         AnnotationDataset ad = mainActivity.getAnnotationDataset();
         mainActivity.regReceiveMessageListener("SyncAnnotationJoint", (mainActivity1, jsonElement) -> this.OnReceiveSyncJoint(ad, jsonElement));
         mainActivity.regReceiveMessageListener("AddAnnotationToJoint", (ma, je) -> this.onReceiveAddAnnotationToJoint(ad,je));
