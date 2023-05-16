@@ -52,7 +52,6 @@ public class DataManager : MonoBehaviour
         joint.AddAnnotation(annotations[4]);
 
         AnnotationJoint joint2 = AddAnnotationJoint("Test Joint 2");
-        joint2.AddAnnotation(annotations[5]);
         joint2.AddAnnotation(annotations[6]);
         joint2.AddAnnotation(annotations[7]);
 
