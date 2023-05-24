@@ -1,4 +1,5 @@
 
+using System.IO;
 using UnityEngine;
 
 public class Utils
@@ -96,6 +97,29 @@ public class Utils
             a.z * b.z
             );
     }
+
+    public static void SaveFile(string fileName, string data)
+    {
+        if (File.Exists(fileName))
+        {
+            Debug.Log("Already Exists " + fileName);
+        }
+        var sr = File.CreateText(fileName);
+        sr.WriteLine(data);
+        sr.Close();
+    }
+
+    public static string ReadFile(string fileName)
+    {
+        if (File.Exists(fileName))
+        {
+            return File.ReadAllText(fileName);
+        }else
+        {
+            return null;
+        }
+    }
+
 
 
 }
