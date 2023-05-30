@@ -1,5 +1,7 @@
 
+using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class Utils
@@ -120,6 +122,32 @@ public class Utils
         }
     }
 
+    public static Vector3 Abs(Vector3 v)
+    {
+        return new Vector3(
+            Mathf.Abs(v.x),
+            Mathf.Abs(v.y),
+            Mathf.Abs(v.z)
+            ) ;
+    }
+    public static float BoundsDistance(Bounds a, Bounds b)
+    {
+        if(
+            a.max.x>=b.min.x && b.max.x >=a.min.x &&
+            a.max.y>=b.min.y && b.max.y >=a.min.y &&
+            a.max.z>=b.min.z && b.max.z >=a.min.z 
+            )
+        {
+            return 0.0f;
+        }
+        Vector3 r = Vector3.Min(Abs(a.max - b.min),Abs(b.max-a.min));
+        return Mathf.Min(r.x, r.y, r.z);
+    }
+
+    public static float Volume(Vector3 size)
+    {
+        return size.x * size.y * size.z;
+    }
 
 
 }

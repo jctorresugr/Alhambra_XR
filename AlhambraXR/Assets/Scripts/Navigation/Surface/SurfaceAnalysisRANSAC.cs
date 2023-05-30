@@ -8,33 +8,57 @@ using UnityEngine;
 
 public class SurfaceAnalysisRANSAC : MonoBehaviour
 {
-    public MeshFilter meshFilter;
-
-
+    [Header("RANSAC Parameters")]
     public float thresholdDistance = 0.004f; //RANSAC outlier threshold
     public float minPointThresholdPercent = 0.05f;//discard surface if it only has inliner< this
+    public int maxIterationCount = 20000;
+    [Header("Topology Parameters")]
     public float clusterPointThreshold = 0.001f;//cluster points if they are enough near
     public float linkPointThreshold = 0.002f;//build an edge if two points are enough near
-    public int maxIterationCount = 20000;
 
-    [SerializeField]
-    public SurfaceInfoBundle surfaceInfos;
-    public bool compute = true;
+    //temporay save the result
+    protected SurfaceInfoBundle surfaceInfos;
+    /*public bool compute = true;
     public bool useCache = false;
+    public bool isFinished = false;*/
     Thread computeThread = null;
 
-    public DisplaySurface displaySurface;
-    public string filePath = "MiddleSave/surfaceInformation.json";
+    public delegate void OnFinishComputationListener(SurfaceInfoBundle result);
+    public event OnFinishComputationListener finishEvent;
 
 
-
-    public int sleepMS = 0;
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    [Header("Other settings")]
+    public int sleepMS = 0; // avoid burned my laptop when it is 100% cpu+100% gpu.
     
+    public void StartCompute(MeshFilter meshFilter)
+    {
+        surfaceInfos = null;
+        Debug.Log("Start analyze mesh");
+        List<VertexTopologyInfo> vtInfo = null;
+        AnalyzeVertices(meshFilter.mesh, ref vtInfo);
+        Debug.Log("Start analyze mesh thread");
+        ThreadStart computeThreadStart = new ThreadStart(() => AnalyzeMesh(vtInfo));
+        computeThread = new Thread(computeThreadStart);
+        computeThread.Start();
+        // wait, but do not block the main thread entirely, otherwise you cannot pause or stop or view logs in Unity :(
+        //just for debugging
+    }
+    private void Update()
+    {
+        if (computeThread != null && computeThread.IsAlive)
+        {
+            Thread.Sleep(sleepMS); // I do not want to make my machine burned, so let the main thread sleep while computing, but not fully sutck at the same time
+        }
+        else
+        {
+            if (computeThread != null)
+            {
+                computeThread = null;
+                finishEvent?.Invoke(surfaceInfos);
+            }
+        }
+    }
+    /*
     void Update()
     {
         if(useCache)
@@ -42,7 +66,7 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
             try
             {
                 surfaceInfos = JsonUtility.FromJson<SurfaceInfoBundle>(Utils.ReadFile(filePath));
-                DebugSurface();
+                isFinished = true;
             }
             catch(Exception e)
             {
@@ -71,8 +95,8 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
         {
             if(computeThread!=null)
             {
+                isFinished = true;
                 computeThread = null;
-                DebugSurface();
             }
         }
 
@@ -85,7 +109,7 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
             displaySurface.surfaceInfos = surfaceInfos;
             displaySurface.DebugSurface();
         }
-    }
+    }*/
     [Serializable]
     public class VertexTopologyInfo
     {
@@ -93,7 +117,7 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
         public int surfaceIndex = -1;
         public bool isVisited = false;
         public HashSet<int> neighborVertex = new HashSet<int>();
-        //public Vector3 averageNormal = Vector3.zero;
+        public Vector3 averageNormal = Vector3.zero;
         public Vector3 pos = Vector3.zero;
     }
 
@@ -134,6 +158,7 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
             b = s.b;
             c = s.c;
             d = s.d;
+            inverseSquare = s.inverseSquare;
         }
     }
 
@@ -143,15 +168,19 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
         [SerializeField]
         public int index;
         [SerializeField]
-        public Vector3 normal;
+        public Vector3 normal = Vector3.zero;
         [SerializeField]
         public float a, b, c, d;//aX+bY+cZ+D=0
         [SerializeField]
-        public Bounds bounds;
+        public Vector3 p0;
         [SerializeField]
-        public int vertexCount;
+        public Bounds bounds;
+        //[SerializeField]
+        public int VertexCount => vertices.Count;
         [SerializeField]
         public List<int> neighborSurface = new List<int>();
+        [SerializeField]
+        public List<Vector3> vertices = new List<Vector3>();
         public SurfaceInfo() { }
         public SurfaceInfo(SurfaceProcessInfo s)
         {
@@ -162,9 +191,95 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
             b = s.b;
             c = s.c;
             d = s.d;
-            vertexCount = s.verticeIndex.Count;
             neighborSurface.Union(s.neighborSurface);
         }
+
+        public SurfaceInfo(SurfaceInfo s)
+        {
+            index = s.index;
+            normal = s.normal;
+            bounds = s.bounds;
+            a = s.a;
+            b = s.b;
+            c = s.c;
+            d = s.d;
+            vertices.AddRange(s.vertices);
+        }
+
+        public void UnionSurface(SurfaceInfo s)
+        {
+            //normal = s.normal;
+            normal = (normal * vertices.Count + s.normal * s.vertices.Count).normalized;
+            
+            if(VertexCount==0)
+            {
+                bounds = s.bounds;
+            }else
+            {
+                bounds.Encapsulate(s.bounds);
+            }
+            vertices.AddRange(s.vertices);
+
+            neighborSurface.Union(s.neighborSurface);
+            /*a = normal.x;
+            b = normal.y;
+            c = normal.z;
+            d = s.d;*/
+            //bounds = s.bounds;
+            //TODO: parallel
+            
+            Vector3 sum = Vector3.zero;
+            foreach(Vector3 v in vertices)
+            {
+                sum += v;
+            }
+            sum /= vertices.Count;
+            a = normal.x;
+            b = normal.y;
+            c = normal.z;
+            d = -Vector3.Dot(normal, sum);
+            p0 = sum;
+        }
+
+        public void ProcessDuplication()
+        {
+            neighborSurface = new List<int>(new HashSet<int>(neighborSurface));
+        }
+
+        public Bounds CalculateGlobalBounds()
+        {
+            Bounds bounds = new Bounds();
+            bounds.SetMinMax(vertices[0], vertices[0]);
+            foreach(Vector3 v in vertices)
+            {
+                bounds.Encapsulate(v);
+            }
+            return bounds;
+        }
+
+        public void RecalculateBounds()
+        {
+            Vector3 right = Right;//x
+            Vector3 forward = Forward;//z
+            bounds.SetMinMax(Vector3.zero, Vector3.zero);
+            foreach(Vector3 p in vertices)
+            {
+                Vector3 dp = p - p0;
+                float y = Vector3.Dot(normal, dp);
+                float x = Vector3.Dot(right, dp);
+                float z = Vector3.Dot(forward, dp);
+                bounds.Encapsulate(new Vector3(x, y, z));
+            }
+            Vector3 c = bounds.center;
+            p0 = c.x * right + c.y * normal + c.z * forward + p0;
+            Vector3 sz = bounds.size/2;
+            bounds.SetMinMax(-sz, sz);
+            //bounds = CalculateGlobalBounds();
+        }
+
+        public Vector3 Right => Vector3.Cross(normal, Vector3.up).normalized;
+        public Vector3 Forward => Vector3.Cross(normal, Right).normalized;
+        public Vector3 Up => normal;
     };
 
     //Wrap the list, Unity JsonUtility cannot parse List<SurfaceInfo>, they just give you an empty list...
@@ -176,7 +291,7 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
         public List<SurfaceInfo> surfaceInfos = new List<SurfaceInfo>();
     }
 
-    public void AnalyzeMeshFilter()
+    public void AnalyzeMeshFilter(MeshFilter meshFilter)
     {
         if (meshFilter != null)
         {
@@ -189,28 +304,31 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
     protected void AnalyzeVertices(Mesh mesh, ref List<VertexTopologyInfo> vtInfo)
     {
         int verticesCount = mesh.vertexCount;
-        int subMeshCount = meshFilter.mesh.subMeshCount;
+        int subMeshCount = mesh.subMeshCount;
         int[] vertexDataPos = new int[verticesCount];
         vtInfo = new List<VertexTopologyInfo>();
         Dictionary<Vector3, VertexTopologyInfo> posDic = new Dictionary<Vector3, VertexTopologyInfo>();
 
         Vector3[] vertices = mesh.vertices;
         Vector3 wholeSize = mesh.bounds.size;
+        Vector3[] normals = mesh.normals;
+        // hash cell for acclerating
         float volume = wholeSize.x * wholeSize.y * wholeSize.z;
         int maxElementSize = 1000000;//1M -> 16 MB
         float maxCellSize = Mathf.Pow(volume / maxElementSize, 1.0f / 3.0f);
         HashCell<VertexTopologyInfo> cells = new HashCell<VertexTopologyInfo>(mesh.bounds, Mathf.Max(maxCellSize, clusterPointThreshold));
-        //Vector3[] normals = mesh.normals;
+
+        // cluster vertices, reduce computation, fast and simple mesh simplification
         float clusterPointThresholdSqr = clusterPointThreshold * clusterPointThreshold;
         for (int i = 0; i < verticesCount; i++)
         {
             Vector3 v = vertices[i];
-            if (!posDic.ContainsKey(v))
+            if (!posDic.ContainsKey(v)) // if not the same point
             {
                 float minDistance = float.MaxValue;
                 VertexTopologyInfo bestCell = null;
                 List<VertexTopologyInfo> nearbyCells = cells.GetRangeCell(v, clusterPointThresholdSqr);
-                foreach(VertexTopologyInfo cellElement in nearbyCells)
+                foreach(VertexTopologyInfo cellElement in nearbyCells) // find nearby clustered points
                 {
                     float disSqr = Vector3.SqrMagnitude(v - cellElement.pos);
                     if (disSqr < clusterPointThresholdSqr)
@@ -222,9 +340,9 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
                         }
                     }
                 }
-                if(bestCell!=null)
+                if(bestCell!=null) // found, cluster this point
                 {
-                    //bestCell.averageNormal += normals[i];
+                    bestCell.averageNormal += normals[i];
                     vertexDataPos[i] = bestCell.index;
                     continue;
                 }
@@ -234,21 +352,22 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
                 posDic.Add(v, vt);
                 vertexDataPos[i] = vt.index;
                 cells.Add(v,vt);
-                //vt.averageNormal = normals[i];
+                vt.averageNormal = normals[i];
                 vt.pos = v;
             }
-            else
+            else // same vertex
             {
                 vertexDataPos[i] = posDic[v].index;
-                //posDic[v].averageNormal += normals[i];
+                posDic[v].averageNormal += normals[i];
             }
 
         }
+
+        Parallel.ForEach(vtInfo,
+            vertexTopologyInfo => vertexTopologyInfo.averageNormal = vertexTopologyInfo.averageNormal.normalized);
         Debug.Log("Actual Vertex count " + vtInfo.Count);
-        //foreach (VertexTopologyInfo vertexTopologyInfo in vtInfo)
-        //{
-        //    vertexTopologyInfo.averageNormal = vertexTopologyInfo.averageNormal.normalized;
-        //}
+
+        // build linkage if the two points are adequate near
         for (int subMeshIndex = 0; subMeshIndex < subMeshCount; subMeshIndex++)
         {
             MeshTopology meshTopology = mesh.GetTopology(subMeshIndex);
@@ -278,6 +397,7 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
         }
 
         float linkPointThresholdSqr = linkPointThreshold * linkPointThreshold;
+        int addedLinks = 0;
         for (int i=0;i<vtInfo.Count;i++)
         {
             VertexTopologyInfo vti = vtInfo[i];
@@ -287,22 +407,23 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
                 if((vti2.pos-vti.pos).sqrMagnitude< linkPointThresholdSqr)
                 {
                     vti.neighborVertex.Add(vti2.index);
+                    addedLinks++;
                 }
             }
         }
+        Debug.Log("Add links: " + addedLinks);
 
     }
     protected void AnalyzeMesh(List<VertexTopologyInfo> vtInfo)
     {
         int minPointThreshold = (int)(vtInfo.Count * minPointThresholdPercent);
         List<SurfaceProcessInfo> surfaceProcessInfos;
-        // prepare data
 
-        // now do the algorithm: RANSAC
         int skipCount = 0;
         int hugeLoopCount = 0;
         List<VertexTopologyInfo> vtInfoPart = vtInfo;
         surfaceProcessInfos = new List<SurfaceProcessInfo>();
+        // now do the algorithm: RANSAC
         while (true)
         {
             hugeLoopCount++;
@@ -310,20 +431,23 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
             int[] randomIndex = new int[3];
             int bestInliner = 0;
             SurfaceProcessInfo bestSurface = null;
-            //RANSAC
+            //RANSAC Iteraction
             for (int iterCount = 0; iterCount < maxIterationCount; iterCount++)
             {
+                //get random 3 points
                 GetRandomIndex(maxIndex, randomIndex);
                 Vector3 p1 = vtInfo[randomIndex[0]].pos;
                 Vector3 p2 = vtInfo[randomIndex[1]].pos;
                 Vector3 p3 = vtInfo[randomIndex[2]].pos;
                 SurfaceProcessInfo surfaceInfo = new SurfaceProcessInfo();
+                // resolve surface equation
                 surfaceInfo.SetParameter(p1, p2, p3);
                 // compute inlier
                 int totalInlier = 0;
                 totalInlier = vtInfoPart.AsParallel().Count(x =>
                     surfaceInfo.PointDistance(x.pos) < thresholdDistance
                 );
+                //record if best
                 if(totalInlier>bestInliner)
                 {
                     bestInliner = totalInlier;
@@ -331,9 +455,12 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
                 }
             }
 
+            // post process: break surface based on topology connectivity, reorganize the left points.
             List<VertexTopologyInfo> newvtInfoPart = new List<VertexTopologyInfo>();
             {
+                
                 skipCount = 0;
+                //filter out inliner points
                 for(int i=0;i<vtInfoPart.Count;i++)
                 {
                     VertexTopologyInfo vti = vtInfoPart[i];
@@ -353,14 +480,14 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
                         newvtInfoPart.Add(vti);
                     }
                 }
-                surfaceProcessInfos.Add(bestSurface);
+                //surfaceProcessInfos.Add(bestSurface);
                 Debug.Log($" Find Surface, vc = {bestInliner}, left={newvtInfoPart.Count}, Loop {hugeLoopCount}, Detail:\n{JsonUtility.ToJson(bestSurface)}");
                 
                 // clip surface based on topology of the mesh
-                /*
                 Queue<int> bfs = new Queue<int>();
-                
-                foreach(int vertexIndex in bestSurface.verticeIndex)
+
+                // do not trust mesh, it is not topological continuously :(
+                foreach (int vertexIndex in bestSurface.verticeIndex)
                 {
                     VertexTopologyInfo vertexInfo = vtInfo[vertexIndex];
                     if(vertexInfo.isVisited)
@@ -372,45 +499,57 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
                     subSurface.CopySurfaceParameters(bestSurface);
                     bfs.Enqueue(vertexIndex);
                     subSurface.bounds.SetMinMax(vertexInfo.pos, vertexInfo.pos);
+                    subSurface.normal = Vector3.zero;
+                    //BFS
                     while(bfs.Count>0)
                     {
                         int curIndex = bfs.Dequeue();
                         VertexTopologyInfo curVertexInfo = vtInfo[curIndex];
                         if(curVertexInfo.isVisited)
                         {
+                            if (curVertexInfo.surfaceIndex >= 0)
+                            {
+                                subSurface.neighborSurface.Add(curVertexInfo.surfaceIndex);
+                            }
                             continue;
                         }
-                        if(subSurface.PointDistance(curVertexInfo.pos)<thresholdDistance)
-                        {
+                        if (subSurface.PointDistance(curVertexInfo.pos)<thresholdDistance)
+                        { //satisify condition
                             curVertexInfo.surfaceIndex = subSurface.index;
                             curVertexInfo.isVisited = true;
                             subSurface.bounds.Encapsulate(curVertexInfo.pos);
                             subSurface.verticeIndex.Add(curIndex);
+                            subSurface.normal += curVertexInfo.averageNormal;
+                            // search nearby points
                             foreach (int neighborVertexIndex in vertexInfo.neighborVertex)
                             {
+                                if(curVertexInfo.isVisited)
+                                {
+                                    if (vtInfo[neighborVertexIndex].surfaceIndex >= 0)
+                                    {
+                                        subSurface.neighborSurface.Add(curVertexInfo.surfaceIndex);
+                                        continue;
+                                    }
+                                }
+                                
                                 bfs.Enqueue(neighborVertexIndex);
                             }
                         }else
                         {
+                            // record connectivity 
                             subSurface.surroundingVertex.Add(curIndex);
                         }
-                        
-                    }
-                    {
-                        if(subSurface.normal==Vector3.zero)
-                        {
-                            subSurface.normal = Vector3.down;
-                        }
-                        surfaceProcessInfos.Add(subSurface);
-                        Debug.Log($" Sub Surface, vertices Count = {subSurface.verticeIndex.Count}, surround Index {subSurface.surroundingVertex}, Detail:\n{JsonUtility.ToJson(subSurface)}");
-                    }
 
+                    }//end bfs
+                    // add surface
+                    subSurface.normal = subSurface.normal.normalized;
+                    surfaceProcessInfos.Add(subSurface);
+                    Debug.Log($" Sub Surface, vertices Count = {subSurface.verticeIndex.Count}, surround Index {subSurface.surroundingVertex.Count}, Detail:\n{JsonUtility.ToJson(subSurface)}");
                 }
 
                 bestSurface = null;
                 bestInliner = 0;
-                */
-                // do not trust mesh, it is not topological continuously :(
+                
             }
             vtInfoPart = newvtInfoPart;
             if (newvtInfoPart.Count<minPointThreshold || skipCount>5)
@@ -428,12 +567,15 @@ public class SurfaceAnalysisRANSAC : MonoBehaviour
                 surface.neighborSurface.Add(vtInfo[v].surfaceIndex);
             }
             surface.neighborSurface.Remove(surface.index);
-            sinfos.Add(new SurfaceInfo(surface));
+            SurfaceInfo si = new SurfaceInfo(surface);
+            foreach(int vindex in surface.verticeIndex)
+            {
+                si.vertices.Add(vtInfo[vindex].pos);
+            }
+            sinfos.Add(si);
         }
         Debug.Log("Finish analyze mesh");
         Debug.Log($"Total surface count {sinfos.Count}");
-        Debug.Log("Writing files...");
-        Utils.SaveFile(filePath, JsonUtility.ToJson(surfaceInfos));
         //-------------
 
     }
