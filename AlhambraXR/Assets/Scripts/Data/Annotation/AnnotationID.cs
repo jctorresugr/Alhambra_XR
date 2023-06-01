@@ -124,4 +124,11 @@ public struct AnnotationID : IEquatable<AnnotationID>
         }
         return base.Equals(obj);
     }
+
+    public bool IsSpeical => AnnotationID.IsSpecialID(this);
+
+    public static bool IsSpecialID(AnnotationID id)
+    {
+        return id == INVALID_ID || id == LIGHTALL_ID;
+    }
 }

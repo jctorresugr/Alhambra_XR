@@ -11,6 +11,9 @@ public class VolumeAnalyze : MonoBehaviour
         public int obstacle;
         public Vector3 normal0;
         public Vector3 normal1;
+        public bool isVisited;
+
+        public bool IsEmpty => obstacle == 0;
 
         public Vector3 this[int i]
         {
@@ -45,16 +48,25 @@ public class VolumeAnalyze : MonoBehaviour
             }
             else if (obstacle < 2) 
             {
-                for(int i=0;i<obstacle;i++)
+                if(ExistNormal(normal,cosThreshold))
                 {
-                    if(Vector3.Dot(normal,this[i])>cosThreshold)
-                    {
-                        return;
-                    }
+                    return;
                 }
                 this[obstacle] = normal;
                 obstacle++;
             }
+        }
+
+        public bool ExistNormal(Vector3 refNormal, float cosThreshold)
+        {
+            for(int i=0;i<obstacle;i++)
+            {
+                if (Vector3.Dot(refNormal, this[i]) > cosThreshold)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public static VolumeInfo GetDefault()
@@ -62,6 +74,7 @@ public class VolumeAnalyze : MonoBehaviour
             VolumeInfo tempVolumeInfo = new VolumeInfo();
             tempVolumeInfo.obstacle = 0;
             tempVolumeInfo.normal0 = tempVolumeInfo.normal1 = Vector3.zero;
+            tempVolumeInfo.isVisited = false;
             return tempVolumeInfo;
         }
     }

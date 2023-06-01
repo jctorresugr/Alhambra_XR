@@ -130,18 +130,82 @@ public class Utils
             Mathf.Abs(v.z)
             ) ;
     }
+
+    public static float Sqr(float a)
+    {
+        return a * a;
+    }
     public static float BoundsDistance(Bounds a, Bounds b)
     {
-        if(
-            a.max.x>=b.min.x && b.max.x >=a.min.x &&
-            a.max.y>=b.min.y && b.max.y >=a.min.y &&
-            a.max.z>=b.min.z && b.max.z >=a.min.z 
-            )
+        /*
+        if(a.Intersects(b))
         {
             return 0.0f;
         }
-        Vector3 r = Vector3.Min(Abs(a.max - b.min),Abs(b.max-a.min));
-        return Mathf.Min(r.x, r.y, r.z);
+        Bounds bound = a.Intersects(b);*/
+        float distance = 0.0f;
+        for(int i=0;i<3;i++)
+        {
+            float amin = a.min[i];
+            float amax = a.max[i];
+            float bmax = b.max[i];
+            float bmin = b.min[i];
+            if(amax>bmin && amin<bmax)
+            {
+                continue;
+            }
+            else
+            {
+                if(amin>bmax)
+                {
+                    distance += Sqr(amin - bmax);
+                }else if (amax<bmin)
+                {
+                    distance += Sqr(bmin - amax);
+                }
+            }
+        }
+        return Mathf.Sqrt(distance);
+        //Vector3 r = Vector3.Min(Abs(a.max - b.min),Abs(b.max-a.min));
+        //return Mathf.Min(r.x, r.y, r.z);
+
+    }
+
+    public static float BoundsDistance(Bounds a, Vector3 b)
+    {
+        float distance = 0.0f;
+        for (int i = 0; i < 3; i++)
+        {
+            float amin = a.min[i];
+            float amax = a.max[i];
+            float bi = b[i];
+            if (amax > bi && amin < bi)
+            {
+                continue;
+            }
+            else
+            {
+                if (amin > bi)
+                {
+                    distance += Sqr(amin - bi);
+                }
+                else if (amax < bi)
+                {
+                    distance += Sqr(bi - amax);
+                }
+            }
+        }
+        return Mathf.Sqrt(distance);
+    }
+
+    public static float BoundsDistance(Vector3 a, Bounds b)
+    {
+        return BoundsDistance(b, a);
+    }
+
+    public static float BoundsDistance(Vector3 a, Vector3 b)
+    {
+        return Vector3.Distance(a,b);
     }
 
     public static float Volume(Vector3 size)

@@ -9,6 +9,9 @@ public class ReferenceTransform : MonoBehaviour
     /// The transformation of the model, 
     /// </summary>
     public Transform referTransform;
+    protected Bounds bounds;
+    public Bounds ModelBound => bounds;
+    //TODO: compute model bounds
 
     public Vector3 MapPosition(Vector3 pos)
     {
@@ -17,6 +20,15 @@ public class ReferenceTransform : MonoBehaviour
             return pos;
         }
         return referTransform.TransformPoint(pos);
+    }
+
+    public Vector3 InvMapPosition(Vector3 pos)
+    {
+        if (referTransform == null)
+        {
+            return pos;
+        }
+        return referTransform.InverseTransformPoint(pos);
     }
 
     public Quaternion MapRotation(Quaternion r)
