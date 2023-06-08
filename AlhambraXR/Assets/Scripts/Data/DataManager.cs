@@ -22,8 +22,8 @@ public class DataManager : MonoBehaviour
     private List<Annotation> annotations;
     private List<AnnotationJoint> annotationJoints; 
 
-    public IReadOnlyList<Annotation> Annotations => annotations;  
-    public IReadOnlyList<AnnotationJoint> AnnotationJoints => annotationJoints;
+    public List<Annotation> Annotations => annotations;  
+    public List<AnnotationJoint> AnnotationJoints => annotationJoints;
 
     public Annotation FindAnnotation(Predicate<Annotation> predicate)
     {

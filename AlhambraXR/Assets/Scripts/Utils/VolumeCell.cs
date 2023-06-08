@@ -13,7 +13,6 @@ public class VolumeCell<T>
     public int CountY =>yc;
     public int CountZ =>zc;
 
-
     public T this[int x,int y,int z]
     {
         get => data[x, y, z];
@@ -29,15 +28,23 @@ public class VolumeCell<T>
     public T this[float x, float y, float z]
     {
         get => data[
-            Mathf.Min(Mathf.Max(0, (int)(x * mul.x)), xc),
-            Mathf.Min(Mathf.Max(0, (int)(y * mul.y)), yc),
-            Mathf.Min(Mathf.Max(0, (int)(z * mul.z)), zc)
+            Mathf.Min(Mathf.Max(0, (int)((x+add.x) * mul.x)), xc),
+            Mathf.Min(Mathf.Max(0, (int)((y+add.y) * mul.y)), yc),
+            Mathf.Min(Mathf.Max(0, (int)((z+add.z) * mul.z)), zc)
             ];
         set => data[
-            Mathf.Min(Mathf.Max(0, (int)(x * mul.x)), xc),
-            Mathf.Min(Mathf.Max(0, (int)(y * mul.y)), yc),
-            Mathf.Min(Mathf.Max(0, (int)(z * mul.z)), zc)
+            Mathf.Min(Mathf.Max(0, (int)((x + add.x) * mul.x)), xc),
+            Mathf.Min(Mathf.Max(0, (int)((y+add.y) * mul.y)), yc),
+            Mathf.Min(Mathf.Max(0, (int)((z+add.z) * mul.z)), zc)
             ] = value;
+    }
+
+    public bool IsValidIndex(Vector3Int i)
+    {
+        return
+            i.x >= 0 && i.x < xc &&
+            i.y >= 0 && i.y < yc &&
+            i.z >= 0 && i.z < zc;
     }
 
     public VolumeCell(Bounds bounds, float cellSize) :

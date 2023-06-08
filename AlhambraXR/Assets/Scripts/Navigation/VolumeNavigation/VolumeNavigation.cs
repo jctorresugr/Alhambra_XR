@@ -11,6 +11,9 @@ public class VolumeNavigation : MonoBehaviour
     public ReferenceTransform referenceTransform;
     [Header("Settings")]
     public float depthRatio = 0.01f;
+    public float splitEdgeThreshold = 0.001f;
+    public LayerMask layerMask = 1 >> 6;
+    public Vector3 tempX = Vector3.right;
     //public float clipEdgeThreshold=0.2f;
     [Header("Cache Data")]
     [SerializeField]
@@ -58,26 +61,28 @@ public class VolumeNavigation : MonoBehaviour
     {
         graph = new Graph<AnnotationNodeData, EdgeDistanceData>();
         // gather all annotations and 
-        IReadOnlyList<Annotation> annotations = data.Annotations;
+        var annotations = data.Annotations;
         int annotCount = annotations.Count;
 
         for (int i = 0; i < annotCount; i++)
         {
             graph.AddNode(new AnnotationNodeData(annotations[i].ID,annotations[i].renderInfo.Bounds.center));
+            Debug.Log($"{annotations[i].ID} .bounds => {annotations[i].renderInfo.Bounds}");
         }
         for (int i=0;i<annotCount;i++)
         {
             GraphNode<AnnotationNodeData> ai = graph.GetNode(i);
             for (int j=i+1;j<annotCount;j++)
             {
-                GraphNode<AnnotationNodeData> aj = graph.GetNode(i);
+                GraphNode<AnnotationNodeData> aj = graph.GetNode(j);
                 //TODO: optimize the graph generation
                 graph.AddEdge(i, j, new EdgeDistanceData(Distance(ai,aj)));
             }
         }
+        volumeAnalyze.Preprocess();
     }
 
-    public float Distance(GraphNode<AnnotationNodeData> a, GraphNode<AnnotationNodeData> b)
+    protected float Distance(GraphNode<AnnotationNodeData> a, GraphNode<AnnotationNodeData> b)
     {
         bool asp = a.data.id.IsSpeical;
         bool bsp = b.data.id.IsSpeical;
@@ -108,7 +113,7 @@ public class VolumeNavigation : MonoBehaviour
     }
 
     //dynamically bound function :(
-    public float BoundDistance(object a, object b)
+    protected float BoundDistance(object a, object b)
     {
         if(a is Bounds && b is Bounds)
         {
@@ -180,10 +185,11 @@ public class VolumeNavigation : MonoBehaviour
         Heap<EdgePickInfo> edgeHeap = new Heap<EdgePickInfo>();
 
         List<GraphEdge<EdgeDistanceData>> resultEdges = new List<GraphEdge<EdgeDistanceData>>();
-        int allNodeCount = graph.NodeCount;
-        int addNodeCount = 1;
+        List<GraphNode<AnnotationNodeData>> additionalNode = new List<GraphNode<AnnotationNodeData>>();
+        additionalNode.Add(userNode);
         GraphNode<AnnotationNodeData> lastNode = userNode;
-        while (addNodeCount < allNodeCount)
+        bool flag = true;
+        while (resultEdges.Count < graph.NodeCount && flag)
         {
             //add Edge
             graph.ForeachNodeNeighbor(
@@ -194,11 +200,13 @@ public class VolumeNavigation : MonoBehaviour
                     EdgePickInfo pi = new EdgePickInfo();
                     pi.edgeIndex = edge.index;
                     pi.nodeIndex = edge.GetAnotherNodeIndex(lastNode.index);
-                    pi.distance = pi.distance + lastNode.data.depth * 0.01f;
+                    pi.distance = edge.data.basicDistance + lastNode.data.depth * depthRatio;
+                    edgeHeap.Enqueue(pi);
+                    Debug.Log($"Push {edge.fromNode}->{edge.toNode} \t| dis = {pi.distance} \t| d={lastNode.data.depth}");
                 }
                 );
             //pick up a minimum edge, add it to the tree
-            while(true)
+            while(edgeHeap.Count>0)
             {
                 EdgePickInfo minEdge = edgeHeap.Dequeue();
                 GraphNode<AnnotationNodeData> newNode = graph.GetNode(minEdge.nodeIndex);
@@ -207,16 +215,85 @@ public class VolumeNavigation : MonoBehaviour
                     if(edgeHeap.Count==0)
                     {
                         Debug.LogError("No more edge found, the graph is not fully connected!");
+                        flag = false;//break the outer loop
                         break;
                     }
                     continue;
                 }
+                //Add new edge!
+                /*
                 GraphEdge<EdgeDistanceData> newEdge = graph.GetEdge(minEdge.edgeIndex);
                 newNode.data.depth =
                     graph.GetNode(newEdge.GetAnotherNodeIndex(newNode.index)).data.depth + 1;
-                resultEdges.Add(newEdge);
+                resultEdges.Add(newEdge);*/
                 lastNode = newNode;
-                addNodeCount++;
+                // add new node if possible
+                GraphEdge<EdgeDistanceData> newEdge = graph.GetEdge(minEdge.edgeIndex);
+                GraphNode<AnnotationNodeData> anotherNode = graph.GetNode(newEdge.GetAnotherNodeIndex(newNode.index));
+                Debug.Log($"Add edge {newEdge.fromNode}->{newEdge.toNode}");
+                //Vector3 dirX = volumeAnalyze.SampleDir(newNode.data.centerPos, Vector3Int.right);
+                //Vector3 dirY = volumeAnalyze.SampleDir(newNode.data.centerPos, Vector3Int.up);
+                //Vector3 dirZ = volumeAnalyze.SampleDir(newNode.data.centerPos, Vector3Int.forward);
+
+                //Vector3 dirX = Vector3.right;//new Vector3(0.027f, 0, 0.0465f).normalized;////SampleNormal(newNode.data.centerPos, Vector3.right);
+                //Vector3 dirY = Vector3.up;//SampleNormal(newNode.data.centerPos, Vector3.up);
+                //Vector3 dirZ = Vector3.forward;//SampleNormal(newNode.data.centerPos, Vector3.forward);
+
+                Vector3 dirX = tempX.normalized;//new Vector3(2.0f, 0, 0.1f).normalized;////SampleNormal(newNode.data.centerPos, Vector3.right);
+                Vector3 dirY = Vector3.up; //SampleNormal(newNode.data.centerPos, Vector3.up);
+                Vector3 dirZ = Vector3.forward; //SampleNormal(newNode.data.centerPos, Vector3.forward);
+
+                XYZCoordinate xyzCoordinate = new XYZCoordinate(dirX, dirY, dirZ);
+                xyzCoordinate.Orthogonalization();
+                // ensure the line is align with the space
+                Vector3 pos1 = xyzCoordinate.TransformToLocalPos(newNode.data.centerPos);
+                Vector3 pos2 = xyzCoordinate.TransformToLocalPos(anotherNode.data.centerPos);
+                // edge: pos2 (another) ---> pos1 (new)
+                Vector3 posDelta = pos1 - pos2;
+                //judge x,y,z, if too large, split them
+                List<Vector3> posSep = SeperateVector(posDelta);
+                if(posSep.Count>1)
+                {
+                    Vector3 posCur = pos2;
+                    GraphNode<AnnotationNodeData> lastNodeInner = anotherNode;
+                    for (int i=0;i<posSep.Count-1;i++)
+                    {
+                        posCur += posSep[i];
+                        GraphNode<AnnotationNodeData> interNode = AddNode(
+                            new AnnotationNodeData(
+                                AnnotationID.INVALID_ID,
+                                xyzCoordinate.TransformToGlobalPos(posCur)));
+                        additionalNode.Add(interNode);
+                        interNode.data.depth = lastNodeInner.data.depth + 1;
+                        Debug.Log($"Add node {interNode.index} d={interNode.data.depth}");
+                        graph.ForeachNodeNeighbor(
+                            interNode,
+                            node => { },
+                            edge =>
+                            {
+                                EdgePickInfo pi = new EdgePickInfo();
+                                pi.edgeIndex = edge.index;
+                                pi.nodeIndex = edge.GetAnotherNodeIndex(interNode.index);
+                                pi.distance = edge.data.basicDistance + interNode.data.depth * depthRatio;
+                                edgeHeap.Enqueue(pi);
+                                Debug.Log($"Push {edge.fromNode}->{edge.toNode} \t| dis = {pi.distance} \t| d={interNode.data.depth}");
+                            }
+                            );
+                        GraphEdge<EdgeDistanceData> interNewEdge = graph.GetEdge(lastNodeInner, interNode);
+                        resultEdges.Add(interNewEdge);
+                        lastNodeInner = interNode;
+                    }
+                    // last
+                    resultEdges.Add(graph.GetEdge(lastNodeInner, newNode));
+                    newNode.data.depth = lastNodeInner.data.depth + 1;
+                }
+                else
+                {
+                    newNode.data.depth = anotherNode.data.depth + 1;
+                    resultEdges.Add(newEdge);
+                    Debug.Log($"Set node depth {newNode.index} d={newNode.data.depth}");
+                }
+                //addNodeCount++;
                 break;
             }
         }
@@ -228,14 +305,37 @@ public class VolumeNavigation : MonoBehaviour
         {
             treeGraph.AddEdge(edge.fromNode, edge.toNode, new EdgeDistanceData(edge.data.basicDistance));
         }
+        foreach(var node in additionalNode)
+        {
+            graph.RemoveNode(node);
+        }
         userNode = treeGraph.GetNode(userNode.index);
-        graph.RemoveNode(userNode);
         NavigationInfo result = new NavigationInfo();
         result.treeGraph = treeGraph;
         result.root = userNode;
+        ClearVisited();
         return result;
     }
 
+    protected List<Vector3> SeperateVector(Vector3 dv)
+    {
+        List<Vector3> results = new List<Vector3>();
+        Vector3 cur = Vector3.zero;
+        for(int i=0;i<3;i++)
+        {
+            cur[i] = dv[i];
+            if (Mathf.Abs(dv[i])>splitEdgeThreshold)
+            {
+                results.Add(cur);
+                cur = Vector3.zero;
+            }
+        }
+        if(cur!=Vector3.zero)
+        {
+            results.Add(cur);
+        }
+        return results;
+    }
 
     //return minimumY
     protected int SearchFloor(int x, int y, int z)
@@ -255,6 +355,26 @@ public class VolumeNavigation : MonoBehaviour
                 return y;
             }
         }
+    }
+
+    protected Vector3 SearchHit(Vector3 pos, Vector3 dir)
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(referenceTransform.MapPosition(pos),dir, out hit, Mathf.Infinity,layerMask))
+        {
+            Debug.DrawRay(referenceTransform.MapPosition(pos), dir * 10.0f, Color.blue);
+            return hit.normal;
+        }
+        Debug.DrawRay(referenceTransform.MapPosition(pos), dir * 10.0f, Color.yellow);
+        return Vector3.zero;
+    }
+
+    protected Vector3 SampleNormal(Vector3 pos, Vector3 dir)
+    {
+        Vector3 n1 = SearchHit(pos, dir);
+        Vector3 n2 = SearchHit(pos, -dir);
+        Vector3 nd = n2 - n1;
+        return nd == Vector3.zero ? nd : nd.normalized;
     }
 
 }

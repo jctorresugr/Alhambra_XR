@@ -127,6 +127,10 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
     public LineNavigatorManager lineNavigatorManager;
 
+    public VolumeNavigation volumeNavigation;
+
+    public VolumeAnalyze volumeAnalyze;
+
 
     private void Awake()
     {
@@ -181,6 +185,8 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         CoreServices.InputSystem?.RegisterHandler<IMixedRealityInputActionHandler>(this);
         //Debug messages
         //OnRead(null, "{\"action\": \"highlight\", \"data\": { \"layer\": 0, \"id\": 112} }");
+
+        volumeNavigation.Preprocess();
 
     }
 

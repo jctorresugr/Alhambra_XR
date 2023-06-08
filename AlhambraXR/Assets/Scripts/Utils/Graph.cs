@@ -13,6 +13,20 @@ public class GraphNode<T>
 
     public IReadOnlyList<int> EdgesIndex => edgesIndex;
     public int Index => index;
+
+    public GraphNode<T> Clone()
+    {
+        GraphNode<T> n = new GraphNode<T>();
+        n.index = index;
+        n.data = data;
+        if(edgesIndex!=null)
+        {
+            n.edgesIndex = new List<int>();
+            n.edgesIndex.AddRange(edgesIndex);
+        }
+        return n;
+    }
+
 }
 [Serializable]
 public class GraphEdge<T>
@@ -33,6 +47,16 @@ public class GraphEdge<T>
     public int GetAnotherNodeIndex(int curIndex)
     {
         return curIndex == fromNode ? toNode : fromNode;
+    }
+
+    public GraphEdge<T> Clone()
+    {
+        GraphEdge<T> e = new GraphEdge<T>();
+        e.index = index;
+        e.fromNode = fromNode;
+        e.toNode = toNode;
+        e.data = data;
+        return e;
     }
 }
 
@@ -72,24 +96,25 @@ public class Graph<N,E>
     public GraphNode<N> AddNode(N data)
     {
         GraphNode<N> graphNode = new GraphNode<N>();
+        graphNode.data = data;
         if(emptyNodes.Count>0)
         {
             graphNode.index = emptyNodes[emptyNodes.Count - 1];
+            nodes[emptyNodes[emptyNodes.Count - 1]] = graphNode;
             emptyNodes.RemoveAt(emptyNodes.Count - 1);
         }else
         {
             graphNode.index = nodes.Count;
             nodes.Add(graphNode);
         }
-        
         return graphNode;
     }
     public GraphNode<N> RemoveNode(GraphNode<N> node)
     {
         int index = node.index;
-        foreach (int edgeIndex in node.edgesIndex)
+        while(node.edgesIndex.Count>0)
         {
-            RemoveEdge(edgeIndex);
+            RemoveEdge(node.edgesIndex[node.edgesIndex.Count-1]);
         }
         if (index == nodes.Count - 1) // if last one, remove
         {
@@ -136,17 +161,53 @@ public class Graph<N,E>
         return AddEdge(nodes[n1], nodes[n2], data);
     }
 
+    public Graph<N,E> Clone()
+    {
+        Graph<N, E> g = new Graph<N, E>();
+        foreach(var n in nodes)
+        {
+            if(n==null)
+            {
+                g.nodes.Add(null);
+            }else
+            {
+                g.nodes.Add(n.Clone());
+            }
+        }
+        foreach (var e in edges)
+        {
+            if (e == null)
+            {
+                g.edges.Add(null);
+            }
+            else
+            {
+                g.edges.Add(e.Clone());
+            }
+        }
+        g.emptyEdges.AddRange(emptyEdges);
+        g.emptyNodes.AddRange(emptyNodes);
+        return g;
+    }
+
     public GraphEdge<E> AddEdge(GraphNode<N> n1, GraphNode<N> n2, E data)
     {
         GraphEdge<E> graphEdge = new GraphEdge<E>();
         graphEdge.fromNode = n1.index;
         graphEdge.toNode = n2.index;
         graphEdge.data = data;
-        n1.edgesIndex.Add(graphEdge.index);
-        n2.edgesIndex.Add(graphEdge.index);
+        if(n1.edgesIndex==null)
+        {
+            n1.edgesIndex = new List<int>();
+        }
+        if (n2.edgesIndex == null)
+        {
+            n2.edgesIndex = new List<int>();
+        }
         if(emptyEdges.Count>0)
         {
             graphEdge.index = emptyEdges[emptyEdges.Count - 1];
+            edges[emptyEdges[emptyEdges.Count - 1]] = graphEdge;
             emptyEdges.RemoveAt(emptyEdges.Count - 1);
         }
         else
@@ -154,6 +215,8 @@ public class Graph<N,E>
             graphEdge.index = edges.Count;
             edges.Add(graphEdge);
         }
+        n1.edgesIndex.Add(graphEdge.index);
+        n2.edgesIndex.Add(graphEdge.index);
         return graphEdge;
     }
 
@@ -182,11 +245,11 @@ public class Graph<N,E>
     {
         foreach(GraphNode<N> node in g.nodes)
         {
-            if(node!=null)
+            if(g.IsValidNode(node))
                 this.AddNode(node.data);
             else
             {
-                emptyNodes.Add(nodes.Count-1);
+                emptyNodes.Add(nodes.Count);
                 nodes.Add(null);
             }
         }
@@ -196,7 +259,7 @@ public class Graph<N,E>
     {
         foreach(GraphNode<N> node in nodes)
         {
-            if (node != null)
+            if (IsValidNode(node))
                 action(node);
         }
     }
@@ -211,7 +274,11 @@ public class Graph<N,E>
     }
 
     public void ForeachNodeNeighbor(GraphNode<N> baseNode, Action<GraphNode<N>> actionNode, Action<GraphEdge<E>> actionEdge = null)
-    {;
+    {
+        if(baseNode.edgesIndex==null)
+        {
+            return;
+        }
         foreach (int edgeIndex in baseNode.edgesIndex)
         {
             GraphEdge<E> edge = edges[edgeIndex];
@@ -227,10 +294,37 @@ public class Graph<N,E>
         }
     }
 
+    protected bool IsValidNode(GraphNode<N> n)
+    {
+        // the C# has some wired behavior, they will create an empty object for the null value in the list
+        if(n != null && n.index>=0 && n.index<nodes.Count)
+        {
+            return nodes[n.index] == n;
+        }
+        return false;
+    }
+
     public void ForeachNodeNeighbor(int nodeIndex, Action<GraphNode<N>> actionNode, Action<GraphEdge<E>> actionEdge=null)
     {
         GraphNode<N> baseNode = nodes[nodeIndex];
         ForeachNodeNeighbor(baseNode, actionNode, actionEdge);
+    }
+
+    public GraphEdge<E> GetEdge(GraphNode<N> node1, GraphNode<N> node2)
+    {
+        if(node1==null||node2==null)
+        {
+            return null;
+        }
+        foreach(int edgeIndex in node1.edgesIndex)
+        {
+            GraphEdge<E> edge = edges[edgeIndex];
+            if(edge.GetAnotherNodeIndex(node1.index)==node2.index)
+            {
+                return edge;
+            }
+        }
+        return null;
     }
 
 

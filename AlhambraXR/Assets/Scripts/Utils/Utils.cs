@@ -13,7 +13,7 @@ public class Utils
             comp = obj.GetComponent<T>();
             if (comp == null)
             {
-                Debug.LogWarning("Cannot init component for " + obj.ToString() + ", expect component: " + comp.GetType().Name);
+                Debug.LogWarning("Cannot init component for " + obj.ToString() + ", expect component "+ typeof(T));
             }
         }
         return comp;
@@ -26,7 +26,7 @@ public class Utils
             comp = obj.GetComponent<T>();
             if (comp == null)
             {
-                Debug.LogWarning("Cannot init component for " + obj.ToString() + ", expect component: " + comp.GetType().Name);
+                Debug.LogWarning("Cannot init component for " + obj.ToString() + ", expect component "+ typeof(T));
             }
         }
         return comp;

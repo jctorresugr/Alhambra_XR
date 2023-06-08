@@ -15,15 +15,15 @@ public class LineRenderManager : MonoBehaviour
     {
         //generate line object for each edge
         //bruteforce way, not optimized! TODO: reduce object and reduce drawcall
-        if(edgeObjects!=null)
+        if (edgeObjects != null)
         {
-            foreach(LineRenderer lineRender in edgeObjects.Values)
+            foreach (LineRenderer lineRender in edgeObjects.Values)
             {
                 Destroy(lineRender.gameObject);
             }
         }
         edgeObjects = new Dictionary<LineRenderEdge, LineRenderer>();
-        foreach(LineRenderEdge edge in data.edges)
+        foreach (LineRenderEdge edge in data.edges)
         {
             LineRenderer lineRenderer = Instantiate(template);
             lineRenderer.transform.parent = this.transform;
@@ -31,7 +31,7 @@ public class LineRenderManager : MonoBehaviour
             lineRenderer.transform.rotation = Quaternion.identity;
             edgeObjects[edge] = lineRenderer;
         }
-        foreach(LineRenderNode node in data.nodes)
+        foreach (LineRenderNode node in data.nodes)
         {
             NotifyUpdatePoint(node);
         }

@@ -158,7 +158,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
                         });
                     else
                     {
-                        //lock(srcAnnot)
+                        lock(srcAnnot)
                         {
                             srcAnnot.Bounds.Encapsulate(new Vector3(m_uvToPositionPixels[idx], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2]));
                             srcAnnot.Normal += new Vector3(m_uvToNormalPixels[idx + 0], m_uvToNormalPixels[idx + 1], m_uvToNormalPixels[idx + 2]);
