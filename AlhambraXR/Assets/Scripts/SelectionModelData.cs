@@ -58,19 +58,19 @@ public struct AnnotationID
 /// <summary>
 /// The Model class of this application keeping track of all data shared by the different modules of the overall application
 /// </summary>
-public class Model
+public class SelectionModelData
 {
     /// <summary>
     /// Listener interface to be notified on events
     /// </summary>
-    public interface IModelListener
+    public interface ISelectionModelDataListener
     {
         /// <summary>
         /// Method called when the current action of the application has changed
         /// </summary>
         /// <param name="model">The model of the application calling this method</param>
         /// <param name="action">The new action</param>
-        void OnSetCurrentAction(Model model, CurrentAction action);
+        void OnSetCurrentAction(SelectionModelData model, CurrentAction action);
 
         /// <summary>
         /// Method called when the current highlighted data chunks are updated. Note that this goes in pair with an action (CurrentAction) that needs such an information
@@ -86,13 +86,15 @@ public class Model
         /// For the moment, this information is only needed in CurrentAction == CurrentAction.DEFAULT
         /// Note that if Layer == -1 or ID == -1, then there is nothing to highlight
         /// </param>
-        void OnSetCurrentHighlight(Model model, AnnotationID mainID, AnnotationID secondID);
+        void OnSetCurrentHighlight(SelectionModelData model, AnnotationID mainID, AnnotationID secondID);
+
+        void OnSetSelectedAnnotations(SelectionModelData model, List<AnnotationID> ids);
     }
 
     /// <summary>
     /// All the registered listeners to notify on changes in the Model
     /// </summary>
-    private HashSet<IModelListener> m_listeners = new HashSet<IModelListener>();
+    private HashSet<ISelectionModelDataListener> m_listeners = new HashSet<ISelectionModelDataListener>();
 
     /// <summary>
     /// The current action to perform
@@ -109,11 +111,42 @@ public class Model
     /// </summary>
     private AnnotationID m_currentHighlightSecond = AnnotationID.INVALID_ID;
 
+    private List<AnnotationID> m_selectedAnnotations = new List<AnnotationID>();
+
+    public IReadOnlyList<AnnotationID> SelectedAnnotations
+    {
+        get => m_selectedAnnotations;
+        set
+        {
+            m_selectedAnnotations.Clear();
+            m_selectedAnnotations.AddRange(value);
+            TriggerChangeSelectedAnnotation();
+        }
+    }
+
+    public void AddSelectedAnnotations(AnnotationID annot)
+    {
+        m_selectedAnnotations.Add(annot);
+        TriggerChangeSelectedAnnotation();
+    }
+
+    public void ClearSelectedAnnotations()
+    {
+        m_selectedAnnotations.Clear();
+        TriggerChangeSelectedAnnotation();
+    }
+
+
+    protected void TriggerChangeSelectedAnnotation()
+    {
+        foreach (ISelectionModelDataListener l in m_listeners)
+            l.OnSetSelectedAnnotations(this, m_selectedAnnotations);
+    }
     /// <summary>
     /// Add a new listener to notify events
     /// </summary>
     /// <param name="l">The new listener to notify on events</param>
-    public void AddListener(IModelListener l)
+    public void AddListener(ISelectionModelDataListener l)
     {
         m_listeners.Add(l);
     }
@@ -122,7 +155,7 @@ public class Model
     /// Remove an already registered listener
     /// </summary>
     /// <param name="l">The listener to unregister</param>
-    public void RemoveListener(IModelListener l)
+    public void RemoveListener(ISelectionModelDataListener l)
     {
         m_listeners.Remove(l);
     }
@@ -136,7 +169,7 @@ public class Model
         set 
         {
             m_currentAction = value;
-            foreach(IModelListener l in m_listeners)
+            foreach(ISelectionModelDataListener l in m_listeners)
                 l.OnSetCurrentAction(this, value);
         }
     }
@@ -151,7 +184,7 @@ public class Model
         set
         {
             m_currentHighlightMain = value;
-            foreach(IModelListener l in m_listeners)
+            foreach(ISelectionModelDataListener l in m_listeners)
                 l.OnSetCurrentHighlight(this, value, m_currentHighlightSecond);
         }
     }
@@ -166,7 +199,7 @@ public class Model
         set
         {
             m_currentHighlightSecond = value;
-            foreach (IModelListener l in m_listeners)
+            foreach (ISelectionModelDataListener l in m_listeners)
                 l.OnSetCurrentHighlight(this, m_currentHighlightMain, value);
         }
     }

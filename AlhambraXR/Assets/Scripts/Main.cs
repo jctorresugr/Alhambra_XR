@@ -13,7 +13,12 @@ using UnityEngine.Rendering;
 /// <summary>
 /// The equivalent of the "Main" specifically designed to work with Unity
 /// </summary>
-public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickPano.IPickPanoListener, Client.IClientListener, Model.IModelListener, IMixedRealityInputActionHandler
+public class Main : MonoBehaviour, 
+    AlhambraServer.IAlhambraServerListener, 
+    PickPano.IPickPanoListener, 
+    Client.IClientListener, 
+    SelectionModelData.ISelectionModelDataListener, 
+    IMixedRealityInputActionHandler
 {
     
     /// <summary>
@@ -40,7 +45,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
     /// <summary>
     /// The model of the application
     /// </summary>
-    private Model m_model = new Model();
+    private SelectionModelData m_model = new SelectionModelData();
 
     /// <summary>
     /// The Random string value
@@ -114,10 +119,12 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
     public DataSync dataSync;
 
+    public SelectionModelData SelectionData => m_model;
+
     /// <summary>
     /// A better navigator? in progress
     /// </summary>
-    public LineNavigator lineNavigator;
+    //public LineNavigator lineNavigator;
 
     public AnnotationJointRenderBuilder annotationJointRenderBuilder;
 
@@ -125,11 +132,12 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
 
     public Dictionary<string, ProcessMessageFunc> onReceiveMessage;
 
-    public LineNavigatorManager lineNavigatorManager;
+    //public LineNavigatorManager lineNavigatorManager;
 
-    public VolumeNavigation volumeNavigation;
+    public NavigationManager navigationManager;
+    //public VolumeNavigation volumeNavigation;
 
-    public VolumeAnalyze volumeAnalyze;
+    //public VolumeAnalyze volumeAnalyze;
 
 
     private void Awake()
@@ -186,7 +194,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         //Debug messages
         //OnRead(null, "{\"action\": \"highlight\", \"data\": { \"layer\": 0, \"id\": 112} }");
 
-        volumeNavigation.Preprocess();
+        navigationManager.Init(m_model);
 
     }
 
@@ -263,16 +271,16 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
             Vector3 annotationPos = PickPanoModel.transform.localToWorldMatrix.MultiplyPoint3x4(m_curAnnotation.Center);
 
             PointingArrow.transform.rotation = Quaternion.LookRotation(annotationPos - Camera.main.transform.position, new Vector3(0, 1, 0));
-            lineNavigator.Visible = true;
+            //lineNavigator.Visible = true;
             //lineNavigator.SetPositions(Camera.main.transform.position+Camera.main.transform.forward*0.5f, annotationPos+m_curAnnotation.Normal*0.5f);
             //debug normal:
-            lineNavigator.SetPositions(annotationPos,annotationPos + m_curAnnotation.Normal * 0.5f);
+            //lineNavigator.SetPositions(annotationPos,annotationPos + m_curAnnotation.Normal * 0.5f);
 
         }
         else
         {
             PointingArrow.SetActive(false);
-            lineNavigator.Visible = false;
+            //lineNavigator.Visible = false;
         }
             
     }
@@ -368,7 +376,7 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
             m_model.CurrentAction = CurrentAction.IN_HIGHLIGHT;
             m_model.CurrentHighlightMain = new AnnotationID(detailedMsg.data.layer, detailedMsg.data.id);
             m_model.CurrentHighlightSecond = AnnotationID.INVALID_ID;
-            lineNavigatorManager.SetAnnotations(data.FindAnnotationID(m_model.CurrentHighlightMain));
+            //lineNavigatorManager.SetAnnotations(data.FindAnnotationID(m_model.CurrentHighlightMain));
         }
 
         else if (commonMsg.action == "startAnnotation")
@@ -732,14 +740,14 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         return triangles;
     }
 
-    public void OnSetCurrentAction(Model model, CurrentAction action)
+    public void OnSetCurrentAction(SelectionModelData model, CurrentAction action)
     {
         if(action != CurrentAction.IN_HIGHLIGHT)
             lock(this)
                 m_curAnnotation = null; //Nothing to highlight. Cancel the current annotation
     }
 
-    public void OnSetCurrentHighlight(Model model, AnnotationID mainID, AnnotationID secondID)
+    public void OnSetCurrentHighlight(SelectionModelData model, AnnotationID mainID, AnnotationID secondID)
     {
         if(model.CurrentAction == CurrentAction.IN_HIGHLIGHT)
         {
@@ -909,5 +917,9 @@ public class Main : MonoBehaviour, AlhambraServer.IAlhambraServerListener, PickP
         m_model.CurrentAction = CurrentAction.DEFAULT;
         m_model.CurrentHighlightMain = AnnotationID.INVALID_ID;
         m_model.CurrentHighlightSecond = AnnotationID.INVALID_ID;
+    }
+
+    void SelectionModelData.ISelectionModelDataListener.OnSetSelectedAnnotations(SelectionModelData model, List<AnnotationID> ids)
+    {
     }
 }

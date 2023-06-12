@@ -5,9 +5,9 @@ using static VolumeNavigation;
 public class NavigationManager : MonoBehaviour
 {
     [Header("Component")]
-    public VolumeAnalyze volumeAnalyze;
     public VolumeNavigation volumeNavigation;
     public GraphRenderManager graphRenderManager;
+    public SelectionModelData selectionModelData;
     public Transform user;
     public float updateThreshold = 1.0f;
     public bool refreshNow = false;//for debugging
@@ -16,7 +16,6 @@ public class NavigationManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Utils.EnsureComponent(this, ref volumeAnalyze);
         Utils.EnsureComponent(this, ref volumeNavigation);
         Utils.EnsureComponent(this, ref graphRenderManager);
         oldPos = user.position;
@@ -33,13 +32,28 @@ public class NavigationManager : MonoBehaviour
         }
     }
 
+    public void Init(SelectionModelData selectionModelData)
+    {
+        this.selectionModelData = selectionModelData;
+        volumeNavigation.Init();
+    }
+
     public void Navigate()
     {
         oldPos = user.position;
+        volumeNavigation.SetAnnotations(selectionModelData.SelectedAnnotations);
+        if (volumeNavigation.annotations.Count==0)
+        {
+            graphRenderManager.ClearDraw();
+            return;
+        }
+        volumeNavigation.Preprocess();
         NavigationInfo navigationInfo = volumeNavigation.Navigate(user);
         //render Navigation
         GraphNode<AnnotationNodeData> root = navigationInfo.root;
         graphRenderManager.data = navigationInfo.treeGraph;
         graphRenderManager.Redraw();
     }
+
+
 }

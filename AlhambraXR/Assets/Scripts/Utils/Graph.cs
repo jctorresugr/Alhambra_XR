@@ -190,6 +190,14 @@ public class Graph<N,E>
         return g;
     }
 
+    public void Clear()
+    {
+        nodes.Clear();
+        edges.Clear();
+        emptyEdges.Clear();
+        emptyNodes.Clear();
+    }
+
     public GraphEdge<E> AddEdge(GraphNode<N> n1, GraphNode<N> n2, E data)
     {
         GraphEdge<E> graphEdge = new GraphEdge<E>();

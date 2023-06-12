@@ -31,13 +31,7 @@ public class GraphRenderManager : MonoBehaviour
         }
         //generate line object for each edge
         //bruteforce way, not optimized! TODO: reduce object and reduce drawcall
-        if (edgeObjects != null)
-        {
-            foreach (LineRenderer lineRender in edgeObjects.Values)
-            {
-                Destroy(lineRender.gameObject);
-            }
-        }
+        ClearDraw();
         edgeObjects = new Dictionary<GraphEdge<E>, LineRenderer>();
         data.ForeachEdge(edge =>
         {
@@ -52,6 +46,17 @@ public class GraphRenderManager : MonoBehaviour
         {
             NotifyUpdatePoint(node);
         });
+    }
+
+    public void ClearDraw()
+    {
+        if (edgeObjects != null)
+        {
+            foreach (LineRenderer lineRender in edgeObjects.Values)
+            {
+                Destroy(lineRender.gameObject);
+            }
+        }
     }
 
     public void NotifyUpdatePoint(GraphNode<N> node)

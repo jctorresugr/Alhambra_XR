@@ -10,7 +10,7 @@ using Unity.Burst;
 using UnityEngine.Rendering;
 
 
-public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IModelListener
+public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, SelectionModelData.ISelectionModelDataListener
 {
 
     /// <summary>
@@ -32,7 +32,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     /// <summary>
     /// The model to use. Should be set up by the main application
     /// </summary>
-    private Model m_model = null;
+    private SelectionModelData m_model = null;
 
     /// <summary>
     /// The listeners objects listening for selection events
@@ -76,7 +76,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     /// </summary>
     /// <param name="model">The Model object containing the data of the overall application</param>
     [BurstCompile(FloatPrecision.Medium, FloatMode.Fast)]
-    public void Init(Model model)
+    public void Init(SelectionModelData model)
     {
         m_model = model;
         model.AddListener(this);
@@ -609,14 +609,18 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Model.IM
     /********** IModelListener interface *********/
     /*********************************************/
 
-    public void OnSetCurrentAction(Model model, CurrentAction action)
+    public void OnSetCurrentAction(SelectionModelData model, CurrentAction action)
     {
         m_updateHighlight = true;
     }
 
-    public void OnSetCurrentHighlight(Model model, AnnotationID mainID, AnnotationID secondMainID)
+    public void OnSetCurrentHighlight(SelectionModelData model, AnnotationID mainID, AnnotationID secondMainID)
     {
         m_updateHighlight = true;
+    }
+
+    void SelectionModelData.ISelectionModelDataListener.OnSetSelectedAnnotations(SelectionModelData model, List<AnnotationID> ids)
+    {
     }
 
     /// <summary>

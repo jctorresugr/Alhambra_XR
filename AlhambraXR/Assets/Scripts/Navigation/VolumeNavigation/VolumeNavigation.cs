@@ -9,10 +9,12 @@ public class VolumeNavigation : MonoBehaviour
     public VolumeAnalyze volumeAnalyze;
     public DataManager data;
     public ReferenceTransform referenceTransform;
+    public List<Annotation> annotations = new List<Annotation>();
     [Header("Settings")]
     public float depthRatio = 0.01f;
     public float splitEdgeThreshold = 0.001f;
     public LayerMask layerMask = 1 >> 6;
+    public float normalOffset = 0.001f;
     public Vector3 tempX = Vector3.right;
     //public float clipEdgeThreshold=0.2f;
     [Header("Cache Data")]
@@ -59,14 +61,13 @@ public class VolumeNavigation : MonoBehaviour
      */
     public void Preprocess()
     {
-        graph = new Graph<AnnotationNodeData, EdgeDistanceData>();
+        graph.Clear();
         // gather all annotations and 
-        var annotations = data.Annotations;
         int annotCount = annotations.Count;
 
         for (int i = 0; i < annotCount; i++)
         {
-            graph.AddNode(new AnnotationNodeData(annotations[i].ID,annotations[i].renderInfo.Bounds.center));
+            graph.AddNode(new AnnotationNodeData(annotations[i].ID, GetAnnotationPos(annotations[i])));
             Debug.Log($"{annotations[i].ID} .bounds => {annotations[i].renderInfo.Bounds}");
         }
         for (int i=0;i<annotCount;i++)
@@ -79,7 +80,51 @@ public class VolumeNavigation : MonoBehaviour
                 graph.AddEdge(i, j, new EdgeDistanceData(Distance(ai,aj)));
             }
         }
+    }
+
+    public void Init()
+    {
+        graph = new Graph<AnnotationNodeData, EdgeDistanceData>();
         volumeAnalyze.Preprocess();
+    }
+
+    public void SetAnnotations(IReadOnlyList<Annotation> aids)
+    {
+        if(aids==null)
+        {
+            annotations.Clear();
+            return;
+        }
+        annotations.AddRange(aids);
+    }
+
+    public void SetAnnotations(IReadOnlyList<AnnotationID> aids)
+    {
+        annotations.Clear();
+        foreach(AnnotationID aid in aids)
+        {
+            annotations.Add(data.FindAnnotationID(aid));
+        }
+    }
+
+    protected Vector3 GetAnnotationPos(Annotation annot)
+    {
+        Vector3 center = annot.renderInfo.Center;
+        Vector3 normal = annot.renderInfo.Normal;
+        Vector3 size = annot.renderInfo.Bounds.size*0.5f;
+        float outBoxDis = float.MaxValue;
+        for(int i=0;i<3;i++)
+        {
+            if(normal[i]!=0)
+            {
+                outBoxDis = Mathf.Min(outBoxDis, Mathf.Abs(size[i] / normal[i]));
+            }
+        }
+        if(outBoxDis==float.MaxValue)
+        {
+            outBoxDis = 0.0f;
+        }
+        return center + annot.renderInfo.Normal * (normalOffset + outBoxDis);
     }
 
     protected float Distance(GraphNode<AnnotationNodeData> a, GraphNode<AnnotationNodeData> b)
@@ -175,6 +220,14 @@ public class VolumeNavigation : MonoBehaviour
     {
         // user node, should always as a root node
         Vector3 userLocalPos = referenceTransform.InvMapPosition(userTransform.position);
+        RaycastHit rayHit;
+        if (Physics.Raycast(userTransform.position,Vector3.down, out rayHit))
+        {
+            userLocalPos = referenceTransform.InvMapPosition(rayHit.point);
+        }
+        
+        List<GraphNode<AnnotationNodeData>> originalNode = new List<GraphNode<AnnotationNodeData>>();
+        graph.ForeachNode(n => originalNode.Add(n));
         GraphNode<AnnotationNodeData> userNode = AddNode(new AnnotationNodeData(AnnotationID.LIGHTALL_ID, userLocalPos));
         userNode.data.depth = 0;
 
@@ -214,7 +267,7 @@ public class VolumeNavigation : MonoBehaviour
                 {
                     if(edgeHeap.Count==0)
                     {
-                        Debug.LogError("No more edge found, the graph is not fully connected!");
+                        Debug.LogWarning($"No more edge found, the graph isn't fully connected! | edges:{resultEdges.Count} | node:{graph.NodeCount}");
                         flag = false;//break the outer loop
                         break;
                     }
@@ -314,6 +367,15 @@ public class VolumeNavigation : MonoBehaviour
         result.treeGraph = treeGraph;
         result.root = userNode;
         ClearVisited();
+
+        //further process result
+        foreach(var node in originalNode)
+        {
+            Annotation annot = data.FindAnnotationID(node.data.id);
+            Vector3 pos = node.data.centerPos-annot.renderInfo.Normal*normalOffset;
+            GraphNode<AnnotationNodeData> annotNode = treeGraph.AddNode(new AnnotationNodeData(AnnotationID.INVALID_ID, pos));
+            treeGraph.AddEdge(node, annotNode, new EdgeDistanceData());
+        }
         return result;
     }
 

@@ -10,17 +10,15 @@ import com.alhambra.dataset.data.AnnotationJoint;
 import com.alhambra.fragment.PreviewFragment;
 import com.google.android.material.chip.Chip;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.stream.Collectors;
 
 public class SelectionInteraction extends IInteraction implements SelectionData.ISelectionDataChange, PreviewFragment.IPreviewFragmentListener {
 
     public SelectionData selectionData;
+    public AnnotationDataset annotationDataset;
 
     public void sendHighlightGroups(HashSet<Integer> groups) {
         mainActivity.sendServerAction("HighlightGroups",groups);
-
     }
 
     @Override
@@ -28,21 +26,32 @@ public class SelectionInteraction extends IInteraction implements SelectionData.
         selectionData = mainActivity.selectionData;
         selectionData.subscriber.addListener(this);
         mainActivity.getPreviewFragment().addListener(this);
+        annotationDataset = mainActivity.getAnnotationDataset();
     }
 
     @Override
     public void onGroupSelectionAdd(int newIndex, HashSet<Integer> groups) {
-        sendHighlightGroups(groups);
+        processSearch();
     }
 
     @Override
     public void onGroupSelectionRemove(int newIndex, HashSet<Integer> groups) {
-        sendHighlightGroups(groups);
+        processSearch();
     }
 
     @Override
     public void onGroupClear() {
-        sendHighlightGroups(new HashSet<>());
+        processSearch();
+    }
+
+    @Override
+    public void onKeywordChange(String text) {
+        processSearch();
+    }
+
+    public void processSearch(){
+        annotationDataset.applySearch(selectionData);
+        mainActivity.sendServerAction("selection", annotationDataset.index2AnnotationID(annotationDataset.getCurrentSelection()));
     }
 
     @Override

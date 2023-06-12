@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.alhambra.Utils;
 import com.alhambra.dataset.data.Annotation;
 import com.alhambra.dataset.data.AnnotationID;
 import com.alhambra.dataset.data.AnnotationInfo;
@@ -22,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -175,6 +177,28 @@ public class AnnotationDataset
             l.onChangeJoint(aj);
     }
 
+    public ArrayList<AnnotationID> getAnnotationIDsByGroups(int[] groups) {
+        HashSet<AnnotationID> ids = new HashSet<>();
+        for(int group : groups){
+            AnnotationJoint annotationJoint = m_jointData.get(group);
+            assert annotationJoint != null;//make compiler happy
+            ids.addAll(annotationJoint.getAnnotationsID());
+        }
+        return new ArrayList<>(ids);
+    }
+
+    public ArrayList<Annotation> getAnnotationsByGroups(int[] groups) {
+        HashSet<Annotation> ids = new HashSet<>();
+        for(int group : groups){
+            AnnotationJoint annotationJoint = m_jointData.get(group);
+            assert annotationJoint != null;//make compiler happy
+            for (AnnotationID aid: annotationJoint.getAnnotationsID()) {
+                ids.add(this.getAnnotation(aid));
+            }
+        }
+        return new ArrayList<>(ids);
+    }
+
 
 
     public boolean hasAnnotation(AnnotationID id){
@@ -242,6 +266,19 @@ public class AnnotationDataset
             }
         }
         return null;
+    }
+
+    public Annotation getAnnotation(int index){
+        return m_data.get(index);
+    }
+
+    public boolean hasSelectionIndex(int x){
+        for (int i : m_currentSelection) {
+            if(i==x){
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Constructor. Read, from the asset manager, the dataset described by assetHeader
@@ -556,15 +593,14 @@ public class AnnotationDataset
      * @param selections the new entry Indexes to highlight. Its size can be 0 (hence, nothing particular is to highlight).
      *                   If one of the Index is invalid, this function does nothing
      * @return true if all the IDs are valid, false otherwise*/
-    public boolean setCurrentSelection(int[] selections)
-    {
-        for(int id : selections)
-            if(!isIndexValid(id))
+    public boolean setCurrentSelection(int[] selections) {
+        for (int id : selections)
+            if (!isIndexValid(id))
                 return false;
 
         Arrays.sort(selections);
         m_currentSelection = selections;
-        for(IDatasetListener l : m_listeners)
+        for (IDatasetListener l : m_listeners)
             l.onSetSelection(this, selections);
         return true;
     }
@@ -574,5 +610,23 @@ public class AnnotationDataset
     public int[] getCurrentSelection()
     {
         return m_currentSelection;
+    }
+
+    public ArrayList<AnnotationID> index2AnnotationID(int[] selections) {
+        ArrayList<AnnotationID> a = new ArrayList<>();
+        for (int i :
+                selections) {
+            a.add(getAnnotation(i).id);
+        }
+        return a;
+    }
+
+    public void applySearch(SelectionData searchData) {
+        ArrayList<Integer> indexes = new ArrayList<>();
+        ArrayList<Annotation> filter = searchData.filter(this);
+        for(Annotation annot:filter){
+            indexes.add(annot.info.getIndex());
+        }
+        setCurrentSelection(Utils.unbox(indexes));
     }
 }

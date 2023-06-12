@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 
 import com.alhambra.dataset.SelectionData;
 import com.alhambra.interactions.DatasetSync;
@@ -18,6 +19,7 @@ import com.alhambra.fragment.PageViewer;
 import com.alhambra.fragment.PreviewFragment;
 import com.alhambra.fragment.ViewPagerAdapter;
 import com.alhambra.interactions.IInteraction;
+import com.alhambra.interactions.SearchInteraction;
 import com.alhambra.interactions.SelectionInteraction;
 import com.alhambra.network.JSONUtils;
 import com.alhambra.network.PackedJSONMessages;
@@ -92,6 +94,8 @@ public class MainActivity
 
     private ArrayList<IInteraction> interactions = new ArrayList<>();
 
+    public EditText filterEditor;
+
     public SelectionData selectionData = new SelectionData();
 
     /*--------------------------------------*/
@@ -110,6 +114,7 @@ public class MainActivity
     private void initFunctions(){
         this.addInteraction(new DatasetSync());
         this.addInteraction(new SelectionInteraction());
+        this.addInteraction(new SearchInteraction());
     }
 
     public void regReceiveMessageListener(String actionName, IReceiveMessageListener l){
@@ -292,6 +297,8 @@ public class MainActivity
     {
         setContentView(R.layout.activity_main);
 
+        filterEditor = (EditText)findViewById(R.id.filterTextEdit);
+
         m_viewPager = (PageViewer)findViewById(R.id.viewpager);
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
 
@@ -428,4 +435,5 @@ public class MainActivity
     public AnnotationDataset getAnnotationDataset() {
         return m_Annotation_dataset;
     }
+
 }

@@ -18,6 +18,8 @@ public class DataSync : SocketDataBasic
         FastReg<MessageAnnotationJointModify>(OnReceiveRemoveAnnotationFromJoint);
         FastReg<int>(OnReceiveRemoveAnnotationJoint);
         FastReg<AnnotationJoint>(OnReceiveAddAnnotationJoint);
+        FastReg<List<AnnotationID>>(OnReceiveselection);
+        FastReg<HighlightMessage>(OnReceivehighlight);
     }
 
 
@@ -154,6 +156,20 @@ public class DataSync : SocketDataBasic
     public string GetAddAnnotationJoint(AnnotationJoint aj)
     {
         return JSONMessage.ActionJSON(ProcessMethodName(MethodBase.GetCurrentMethod().Name), aj);
+    }
+
+    //Selection data
+
+    public void OnReceiveselection(List<AnnotationID> aids)
+    {
+        main.SelectionData.SelectedAnnotations = aids;
+    }
+
+    public void OnReceivehighlight(HighlightMessage detailedMsg)
+    {
+        main.SelectionData.CurrentAction = CurrentAction.IN_HIGHLIGHT;
+        main.SelectionData.CurrentHighlightMain = new AnnotationID(detailedMsg.layer, detailedMsg.id);
+        main.SelectionData.CurrentHighlightSecond = AnnotationID.INVALID_ID;
     }
 
 }

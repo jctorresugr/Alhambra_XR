@@ -47,6 +47,11 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
         }
     }
 
+    @Override
+    public void onKeywordChange(String text) {
+
+    }
+
     private void updateChip(int index) {
         Chip chip = m_chipMappings.get(index);
         if(chip==null) {
@@ -254,8 +259,12 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
         });
 
         m_quitSelectionBtn.setOnClickListener(view -> {
-            if(m_currentSelection != null)
+            if(m_currentSelection != null){
                 m_Annotation_dataset.setCurrentSelection(new int[0]);
+                m_selection_data.setKeyword("");
+                m_selection_data.clearSelectedGroup();
+            }
+
         });
 
         m_highlightBtn.setOnClickListener(view -> {
@@ -386,19 +395,51 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
         //Reset the background to all preview entries
         if(selections.length == 0)
         {
-            for(Tree<View> view : m_datasetEntries.values())
+            //for(Tree<View> view : m_datasetEntries.values())
+            //    view.value.setBackgroundResource(0);
+            for(Annotation annot: m_Annotation_dataset.getAnnotationList()) {
+                int dataID = annot.info.getIndex();
+                PreviewUI previewUI = annotationPreviewUIMapping.get(annot.id);
+                Tree<View> view = m_datasetEntries.get(dataID);
+                assert view != null;
+                assert previewUI != null;
                 view.value.setBackgroundResource(0);
+                previewUI.imageView.setImageDrawable(annot.info.getImage());
+                previewUI.textView.setText(String.valueOf(dataID));
+            }
             onSetMainEntryIndex(d, m_currentSelection); //Redo the background
             m_quitSelectionBtn.setVisibility(View.GONE); //Hide the quit selection, as there is no selection
             return;
         }
         m_quitSelectionBtn.setVisibility(View.VISIBLE); //Show the quit selection button
 
-        //Grey out all the data that are not part of group selection
+        //Grey out all the data that are not part of group
+        /*
         for(Integer dataID : m_Annotation_dataset.getIndexes())
         {
             Tree<View> view = m_datasetEntries.get(dataID);
             view.value.setBackgroundResource(isEntryGreyed(dataID) ? R.color.dark : 0);
+            Annotation annot = m_Annotation_dataset.getAnnotation(dataID);
+            PreviewUI previewUI = annotationPreviewUIMapping.get(annot.id);
+            assert previewUI != null;
+            previewUI.imageView.setImageDrawable(null);
+        }*/
+
+        for(Annotation annot: m_Annotation_dataset.getAnnotationList()) {
+            int dataID = annot.info.getIndex();
+            Tree<View> view = m_datasetEntries.get(dataID);
+            PreviewUI previewUI = annotationPreviewUIMapping.get(annot.id);
+            assert view != null;
+            assert previewUI != null;
+            if(m_Annotation_dataset.hasSelectionIndex(dataID)) {
+                view.value.setBackgroundResource(0);
+                previewUI.imageView.setImageDrawable(annot.info.getImage());
+                previewUI.textView.setText(String.valueOf(dataID));
+            }else{
+                view.value.setBackgroundResource(isEntryGreyed(dataID) ? R.color.dark : 0);
+                previewUI.imageView.setImageDrawable(null);
+                previewUI.textView.setText("");
+            }
         }
 
         //Set the selection to the first group
