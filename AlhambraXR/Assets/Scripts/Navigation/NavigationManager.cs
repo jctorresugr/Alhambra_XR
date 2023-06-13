@@ -6,18 +6,24 @@ public class NavigationManager : MonoBehaviour
 {
     [Header("Component")]
     public VolumeNavigation volumeNavigation;
-    public GraphRenderManager graphRenderManager;
+    public GraphRenderSimple graphRenderSimple;
     public SelectionModelData selectionModelData;
+    public GraphRenderRoutes graphRenderRoutes;
     public Transform user;
-    public float updateThreshold = 1.0f;
-    public bool refreshNow = false;//for debugging
+    public bool refreshNow = false;
+    [Header("Config")]
+    public float updateThreshold = 1.0f; //update if the user move far away
+    public bool useDefaultRender = false;
+    public bool useRouteRender = true;
+
+    public bool triggerDebug = false;
 
     protected Vector3 oldPos;
     // Start is called before the first frame update
     void Start()
     {
         Utils.EnsureComponent(this, ref volumeNavigation);
-        Utils.EnsureComponent(this, ref graphRenderManager);
+        Utils.EnsureComponent(this, ref graphRenderSimple);
         oldPos = user.position;
     }
 
@@ -29,6 +35,18 @@ public class NavigationManager : MonoBehaviour
         {
             refreshNow = false;
             Navigate();
+        }
+        //debugging code, TODO: remove
+        if(triggerDebug)
+        {
+            triggerDebug = false;
+            refreshNow = true;
+            selectionModelData.ClearSelectedAnnotations();
+            foreach (var a in graphRenderRoutes.annotationData.Annotations)
+            {
+                selectionModelData.AddSelectedAnnotations(a.ID);
+            }
+            
         }
     }
 
@@ -44,16 +62,43 @@ public class NavigationManager : MonoBehaviour
         volumeNavigation.SetAnnotations(selectionModelData.SelectedAnnotations);
         if (volumeNavigation.annotations.Count==0)
         {
-            graphRenderManager.ClearDraw();
+            graphRenderSimple.ClearDraw();
             return;
         }
         volumeNavigation.Preprocess();
         NavigationInfo navigationInfo = volumeNavigation.Navigate(user);
-        //render Navigation
-        GraphNode<AnnotationNodeData> root = navigationInfo.root;
-        graphRenderManager.data = navigationInfo.treeGraph;
-        graphRenderManager.Redraw();
+        if(useDefaultRender)
+        {
+            RenderGraph(navigationInfo);
+        }
+        if(useRouteRender)
+        {
+            RenderRoutes(navigationInfo);
+        }
     }
+
+    public void RenderRoutes(NavigationInfo navigationInfo)
+    {
+        if(graphRenderRoutes==null)
+        {
+            return;
+        }
+        graphRenderRoutes.data = RouteInfo.GenerateRoutes(navigationInfo);
+        graphRenderRoutes.graph = navigationInfo.treeGraph;
+        graphRenderRoutes.Redraw();
+    }
+
+    public void RenderGraph(NavigationInfo navigationInfo)
+    {
+        if(graphRenderSimple==null)
+        {
+            return;
+        }
+        graphRenderSimple.data = navigationInfo.treeGraph;
+        graphRenderSimple.Redraw();
+    }
+
+    
 
 
 }

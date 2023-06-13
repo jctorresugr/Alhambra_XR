@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class VolumeNavigation : MonoBehaviour
 {
@@ -20,7 +21,7 @@ public class VolumeNavigation : MonoBehaviour
     [Header("Cache Data")]
     [SerializeField]
     Graph<AnnotationNodeData, EdgeDistanceData> graph;
-    public struct NavigationInfo
+    public class NavigationInfo
     {
         public Graph<AnnotationNodeData, EdgeDistanceData> treeGraph;
         public GraphNode<AnnotationNodeData> root;
@@ -30,6 +31,7 @@ public class VolumeNavigation : MonoBehaviour
     {
         public AnnotationID id;
         public Vector3 centerPos;
+        public XYZCoordinate coord;
         //Add more if required
 
         public AnnotationNodeData(AnnotationID id, Vector3 centerPos)
@@ -37,6 +39,7 @@ public class VolumeNavigation : MonoBehaviour
             this.id = id;
             this.centerPos = centerPos;
             this.depth = -1;
+            this.coord = new XYZCoordinate();
         }
 
         public int depth;
@@ -62,7 +65,8 @@ public class VolumeNavigation : MonoBehaviour
     public void Preprocess()
     {
         graph.Clear();
-        // gather all annotations and 
+        // gather all annotations
+        annotations = annotations.FindAll(a => a.renderInfo.IsValid); //filter those annotations who does not have render info
         int annotCount = annotations.Count;
 
         for (int i = 0; i < annotCount; i++)
@@ -295,8 +299,8 @@ public class VolumeNavigation : MonoBehaviour
                 Vector3 dirX = tempX.normalized;//new Vector3(2.0f, 0, 0.1f).normalized;////SampleNormal(newNode.data.centerPos, Vector3.right);
                 Vector3 dirY = Vector3.up; //SampleNormal(newNode.data.centerPos, Vector3.up);
                 Vector3 dirZ = Vector3.forward; //SampleNormal(newNode.data.centerPos, Vector3.forward);
-
                 XYZCoordinate xyzCoordinate = new XYZCoordinate(dirX, dirY, dirZ);
+                newNode.data.coord = xyzCoordinate;
                 xyzCoordinate.Orthogonalization();
                 // ensure the line is align with the space
                 Vector3 pos1 = xyzCoordinate.TransformToLocalPos(newNode.data.centerPos);
@@ -318,6 +322,7 @@ public class VolumeNavigation : MonoBehaviour
                                 xyzCoordinate.TransformToGlobalPos(posCur)));
                         additionalNode.Add(interNode);
                         interNode.data.depth = lastNodeInner.data.depth + 1;
+                        interNode.data.coord = xyzCoordinate;
                         Debug.Log($"Add node {interNode.index} d={interNode.data.depth}");
                         graph.ForeachNodeNeighbor(
                             interNode,

@@ -115,6 +115,7 @@ public class DataManager : MonoBehaviour
             Annotation newAnnotation = new Annotation(id);
             newAnnotation.info = info;
             newAnnotation.renderInfo = new AnnotationRenderInfo();
+            newAnnotation.renderInfo.Normal = Vector3.zero;
             annotations.Add(newAnnotation);
             Debug.Log("Add annotation (info) " + id);
             OnAnnotationAddEvent?.Invoke(newAnnotation);

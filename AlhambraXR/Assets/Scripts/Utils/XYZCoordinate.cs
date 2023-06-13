@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-struct XYZCoordinate
+public struct XYZCoordinate
 {
     public Vector3 x,y,z;
 

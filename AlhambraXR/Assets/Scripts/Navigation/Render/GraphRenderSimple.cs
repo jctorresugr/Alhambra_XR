@@ -9,9 +9,9 @@ using static VolumeNavigation;
 using N = VolumeNavigation.AnnotationNodeData;
 using E = VolumeNavigation.EdgeDistanceData;
 
-public class GraphRenderManager : MonoBehaviour
+public class GraphRenderSimple : MonoBehaviour
 {
-    [Header("template and set")]
+    [Header("template and set up")]
     public LineRenderer template;
     public DataManager annotationData;
     public ReferenceTransform referenceTransform;
@@ -71,7 +71,7 @@ public class GraphRenderManager : MonoBehaviour
 
     }
 
-    public Vector3[] GenerateEdgePositionData(GraphEdge<E> edge)
+    protected Vector3[] GenerateEdgePositionData(GraphEdge<E> edge)
     {
         Vector3[] posData = new Vector3[2];
         posData[0] = GetNodePos(edge.FromNode);

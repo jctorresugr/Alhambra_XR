@@ -302,6 +302,28 @@ public class Graph<N,E>
         }
     }
 
+    public void ForeachNodeNeighbor(GraphNode<N> baseNode, Action<GraphNode<N>, GraphEdge<E>> action)
+    {
+        if (baseNode.edgesIndex == null)
+        {
+            return;
+        }
+        foreach (int edgeIndex in baseNode.edgesIndex)
+        {
+            GraphEdge<E> edge = edges[edgeIndex];
+            GraphNode<N> node;
+            if (edge.fromNode == baseNode.index)
+            {
+                node = nodes[edge.toNode];
+            }
+            else
+            {
+                node = nodes[edge.fromNode];
+            }
+            action(node, edge);
+        }
+    }
+
     protected bool IsValidNode(GraphNode<N> n)
     {
         // the C# has some wired behavior, they will create an empty object for the null value in the list

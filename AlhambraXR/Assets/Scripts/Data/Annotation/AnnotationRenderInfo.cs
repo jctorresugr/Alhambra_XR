@@ -59,13 +59,12 @@ public class AnnotationRenderInfo
                            0.5f * (BoundingMax[2] - BoundingMin[2]) + BoundingMin[2]);
     }
 
+    public bool IsValid => normal != Vector3.zero;
+
     /// <summary>
     /// Constructor. Initialize everything with default values.
     /// </summary>
     public AnnotationRenderInfo()
     {
-       //Bounds.SetMinMax(new Vector3(float.MaxValue, float.MaxValue, float.MaxValue),
-         //   new Vector3(float.MinValue, float.MinValue, float.MinValue));
-        //Color = new Color32(0, 0, 0, 0);
     }
 }

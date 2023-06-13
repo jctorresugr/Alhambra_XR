@@ -42,7 +42,9 @@ public class SelectionData {
     }
 
     public ArrayList<Annotation> filter(AnnotationDataset annotationDataset){
-
+        if(selectedGroups.size()==0 && (keywords==null || keywords.equals(""))) {
+            return new ArrayList<>();
+        }
         ArrayList<Annotation> filtered = new ArrayList<>();
         ArrayList<Annotation> basic;
         if(selectedGroups.size()!=0) {
