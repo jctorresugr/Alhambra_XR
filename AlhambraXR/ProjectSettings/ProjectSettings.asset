@@ -178,6 +178,15 @@ PlayerSettings:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 1233241448893043374, guid: 5ccd3a41c182a084b902d080fb8cc2ac, type: 2}
+  - {fileID: 3694906691998218777, guid: 53a6f1ed5af0b5e419bba1a7a5ef2d3b, type: 2}
+  - {fileID: 0}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -663,11 +672,11 @@ PlayerSettings:
   m_MobileRenderingPath: 1
   metroPackageName: Template3D1
   metroPackageVersion: 1.0.0.0
-  metroCertificatePath: Assets\WSATestCertificate.pfx
-  metroCertificatePassword: 
-  metroCertificateSubject: DefaultCompany
-  metroCertificateIssuer: DefaultCompany
-  metroCertificateNotAfter: 003694f30093d901
+  metroCertificatePath: Assets/debugCertificate.pfx
+  metroCertificatePassword: "\uCB6A"
+  metroCertificateSubject: DebugCertificate
+  metroCertificateIssuer: DebugCertificate
+  metroCertificateNotAfter: 0037725675bdda01
   metroApplicationDescription: Template_3D
   wsaImages: {}
   metroTileShortName: MRTKtest
