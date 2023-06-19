@@ -21,6 +21,7 @@ import com.alhambra.dataset.data.AnnotationJoint;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.sereno.Tree;
+import com.sereno.math.BBox;
 import com.sereno.view.TreeView;
 
 import java.util.ArrayList;
@@ -237,6 +238,8 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
      * @param v the inflated view of this Fragment*/
     private void initLayout(View v)
     {
+        m_datasetEntries.clear();
+        annotationPreviewUIMapping.clear();
         //Find all the widgets of this fragment
         m_treeView         = v.findViewById(R.id.previewLayout);
         m_mainImageView    = v.findViewById(R.id.mainImageEntry);
@@ -447,17 +450,17 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
     }
 
     @Override
-    public void onAddDataChunk(AnnotationDataset annotationDataset, AnnotationInfo annotationInfo)
+    public void onAddDataChunk(AnnotationDataset annotationDataset, Annotation annotation)
     {
-        addDataChunk(annotationInfo.getIndex());
+        addDataChunk(annotation.info.getIndex());
     }
 
     @Override
-    public void onRemoveDataChunk(AnnotationDataset annotationDataset, AnnotationInfo annotationInfo)
+    public void onRemoveDataChunk(AnnotationDataset annotationDataset, Annotation annotation)
     {
         final Tree<View> treeModel = m_treeView.getModel();
 
-        Tree<View> entry = m_datasetEntries.get(annotationInfo.getIndex());
+        Tree<View> entry = m_datasetEntries.get(annotation.info.getIndex());
         treeModel.removeChild(entry);
     }
 
@@ -483,6 +486,11 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
 
     @Override
     public void onChangeJoint(AnnotationJoint annotationJoint) {
+
+    }
+
+    @Override
+    public void onModelBoundsChange(AnnotationDataset annotationDataset, BBox bounds) {
 
     }
 }

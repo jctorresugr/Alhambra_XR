@@ -20,7 +20,8 @@ public class DataManager : MonoBehaviour
     public event AnnotationJoint.AnnotationAndJointChangeFunc OnJointRemoveAnnotationEvent;
 
     private List<Annotation> annotations;
-    private List<AnnotationJoint> annotationJoints; 
+    private List<AnnotationJoint> annotationJoints;
+    public Bounds modelBounds;
 
     public List<Annotation> Annotations => annotations;  
     public List<AnnotationJoint> AnnotationJoints => annotationJoints;

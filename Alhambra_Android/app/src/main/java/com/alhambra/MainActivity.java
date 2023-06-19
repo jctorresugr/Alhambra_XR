@@ -318,6 +318,7 @@ public class MainActivity
         //Add Overview tab
         m_overviewFragment = new OverviewFragment();
         m_overviewFragment.addListener((OverviewFragment.OverviewFragmentListener) this);
+        m_overviewFragment.setAnnotationDataset(m_Annotation_dataset);
         adapter.addFragment(m_overviewFragment, "Overview");
 
 

@@ -9,6 +9,7 @@ import com.alhambra.dataset.SelectionData;
 import com.alhambra.dataset.data.Annotation;
 import com.alhambra.dataset.data.AnnotationInfo;
 import com.alhambra.dataset.data.AnnotationJoint;
+import com.sereno.math.BBox;
 
 import java.util.HashSet;
 
@@ -55,12 +56,12 @@ public class SearchInteraction extends IInteraction implements TextWatcher, Anno
     }
 
     @Override
-    public void onAddDataChunk(AnnotationDataset annotationDataset, AnnotationInfo annotationInfo) {
+    public void onAddDataChunk(AnnotationDataset annotationDataset, Annotation annotation) {
 
     }
 
     @Override
-    public void onRemoveDataChunk(AnnotationDataset annotationDataset, AnnotationInfo annotationInfo) {
+    public void onRemoveDataChunk(AnnotationDataset annotationDataset, Annotation annotation) {
 
     }
 
@@ -81,6 +82,11 @@ public class SearchInteraction extends IInteraction implements TextWatcher, Anno
 
     @Override
     public void onChangeJoint(AnnotationJoint annotationJoint) {
+
+    }
+
+    @Override
+    public void onModelBoundsChange(AnnotationDataset annotationDataset, BBox bounds) {
 
     }
 

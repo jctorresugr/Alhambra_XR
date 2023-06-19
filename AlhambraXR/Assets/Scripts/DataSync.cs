@@ -65,6 +65,44 @@ public class DataSync : SocketDataBasic
     // OnReceiveAddAnnotationToJoint() process "AddAnnotationToJoint" information
     // SendAddAnnotationtoJoint() send "AddAnnotationtoJoint" information
 
+    [Serializable]
+    public struct MessageUpdateAnnotationRenderInfo
+    {
+        [SerializeField]
+        public AnnotationID id;
+        [SerializeField]
+        public AnnotationRenderInfo annotationRenderInfo;
+
+        public MessageUpdateAnnotationRenderInfo(AnnotationID id, AnnotationRenderInfo annotationRenderInfo)
+        {
+            this.id = id;
+            this.annotationRenderInfo = annotationRenderInfo;
+        }
+    }
+    public void SendUpdateAnnotationRenderInfo(MessageUpdateAnnotationRenderInfo annotationRenderInfo)
+    {
+        SendClientAction(ProcessMethodName(MethodBase.GetCurrentMethod().Name),
+            annotationRenderInfo);
+    }
+
+    public static string GetUpdateAnnotationRenderInfo(Annotation annotation)
+    {
+        return JSONMessage.ActionJSON(ProcessMethodName(MethodBase.GetCurrentMethod().Name), 
+            new MessageUpdateAnnotationRenderInfo(annotation.ID,annotation.renderInfo));
+    }
+
+    public static string GetUpdateModelBounds(Bounds bounds)
+    {
+        // JsonUtility only seralize class but not struct...
+        return JSONMessage.ActionJSON(ProcessMethodName(MethodBase.GetCurrentMethod().Name),
+            new BoundsClass(bounds));
+    }
+
+    public static string GetUpdateAnnotationRenderInfo(MessageUpdateAnnotationRenderInfo annotationRenderInfo)
+    {
+        return JSONMessage.ActionJSON(ProcessMethodName(MethodBase.GetCurrentMethod().Name), annotationRenderInfo);
+    }
+
     public void OnReceiveAddAnnotationToJoint(MessageAnnotationJointModify msg)
     {
         AnnotationJoint annotationJoint = GetAnnotationJoint(msg.jointID);

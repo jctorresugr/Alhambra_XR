@@ -179,6 +179,7 @@ public class Main : MonoBehaviour,
         PickPanoModel.AddListener(this);
 
         data.LoadDefaultData();
+        data.modelBounds = PickPanoModel.Mesh.bounds;
 
         m_server.Launch();
         m_server.AddListener(this);
@@ -322,10 +323,12 @@ public class Main : MonoBehaviour,
             PackedJSONMessages pack = new PackedJSONMessages();
             lock (this)
             {
+                pack.AddString(DataSync.GetUpdateModelBounds(data.modelBounds));
                 foreach(Annotation annot in data.Annotations)
                 {
                     if (annot.isLocalData)
                     {
+                        pack.AddString(DataSync.GetUpdateAnnotationRenderInfo(annot));
                         continue;
                     }
                     pack.AddString(JSONMessage.AddAnnotationToJSON(annot));

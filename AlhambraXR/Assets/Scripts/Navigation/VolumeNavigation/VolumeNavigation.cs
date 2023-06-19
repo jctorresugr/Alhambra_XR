@@ -278,11 +278,6 @@ public class VolumeNavigation : MonoBehaviour
                     continue;
                 }
                 //Add new edge!
-                /*
-                GraphEdge<EdgeDistanceData> newEdge = graph.GetEdge(minEdge.edgeIndex);
-                newNode.data.depth =
-                    graph.GetNode(newEdge.GetAnotherNodeIndex(newNode.index)).data.depth + 1;
-                resultEdges.Add(newEdge);*/
                 lastNode = newNode;
                 // add new node if possible
                 GraphEdge<EdgeDistanceData> newEdge = graph.GetEdge(minEdge.edgeIndex);
@@ -291,10 +286,6 @@ public class VolumeNavigation : MonoBehaviour
                 //Vector3 dirX = volumeAnalyze.SampleDir(newNode.data.centerPos, Vector3Int.right);
                 //Vector3 dirY = volumeAnalyze.SampleDir(newNode.data.centerPos, Vector3Int.up);
                 //Vector3 dirZ = volumeAnalyze.SampleDir(newNode.data.centerPos, Vector3Int.forward);
-
-                //Vector3 dirX = Vector3.right;//new Vector3(0.027f, 0, 0.0465f).normalized;////SampleNormal(newNode.data.centerPos, Vector3.right);
-                //Vector3 dirY = Vector3.up;//SampleNormal(newNode.data.centerPos, Vector3.up);
-                //Vector3 dirZ = Vector3.forward;//SampleNormal(newNode.data.centerPos, Vector3.forward);
 
                 Vector3 dirX = tempX.normalized;//new Vector3(2.0f, 0, 0.1f).normalized;////SampleNormal(newNode.data.centerPos, Vector3.right);
                 Vector3 dirY = Vector3.up; //SampleNormal(newNode.data.centerPos, Vector3.up);
@@ -308,7 +299,7 @@ public class VolumeNavigation : MonoBehaviour
                 // edge: pos2 (another) ---> pos1 (new)
                 Vector3 posDelta = pos1 - pos2;
                 //judge x,y,z, if too large, split them
-                List<Vector3> posSep = SeperateVector(posDelta);
+                List<Vector3> posSep = SeperateVector(posDelta,pos1,pos2);
                 if(posSep.Count>1)
                 {
                     Vector3 posCur = pos2;
@@ -384,7 +375,21 @@ public class VolumeNavigation : MonoBehaviour
         return result;
     }
 
-    protected List<Vector3> SeperateVector(Vector3 dv)
+    private static readonly int[,] iterSeq2 = new int[,]
+            {
+                { 0,1},
+                { 1,0}
+            };
+    private static readonly int[,] iterSeq3 = new int[,]
+            {
+                { 0,1,2},
+                { 0,2,1},
+                { 1,0,2},
+                { 1,2,0},
+                { 2,1,0},
+                { 2,0,1},
+            };
+    protected List<Vector3> SeperateVector(Vector3 dv,Vector3 posTo, Vector3 posFrom)
     {
         List<Vector3> results = new List<Vector3>();
         Vector3 cur = Vector3.zero;
@@ -400,6 +405,38 @@ public class VolumeNavigation : MonoBehaviour
         if(cur!=Vector3.zero)
         {
             results.Add(cur);
+        }
+        if(results.Count>1)
+        {
+            int[,] seq = results.Count == 2 ? iterSeq2 : iterSeq3;
+            for(int seqi=0;seqi<seq.Length;seqi++)
+            {
+                Vector3 curPos = posFrom;
+                bool isImpeded = false;
+                for (int i0 = 0; i0 < results.Count; i0++)
+                {
+                    int i = seq[seqi, i0];
+                    Vector3 interPos = curPos + results[i];
+                    Vector3 worldCurPos = referenceTransform.MapPosition(curPos);
+                    Vector3 worldInterPos = referenceTransform.MapPosition(interPos);
+                    if (Physics.Raycast(worldCurPos, results[i].normalized, (worldInterPos - worldCurPos).magnitude, layerMask))
+                    {
+                        isImpeded = true;
+                        break;
+                    }
+                }
+                if(!isImpeded)
+                {
+                    List<Vector3> sortedResult = new List<Vector3>();
+                    for(int i0=0;i0<results.Count;i0++)
+                    {
+                        int i = seq[seqi, i0];
+                        sortedResult.Add(results[i]);
+                        return sortedResult;
+                    }
+                }
+            }
+            Debug.LogWarning($"Navigate line may hit wall {posFrom} -> {posTo}");
         }
         return results;
     }

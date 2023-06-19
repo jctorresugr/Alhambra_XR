@@ -7,8 +7,10 @@ import com.alhambra.dataset.AnnotationDataset;
 import com.alhambra.dataset.data.Annotation;
 import com.alhambra.dataset.data.AnnotationID;
 import com.alhambra.dataset.data.AnnotationJoint;
+import com.alhambra.dataset.data.AnnotationRenderInfo;
 import com.alhambra.network.JSONUtils;
 import com.google.gson.JsonElement;
+import com.sereno.math.BBox;
 
 import java.util.ArrayList;
 
@@ -44,6 +46,8 @@ public class DatasetSync extends IInteraction{
         mainActivity.regReceiveMessageListener("RemoveAnnotationFromJoint", (ma, je) -> this.onReceiveRemoveAnnotationFromJoint(ad,je));
         mainActivity.regReceiveMessageListener("AddAnnotationJoint", (ma, je) -> this.onReceiveAddAnnotationJoint(ad,je));
         mainActivity.regReceiveMessageListener("RemoveAnnotationJoint", (ma, je) -> this.onReceiveRemoveAnnotationJoint(ad,je));
+        mainActivity.regReceiveMessageListener("UpdateAnnotationRenderInfo", (ma, je) -> this.onReceiveUpdateAnnotationRenderInfo(ad,je));
+        mainActivity.regReceiveMessageListener("UpdateModelBounds", (ma, je) -> this.onReceiveUpdateModelBounds(ad,je));
     }
 
     private static final String LOG_TAG = "DatasetSync";
@@ -88,7 +92,7 @@ public class DatasetSync extends IInteraction{
         annotationJoint.addAnnotation(annotation);
     }
 
-    public void SendAddAnnotationToJoint(int jointID, AnnotationID annotationID) {
+    public void sendAddAnnotationToJoint(int jointID, AnnotationID annotationID) {
         MessageAnnotationJointModify msg = new MessageAnnotationJointModify(jointID,annotationID);
         mainActivity.sendServerAction("AddAnnotationToJoint",msg);
     }
@@ -130,7 +134,31 @@ public class DatasetSync extends IInteraction{
         mainActivity.sendServerAction("AddAnnotationJoint",annotationJoint);
     }
 
+    public static class MessageUpdateAnnotationRenderInfo{
+        public AnnotationID id;
+        public AnnotationRenderInfo annotationRenderInfo;
+    }
+    public void onReceiveUpdateAnnotationRenderInfo(AnnotationDataset dataset, JsonElement jsonElement){
+        MessageUpdateAnnotationRenderInfo annotationRenderInfo = JSONUtils.gson.fromJson(jsonElement,MessageUpdateAnnotationRenderInfo.class);
+        Annotation annotation = dataset.getAnnotation(annotationRenderInfo.id);
+        if(annotation==null){
+            Log.w(LOG_TAG, "Unknown annotation when try to update annotation render info: "+annotationRenderInfo.id);
+            return;
+        }
+        if(annotationRenderInfo.annotationRenderInfo!=null){
+            annotation.renderInfo=annotationRenderInfo.annotationRenderInfo;
+            dataset.notifyAnnotationChange(annotation);
+        }else{
+            Log.w(LOG_TAG, "Null render info when try to update annotation render info: "+annotationRenderInfo.id);
+        }
+    }
 
+    public void onReceiveUpdateModelBounds(AnnotationDataset dataset, JsonElement jsonElement){
+        BBox bBox = JSONUtils.gson.fromJson(jsonElement,BBox.class);
+        if(bBox!=null){
+            dataset.setModelBounds(bBox);
+        }
+    }
 
 
 

@@ -14,6 +14,7 @@ import com.alhambra.dataset.data.AnnotationInfo;
 import com.alhambra.dataset.data.AnnotationJoint;
 import com.alhambra.network.receivingmsg.AddAnnotationMessage;
 import com.sereno.CSVReader;
+import com.sereno.math.BBox;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -45,19 +46,21 @@ public class AnnotationDataset
 
         /** Function called when a new data chunk was added to the dataset
          * @param annotationDataset the dataset calling this function
-         * @param annotationInfo  the newly added data chunk. This data chunk can have been created on the server's requests, and can later be deleted if needed*/
-        void onAddDataChunk(AnnotationDataset annotationDataset, AnnotationInfo annotationInfo);
+         * @param annotation  the newly added data chunk. This data chunk can have been created on the server's requests, and can later be deleted if needed*/
+        void onAddDataChunk(AnnotationDataset annotationDataset, Annotation annotation);
 
         /** Function called when a data chunk was removed from the dataset
          * @param annotationDataset the dataset calling this function
-         * @param annotationInfo  the data chunk that is being removed. This data chunk is not part of the original dataset (that is immutable)*/
-        void onRemoveDataChunk(AnnotationDataset annotationDataset, AnnotationInfo annotationInfo);
+         * @param annotation  the data chunk that is being removed. This data chunk is not part of the original dataset (that is immutable)*/
+        void onRemoveDataChunk(AnnotationDataset annotationDataset, Annotation annotation);
 
         void onAnnotationChange(Annotation annotation);
 
         void onAddJoint(AnnotationJoint annotationJoint);
         void onRemoveJoint(AnnotationJoint annotationJoint);
         void onChangeJoint(AnnotationJoint annotationJoint);
+
+        void onModelBoundsChange(AnnotationDataset annotationDataset,BBox bounds);
     }
 
     private static final String LOG_TAG = "AnnotationDataset";
@@ -79,6 +82,8 @@ public class AnnotationDataset
     /** The general default data*/
     private AnnotationInfo m_defaultAnnotationInfo = null;
 
+    private BBox modelBounds;
+
     /** The listeners to notify changes*/
     private ArrayList<IDatasetListener> m_listeners = new ArrayList<IDatasetListener>();
 
@@ -89,6 +94,16 @@ public class AnnotationDataset
 
     /** The current selections to consider*/
     private int[] m_currentSelection = new int[0];
+
+    public BBox getModelBounds() {
+        return modelBounds;
+    }
+
+    public void setModelBounds(BBox modelBounds) {
+        this.modelBounds = modelBounds;
+        for(IDatasetListener l : m_listeners)
+            l.onModelBoundsChange(this,modelBounds);
+    }
 
     public Collection<Annotation> getAnnotationList(){
         return Collections.unmodifiableCollection(m_data.values());
@@ -229,7 +244,7 @@ public class AnnotationDataset
                     l.onChangeJoint(aj);
             }
             for(IDatasetListener l : m_listeners)
-                l.onRemoveDataChunk(this,annotation.info);
+                l.onRemoveDataChunk(this,annotation);
             m_data.remove(index);
             return annotation;
         }
@@ -446,7 +461,7 @@ public class AnnotationDataset
         m_serverAnnotations.add(annotationInfo.getIndex());
 
         for(IDatasetListener l : m_listeners)
-            l.onAddDataChunk(this, annotationInfo);
+            l.onAddDataChunk(this, annotation);
         return true;
     }
 

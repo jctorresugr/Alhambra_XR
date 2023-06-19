@@ -66,7 +66,7 @@ public class SocketDataBasic : MonoBehaviour
     // reg
 
 
-    protected string ProcessMethodName(string name)
+    protected static string ProcessMethodName(string name)
     {
         if (name.StartsWith("OnReceive"))
         {
