@@ -57,8 +57,8 @@ public class NavigationManager : MonoBehaviour
     public void Navigate()
     {
         oldPos = user.position;
-        volumeNavigation.SetAnnotations(selectionModelData.SelectedAnnotations);
-        if (volumeNavigation.annotations.Count==0)
+        IReadOnlyList<AnnotationID> selectedAnnotations = selectionModelData.SelectedAnnotations;
+        if (selectedAnnotations.Count==0)
         {
             render.ClearDraw();
             return;
@@ -69,8 +69,7 @@ public class NavigationManager : MonoBehaviour
         {
             userLocalPos = rayHit.point + Vector3.up * 0.3f;
         }
-        volumeNavigation.Preprocess();
-        NavigationInfo navigationInfo = volumeNavigation.Navigate(userLocalPos,user.forward);
+        NavigationInfo navigationInfo = volumeNavigation.Navigate(selectedAnnotations, userLocalPos, user.forward);
         render.ClearDraw();
         render.SetGraphData(navigationInfo.treeGraph, navigationInfo.root);
         render.Redraw();

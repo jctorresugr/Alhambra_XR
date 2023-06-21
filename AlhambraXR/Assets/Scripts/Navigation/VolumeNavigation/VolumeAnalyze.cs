@@ -108,10 +108,16 @@ public class VolumeAnalyze : MonoBehaviour
     public float CosSplitNormalDegreeThreshold => Mathf.Cos(splitNormalDegreeThreshold / 180.0f * Mathf.PI);
 
     public VolumeCell<VolumeInfo> volumeInfos;
+    private bool isProcessed = false;
 
     public void Preprocess()
     {
-        this.ComputeInfo(mesh.mesh);
+        if(!isProcessed)
+        {
+            this.ComputeInfo(mesh.mesh);
+            isProcessed = true;
+        }
+        
     }
     public void ComputeInfo(Mesh mesh)
     {

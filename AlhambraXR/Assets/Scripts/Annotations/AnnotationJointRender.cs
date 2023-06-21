@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// Manage Annotation Joint Object
 /// </summary>
-public class AnnotationJointRender : MonoBehaviour
+public class AnnotationJointRender : AnnotationJointRenderBase
 {
     private AnnotationJoint data;
     private Dictionary<Annotation,GameObject> indicators;
@@ -14,11 +14,10 @@ public class AnnotationJointRender : MonoBehaviour
 
     public float offsetRadius = 0.05f;
 
-    public void Init(AnnotationJoint data, GameObject templateIndicator)
+    public override void Init(AnnotationJoint data)
     {
         indicators = new Dictionary<Annotation, GameObject>();
         this.data = data;
-        this.templateIndicator = templateIndicator;
         this.data.OnJointAddAnnotationEvent += OnAddAnnotation;
         this.data.OnJointRemoveAnnotationEvent += OnRemoveAnnotation;
         UpdatePosition();

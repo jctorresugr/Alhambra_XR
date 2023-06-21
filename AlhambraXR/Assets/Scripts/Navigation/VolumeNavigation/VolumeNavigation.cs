@@ -10,9 +10,9 @@ public class VolumeNavigation : MonoBehaviour
     public VolumeAnalyze volumeAnalyze;
     public DataManager data;
     public ReferenceTransform referenceTransform;
-    public List<Annotation> annotations = new List<Annotation>();
     [Header("Settings")]
     public float depthRatio = 0.01f;
+    public float branchRatio = 0.01f;
     public float splitEdgeThreshold = 0.001f;
     public LayerMask layerMask = 1 >> 6;
     public float normalOffset = 0.001f;
@@ -21,6 +21,7 @@ public class VolumeNavigation : MonoBehaviour
     [Header("Cache Data")]
     [SerializeField]
     Graph<AnnotationNodeData, EdgeDistanceData> graph;
+    [Serializable]
     public class NavigationInfo
     {
         public Graph<AnnotationNodeData, EdgeDistanceData> treeGraph;
@@ -57,63 +58,16 @@ public class VolumeNavigation : MonoBehaviour
         }
     }
 
-
-    /**
-     * First step: generate a n*n graph for annotations
-     * TODO: consider spacial important position
-     */
-    public void Preprocess()
-    {
-        graph.Clear();
-        // gather all annotations
-        annotations = annotations.FindAll(a => a.renderInfo.IsValid); //filter those annotations who does not have render info
-        int annotCount = annotations.Count;
-
-        for (int i = 0; i < annotCount; i++)
-        {
-            graph.AddNode(new AnnotationNodeData(annotations[i].ID, GetAnnotationPos(annotations[i])));
-            Debug.Log($"{annotations[i].ID} .bounds => {annotations[i].renderInfo.Bounds}");
-        }
-        for (int i=0;i<annotCount;i++)
-        {
-            GraphNode<AnnotationNodeData> ai = graph.GetNode(i);
-            for (int j=i+1;j<annotCount;j++)
-            {
-                GraphNode<AnnotationNodeData> aj = graph.GetNode(j);
-                //TODO: optimize the graph generation
-                graph.AddEdge(i, j, new EdgeDistanceData(Distance(ai,aj)));
-            }
-        }
-    }
-
     public void Init()
     {
         graph = new Graph<AnnotationNodeData, EdgeDistanceData>();
         volumeAnalyze.Preprocess();
     }
 
-    public void SetAnnotations(IReadOnlyList<Annotation> aids)
-    {
-        if(aids==null)
-        {
-            annotations.Clear();
-            return;
-        }
-        annotations.AddRange(aids);
-    }
-
-    public void SetAnnotations(IReadOnlyList<AnnotationID> aids)
-    {
-        annotations.Clear();
-        foreach(AnnotationID aid in aids)
-        {
-            annotations.Add(data.FindAnnotationID(aid));
-        }
-    }
-
     protected Vector3 GetAnnotationPos(Annotation annot)
     {
         Vector3 center = annot.renderInfo.Center;
+        //return center;
         Vector3 normal = annot.renderInfo.Normal;
         Vector3 size = annot.renderInfo.Bounds.size*0.5f;
         float outBoxDis = float.MaxValue;
@@ -128,7 +82,18 @@ public class VolumeNavigation : MonoBehaviour
         {
             outBoxDis = 0.0f;
         }
-        return center + annot.renderInfo.Normal * (normalOffset + outBoxDis);
+        Vector3 pos =  center + annot.renderInfo.Normal * outBoxDis;
+
+        Vector3 worldPos = referenceTransform.MapPosition(pos);
+        RaycastHit rayHit;
+        if(Physics.Raycast(worldPos,-annot.renderInfo.Normal, out rayHit, /*annot.renderInfo.Bounds.size.magnitude*data.ReferLength*5.0f*/10000.0f,layerMask))
+        {
+            return referenceTransform.InvMapPosition(rayHit.point)+ annot.renderInfo.Normal * normalOffset;
+        }
+        else
+        {
+            return pos + annot.renderInfo.Normal * normalOffset;
+        }
     }
 
     protected float Distance(GraphNode<AnnotationNodeData> a, GraphNode<AnnotationNodeData> b)
@@ -217,20 +182,54 @@ public class VolumeNavigation : MonoBehaviour
         graph.ForeachNode(n => n.data.depth = -1);
     }
 
-    /**
-     * Step 2: pass the userTransform and begin to navigate! 
-     */
-    public NavigationInfo Navigate(Vector3 userLocalPos, Vector3 suggestForward)
+    public NavigationInfo Navigate(IReadOnlyList<AnnotationID> annotationIDs, Vector3 userLocalPos, Vector3 suggestForward)
     {
-        userLocalPos = referenceTransform.InvMapPosition(userLocalPos);
-        // user node, should always as a root node
-        /*
-        Vector3 userLocalPos = referenceTransform.InvMapPosition(userTransform.position);
-        RaycastHit rayHit;
-        if (Physics.Raycast(userTransform.position,Vector3.down, out rayHit))
+        List<Annotation> filteredAnnots = new List<Annotation>();
+        foreach(AnnotationID id in annotationIDs)
         {
-            userLocalPos = referenceTransform.InvMapPosition(rayHit.point);
-        }*/
+            Annotation annotation = data.FindAnnotationID(id);
+            if(annotation.IsValid)
+            {
+                filteredAnnots.Add(annotation);
+            }
+        }
+        return Navigate(filteredAnnots, userLocalPos, suggestForward);
+    }
+
+    public NavigationInfo Navigate(List<Annotation> annotations, Vector3 userLocalPos)
+    {
+        return Navigate(annotations, userLocalPos, Vector3.zero);
+    }
+    /**
+     * pass the userTransform and begin to navigate! 
+     */
+    public NavigationInfo Navigate(List<Annotation> annotations, Vector3 userLocalPos, Vector3 suggestForward)
+    {
+        //=========================
+        //preprocess
+        graph.Clear();
+        int annotCount = annotations.Count;
+
+        for (int i = 0; i < annotCount; i++)
+        {
+            graph.AddNode(new AnnotationNodeData(annotations[i].ID, GetAnnotationPos(annotations[i])));
+            Debug.Log($"{annotations[i].ID} .bounds => {annotations[i].renderInfo.Bounds}");
+        }
+
+        for (int i = 0; i < annotCount; i++)
+        {
+            GraphNode<AnnotationNodeData> ai = graph.GetNode(i);
+            for (int j = i + 1; j < annotCount; j++)
+            {
+                GraphNode<AnnotationNodeData> aj = graph.GetNode(j);
+                //TODO: optimize the graph generation
+                graph.AddEdge(i, j, new EdgeDistanceData(Distance(ai, aj)));
+            }
+        }
+
+        //==================================
+        //begin!
+        userLocalPos = referenceTransform.InvMapPosition(userLocalPos);
         
         List<GraphNode<AnnotationNodeData>> originalNode = new List<GraphNode<AnnotationNodeData>>();
         graph.ForeachNode(n => originalNode.Add(n));
@@ -248,7 +247,7 @@ public class VolumeNavigation : MonoBehaviour
         additionalNode.Add(userNode);
         GraphNode<AnnotationNodeData> lastNode = userNode;
         bool flag = true;
-        while (resultEdges.Count < graph.NodeCount && flag)
+        while (resultEdges.Count < (graph.NodeCount-1) && flag)
         {
             //add Edge
             graph.ForeachNodeNeighbor(
@@ -259,7 +258,7 @@ public class VolumeNavigation : MonoBehaviour
                     EdgePickInfo pi = new EdgePickInfo();
                     pi.edgeIndex = edge.index;
                     pi.nodeIndex = edge.GetAnotherNodeIndex(lastNode.index);
-                    pi.distance = edge.data.basicDistance + lastNode.data.depth * depthRatio;
+                    pi.distance = edge.data.basicDistance + lastNode.data.depth * depthRatio + lastNode.Degree * branchRatio;
                     edgeHeap.Enqueue(pi);
                     Debug.Log($"Push {edge.fromNode}->{edge.toNode} \t| dis = {pi.distance} \t| d={lastNode.data.depth}");
                 }
@@ -370,7 +369,7 @@ public class VolumeNavigation : MonoBehaviour
         foreach(var node in originalNode)
         {
             Annotation annot = data.FindAnnotationID(node.data.id);
-            Vector3 pos = node.data.centerPos-annot.renderInfo.Normal*normalOffset;
+            Vector3 pos = node.data.centerPos;// -annot.renderInfo.Normal*normalOffset;
             GraphNode<AnnotationNodeData> annotNode = treeGraph.AddNode(new AnnotationNodeData(AnnotationID.INVALID_ID, pos));
             treeGraph.AddEdge(node, annotNode, new EdgeDistanceData());
         }
@@ -411,7 +410,7 @@ public class VolumeNavigation : MonoBehaviour
         if(results.Count>1)
         {
             List<Vector3> bestResult = results;
-            float bestScore = 0.0f;
+            float bestScore = -100.0f;
             int[,] seq = results.Count == 2 ? iterSeq2 : iterSeq3;
             for(int seqi=0;seqi<seq.GetLength(0);seqi++)
             {
@@ -428,6 +427,7 @@ public class VolumeNavigation : MonoBehaviour
                         isImpeded = true;
                         break;
                     }
+                    curPos = interPos;
                 }
                 if(!isImpeded)
                 {

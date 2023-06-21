@@ -171,7 +171,6 @@ public class Main : MonoBehaviour,
 
         data.Init();
         // init ui first, add listeners
-        annotationJointRenderBuilder.Init();
 
         
         m_model.AddListener(this);
@@ -180,6 +179,10 @@ public class Main : MonoBehaviour,
 
         data.LoadDefaultData();
         data.modelBounds = PickPanoModel.Mesh.bounds;
+
+        navigationManager.Init(m_model);
+        annotationJointRenderBuilder.Init();
+        annotationJointRenderBuilder.DrawAllAnnotationJoints();
 
         m_server.Launch();
         m_server.AddListener(this);
@@ -195,7 +198,7 @@ public class Main : MonoBehaviour,
         //Debug messages
         //OnRead(null, "{\"action\": \"highlight\", \"data\": { \"layer\": 0, \"id\": 112} }");
 
-        navigationManager.Init(m_model);
+        
 
     }
 

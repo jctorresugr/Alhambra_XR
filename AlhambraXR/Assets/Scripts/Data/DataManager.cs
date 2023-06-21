@@ -48,19 +48,16 @@ public class DataManager : MonoBehaviour
     {
         LoadData(this);
 
-        //TODO: test code, commnet it for real dataset
-        AnnotationJoint joint = AddAnnotationJoint("Test Joint 1");
-        joint.AddAnnotation(annotations[2]);
-        joint.AddAnnotation(annotations[3]);
-        joint.AddAnnotation(annotations[4]);
-
-        AnnotationJoint joint2 = AddAnnotationJoint("Test Joint 2");
-        joint2.AddAnnotation(annotations[6]);
-        joint2.AddAnnotation(annotations[7]);
-
         foreach(Annotation annot in annotations)
         {
             annot.isLocalData = true;
+        }
+
+        //TODO: test code, commnet it for real dataset
+        AnnotationJoint joint = AddAnnotationJoint("Room A");
+        foreach (var annot in annotations)
+        {
+            joint.AddAnnotation(annot);
         }
     }
 

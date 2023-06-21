@@ -32,6 +32,41 @@ public class Utils
         return comp;
     }
 
+    public static T EnsureComponentIncludeChild<T>(MonoBehaviour obj, ref T comp)
+    {
+        if (comp == null)
+        {
+            comp = obj.GetComponent<T>();
+            if (comp == null)
+            {
+                comp = obj.GetComponentInChildren<T>();
+                if (comp == null)
+                {
+                    Debug.LogWarning("Cannot init component for " + obj.ToString() + ", expect component " + typeof(T));
+                }
+            }
+        }
+        return comp;
+    }
+
+    public static T EnsureComponentIncludeChild<T>(GameObject obj, ref T comp)
+    {
+        if (comp == null)
+        {
+            comp = obj.GetComponent<T>();
+            if (comp == null)
+            {
+                comp = obj.GetComponentInChildren<T>();
+                if (comp == null)
+                {
+                    Debug.LogWarning("Cannot init component for " + obj.ToString() + ", expect component " + typeof(T));
+                }
+                
+            }
+        }
+        return comp;
+    }
+
     // get component, if not exists, add the compoennt
     public static T ForceToGetComponent<T>(GameObject obj, ref T comp) where T:Component
     {
