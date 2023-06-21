@@ -39,4 +39,6 @@ public class ReferenceTransform : MonoBehaviour
         }
         return referTransform.rotation * r;
     }
+
+    public float ScaleRefer => referTransform.lossyScale.magnitude;
 }

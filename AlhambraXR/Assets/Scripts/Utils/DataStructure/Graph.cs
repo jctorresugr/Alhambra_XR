@@ -13,6 +13,7 @@ public class GraphNode<T>
 
     public IReadOnlyList<int> EdgesIndex => edgesIndex;
     public int Index => index;
+    public int Degree => edgesIndex.Count;
 
     public GraphNode<T> Clone()
     {
@@ -319,6 +320,32 @@ public class Graph<N,E>
             else
             {
                 node = nodes[edge.fromNode];
+            }
+            action(node, edge);
+        }
+    }
+
+    public void ForeachNodeNeighbor(GraphNode<N> baseNode, GraphNode<N> exceptNode, Action<GraphNode<N>, GraphEdge<E>> action)
+    {
+        if (baseNode.edgesIndex == null)
+        {
+            return;
+        }
+        foreach (int edgeIndex in baseNode.edgesIndex)
+        {
+            GraphEdge<E> edge = edges[edgeIndex];
+            GraphNode<N> node;
+            if (edge.fromNode == baseNode.index)
+            {
+                node = nodes[edge.toNode];
+            }
+            else
+            {
+                node = nodes[edge.fromNode];
+            }
+            if(exceptNode==node)
+            {
+                continue;
             }
             action(node, edge);
         }

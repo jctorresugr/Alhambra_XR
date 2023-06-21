@@ -9,23 +9,17 @@ using static VolumeNavigation;
 using N = VolumeNavigation.AnnotationNodeData;
 using E = VolumeNavigation.EdgeDistanceData;
 
-public class GraphRenderSimple : MonoBehaviour
+public class GraphRenderSimple : BasicRouteGraphRender
 {
-    [Header("template and set up")]
-    public LineRenderer template;
-    public DataManager annotationData;
-    public ReferenceTransform referenceTransform;
-    //public LineRenderData data;
     [Header("data")]
-    public Graph<N, E> data;
     public Dictionary<GraphEdge<E>, LineRenderer> edgeObjects;
 
 
 
     //Try to re-generate all mesh (lines) 
-    public void Redraw()
+    public override void Redraw()
     {
-        if (data == null)
+        if (graph == null)
         {
             return;
         }
@@ -33,7 +27,7 @@ public class GraphRenderSimple : MonoBehaviour
         //bruteforce way, not optimized! TODO: reduce object and reduce drawcall
         ClearDraw();
         edgeObjects = new Dictionary<GraphEdge<E>, LineRenderer>();
-        data.ForeachEdge(edge =>
+        graph.ForeachEdge(edge =>
         {
             LineRenderer lineRenderer = Instantiate(template);
             lineRenderer.transform.parent = this.transform;
@@ -42,13 +36,13 @@ public class GraphRenderSimple : MonoBehaviour
             edgeObjects[edge] = lineRenderer;
         });
 
-        data.ForeachNode(node =>
+        graph.ForeachNode(node =>
         {
             NotifyUpdatePoint(node);
         });
     }
 
-    public void ClearDraw()
+    public override void ClearDraw()
     {
         if (edgeObjects != null)
         {
@@ -61,7 +55,7 @@ public class GraphRenderSimple : MonoBehaviour
 
     public void NotifyUpdatePoint(GraphNode<N> node)
     {
-        data.ForeachNodeNeighbor(node,
+        graph.ForeachNodeNeighbor(node,
             node => { },
             edge =>
             {
@@ -81,8 +75,12 @@ public class GraphRenderSimple : MonoBehaviour
 
     protected Vector3 GetNodePos(int nodeIndex)
     {
-        return referenceTransform.MapPosition(data.GetNode(nodeIndex).data.centerPos);
+        return referenceTransform.MapPosition(graph.GetNode(nodeIndex).data.centerPos);
     }
 
+    public override void SetGraphData(Graph<N, E> graph, GraphNode<N> root = null)
+    {
+        this.graph = graph;
+    }
 }
 

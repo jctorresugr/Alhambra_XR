@@ -26,6 +26,8 @@ public class DataManager : MonoBehaviour
     public List<Annotation> Annotations => annotations;  
     public List<AnnotationJoint> AnnotationJoints => annotationJoints;
 
+    public float ReferLength => modelBounds.size.magnitude;
+
     public Annotation FindAnnotation(Predicate<Annotation> predicate)
     {
         return annotations.Find(predicate);

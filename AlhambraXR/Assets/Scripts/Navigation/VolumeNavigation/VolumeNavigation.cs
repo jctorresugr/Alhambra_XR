@@ -220,15 +220,17 @@ public class VolumeNavigation : MonoBehaviour
     /**
      * Step 2: pass the userTransform and begin to navigate! 
      */
-    public NavigationInfo Navigate(Transform userTransform)
+    public NavigationInfo Navigate(Vector3 userLocalPos, Vector3 suggestForward)
     {
+        userLocalPos = referenceTransform.InvMapPosition(userLocalPos);
         // user node, should always as a root node
+        /*
         Vector3 userLocalPos = referenceTransform.InvMapPosition(userTransform.position);
         RaycastHit rayHit;
         if (Physics.Raycast(userTransform.position,Vector3.down, out rayHit))
         {
             userLocalPos = referenceTransform.InvMapPosition(rayHit.point);
-        }
+        }*/
         
         List<GraphNode<AnnotationNodeData>> originalNode = new List<GraphNode<AnnotationNodeData>>();
         graph.ForeachNode(n => originalNode.Add(n));
@@ -299,7 +301,7 @@ public class VolumeNavigation : MonoBehaviour
                 // edge: pos2 (another) ---> pos1 (new)
                 Vector3 posDelta = pos1 - pos2;
                 //judge x,y,z, if too large, split them
-                List<Vector3> posSep = SeperateVector(posDelta,pos1,pos2);
+                List<Vector3> posSep = SeperateVector(posDelta,pos1,pos2,suggestForward);
                 if(posSep.Count>1)
                 {
                     Vector3 posCur = pos2;
@@ -389,7 +391,7 @@ public class VolumeNavigation : MonoBehaviour
                 { 2,1,0},
                 { 2,0,1},
             };
-    protected List<Vector3> SeperateVector(Vector3 dv,Vector3 posTo, Vector3 posFrom)
+    protected List<Vector3> SeperateVector(Vector3 dv,Vector3 posTo, Vector3 posFrom,Vector3 suggestForward)
     {
         List<Vector3> results = new List<Vector3>();
         Vector3 cur = Vector3.zero;
@@ -408,8 +410,10 @@ public class VolumeNavigation : MonoBehaviour
         }
         if(results.Count>1)
         {
+            List<Vector3> bestResult = results;
+            float bestScore = 0.0f;
             int[,] seq = results.Count == 2 ? iterSeq2 : iterSeq3;
-            for(int seqi=0;seqi<seq.Length;seqi++)
+            for(int seqi=0;seqi<seq.GetLength(0);seqi++)
             {
                 Vector3 curPos = posFrom;
                 bool isImpeded = false;
@@ -427,16 +431,27 @@ public class VolumeNavigation : MonoBehaviour
                 }
                 if(!isImpeded)
                 {
-                    List<Vector3> sortedResult = new List<Vector3>();
-                    for(int i0=0;i0<results.Count;i0++)
+                    float score = Vector3.Dot(suggestForward, results[seq[seqi, 0]]);
+                    if(score>bestScore)
                     {
-                        int i = seq[seqi, i0];
-                        sortedResult.Add(results[i]);
-                        return sortedResult;
+                        List<Vector3> sortedResult = new List<Vector3>();
+                        for (int i0 = 0; i0 < results.Count; i0++)
+                        {
+                            int i = seq[seqi, i0];
+                            sortedResult.Add(results[i]);
+                        }
+                        bestScore = score;
+                        bestResult = sortedResult;
                     }
+                    
                 }
             }
-            Debug.LogWarning($"Navigate line may hit wall {posFrom} -> {posTo}");
+            if(bestScore<=0)
+            {
+                Debug.LogWarning($"Navigate line may hit wall {posFrom} -> {posTo}");
+            }
+            return bestResult;
+            
         }
         return results;
     }

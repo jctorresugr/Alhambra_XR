@@ -6,15 +6,14 @@ public class NavigationManager : MonoBehaviour
 {
     [Header("Component")]
     public VolumeNavigation volumeNavigation;
-    public GraphRenderSimple graphRenderSimple;
     public SelectionModelData selectionModelData;
-    public GraphRenderRoutes graphRenderRoutes;
     public Transform user;
-    public bool refreshNow = false;
+    [Header("Render Component")]
+    public BasicRouteGraphRender render;
     [Header("Config")]
+    public bool refreshNow = false;
+    public float forwardDistance = 0.1f;
     public float updateThreshold = 1.0f; //update if the user move far away
-    public bool useDefaultRender = false;
-    public bool useRouteRender = true;
 
     public bool triggerDebug = false;
 
@@ -23,7 +22,6 @@ public class NavigationManager : MonoBehaviour
     void Start()
     {
         Utils.EnsureComponent(this, ref volumeNavigation);
-        Utils.EnsureComponent(this, ref graphRenderSimple);
         oldPos = user.position;
     }
 
@@ -42,7 +40,7 @@ public class NavigationManager : MonoBehaviour
             triggerDebug = false;
             refreshNow = true;
             selectionModelData.ClearSelectedAnnotations();
-            foreach (var a in graphRenderRoutes.annotationData.Annotations)
+            foreach (var a in render.annotationData.Annotations)
             {
                 selectionModelData.AddSelectedAnnotations(a.ID);
             }
@@ -62,43 +60,19 @@ public class NavigationManager : MonoBehaviour
         volumeNavigation.SetAnnotations(selectionModelData.SelectedAnnotations);
         if (volumeNavigation.annotations.Count==0)
         {
-            graphRenderSimple.ClearDraw();
+            render.ClearDraw();
             return;
+        }
+        Vector3 userLocalPos = user.position + user.forward * forwardDistance;
+        RaycastHit rayHit;
+        if (Physics.Raycast(userLocalPos, Vector3.down, out rayHit))
+        {
+            userLocalPos = rayHit.point + Vector3.up * 0.3f;
         }
         volumeNavigation.Preprocess();
-        NavigationInfo navigationInfo = volumeNavigation.Navigate(user);
-        if(useDefaultRender)
-        {
-            RenderGraph(navigationInfo);
-        }
-        if(useRouteRender)
-        {
-            RenderRoutes(navigationInfo);
-        }
+        NavigationInfo navigationInfo = volumeNavigation.Navigate(userLocalPos,user.forward);
+        render.ClearDraw();
+        render.SetGraphData(navigationInfo.treeGraph, navigationInfo.root);
+        render.Redraw();
     }
-
-    public void RenderRoutes(NavigationInfo navigationInfo)
-    {
-        if(graphRenderRoutes==null)
-        {
-            return;
-        }
-        graphRenderRoutes.data = RouteInfo.GenerateRoutes(navigationInfo);
-        graphRenderRoutes.graph = navigationInfo.treeGraph;
-        graphRenderRoutes.Redraw();
-    }
-
-    public void RenderGraph(NavigationInfo navigationInfo)
-    {
-        if(graphRenderSimple==null)
-        {
-            return;
-        }
-        graphRenderSimple.data = navigationInfo.treeGraph;
-        graphRenderSimple.Redraw();
-    }
-
-    
-
-
 }

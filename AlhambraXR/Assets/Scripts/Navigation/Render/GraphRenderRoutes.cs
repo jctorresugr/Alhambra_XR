@@ -5,22 +5,20 @@ using UnityEngine;
 using N = VolumeNavigation.AnnotationNodeData;
 using E = VolumeNavigation.EdgeDistanceData;
 
-public class GraphRenderRoutes : MonoBehaviour
+public class GraphRenderRoutes : BasicRouteGraphRender
 {
-
-    [Header("template and set up")]
-    public LineRenderer template;
-    public DataManager annotationData;
-    public ReferenceTransform referenceTransform;
     [Header("data")]
     public List<RouteInfo> data = null;
-    public Graph<N, E> graph = null;
     public Dictionary<RouteInfo, LineRenderer> renders = new Dictionary<RouteInfo, LineRenderer>();
     protected Dictionary<GraphNode<N>, int> usedCount = new Dictionary<GraphNode<N>, int>();
     [Header("config")]
     public float offset = 0.0001f;
+    [Header("config - curve")]
+    public bool useSmoothCurve = true;
+    public float alpha=2.0f;
+    public float sampleDistanceRatio = 0.01f;
 
-    public void Redraw()
+    public override void Redraw()
     {
         ClearDraw();
         if (data==null)
@@ -36,21 +34,20 @@ public class GraphRenderRoutes : MonoBehaviour
             lineRenderer.transform.rotation = Quaternion.identity;
             lineRenderer.positionCount = route.nodes.Count;
 
-            lineRenderer.colorGradient.SetKeys(route.GenerateGradientColor(), route.GenerateGradientAlpha());
-            Debug.Log(lineRenderer.colorGradient.colorKeys);
-
             Gradient graident = new Gradient();
             GradientColorKey[] gradientColorKeys = route.GenerateGradientColor();
             GradientAlphaKey[] gradientAlphaKeys = route.GenerateGradientAlpha();
             graident.SetKeys(gradientColorKeys, gradientAlphaKeys);
             lineRenderer.colorGradient = graident;
 
-            lineRenderer.SetPositions(GeneratePosData(route));
+            Vector3[] vertexData = GeneratePosData(route);
+            lineRenderer.positionCount = vertexData.Length;
+            lineRenderer.SetPositions(vertexData);
             renders.Add(route,lineRenderer);
         }
     }
 
-    public void ClearDraw()
+    public override void ClearDraw()
     {
         foreach(LineRenderer renderer in renders.Values)
         {
@@ -79,7 +76,18 @@ public class GraphRenderRoutes : MonoBehaviour
             data[i] = referenceTransform.MapPosition(pos);
             usedCount[node]++;
         }
+        if(useSmoothCurve)
+        {
+            float sampleDistance = sampleDistanceRatio * this.annotationData.ReferLength * referenceTransform.ScaleRefer;
+            List <Vector3> dataRefined = CurveSample.GenerateCurve(data, sampleDistance, alpha);
+            return dataRefined.ToArray();
+        }
         return data;
     }
 
+    public override void SetGraphData(Graph<N, E> graph, GraphNode<N> root = null)
+    {
+        this.graph = graph;
+        data = RouteInfo.GenerateRoutes(graph,root);
+    }
 }

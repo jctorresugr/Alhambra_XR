@@ -58,18 +58,20 @@ public class RouteInfo
         return new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0.0f), new GradientAlphaKey(1.0f, 1.0f) };
     }
 
-    public static List<RouteInfo> GenerateRoutes(NavigationInfo navigationInfo)
+
+    public static List<RouteInfo> GenerateRoutes(Graph<N,E> treeGraph, GraphNode<N> root)
     {
+
         List<RouteInfo> routes = new List<RouteInfo>();
         List<GraphNode<N>> nodes = new List<GraphNode<N>>();
-        void RecusiveIter(Graph<N,E> data, GraphNode<N> pre, GraphNode<N> cur)
+        void RecusiveIter(Graph<N, E> data, GraphNode<N> pre, GraphNode<N> cur)
         {
             Debug.Log($"> Iter pre {pre.index}\t | cur {cur.index} \t| curRouteLen {GetIndexInfo(nodes)}");
             bool isEnd = true;
-            data.ForeachNodeNeighbor(cur, 
-                (n,e)=>
+            data.ForeachNodeNeighbor(cur,
+                (n, e) =>
                 {
-                    if(n!=pre)
+                    if (n != pre)
                     {
                         Debug.Log($"! Iter detect {n.index}\t | cur {cur.index} |\t {GetIndexInfo(nodes)}");
                         isEnd = false;
@@ -85,16 +87,22 @@ public class RouteInfo
                 RouteInfo route = new RouteInfo();
                 route.nodes.AddRange(nodes);
                 routes.Add(route);
-            }else
+            }
+            else
             {
                 Debug.Log($"# Iter Leave {GetIndexInfo(nodes)}");
             }
         }
 
         //routes.Add(initRoute);
-        nodes.Add(navigationInfo.root);
-        RecusiveIter(navigationInfo.treeGraph, navigationInfo.root, navigationInfo.root);
+        nodes.Add(root);
+        RecusiveIter(treeGraph, root, root);
         return routes;
+    }
+
+    public static List<RouteInfo> GenerateRoutes(NavigationInfo navigationInfo)
+    {
+        return GenerateRoutes(navigationInfo.treeGraph, navigationInfo.root);
     }
 
     public static string GetIndexInfo(List<GraphNode<N>> l)
