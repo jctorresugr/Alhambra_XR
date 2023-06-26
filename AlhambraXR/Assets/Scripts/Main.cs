@@ -278,18 +278,11 @@ public class Main : MonoBehaviour,
         {
             PointingArrow.SetActive(true);
             Vector3 annotationPos = PickPanoModel.transform.localToWorldMatrix.MultiplyPoint3x4(m_curAnnotation.Center);
-
             PointingArrow.transform.rotation = Quaternion.LookRotation(annotationPos - Camera.main.transform.position, new Vector3(0, 1, 0));
-            //lineNavigator.Visible = true;
-            //lineNavigator.SetPositions(Camera.main.transform.position+Camera.main.transform.forward*0.5f, annotationPos+m_curAnnotation.Normal*0.5f);
-            //debug normal:
-            //lineNavigator.SetPositions(annotationPos,annotationPos + m_curAnnotation.Normal * 0.5f);
-
         }
         else
         {
             PointingArrow.SetActive(false);
-            //lineNavigator.Visible = false;
         }
             
     }
@@ -772,14 +765,6 @@ public class Main : MonoBehaviour,
 
             Annotation annot = data.FindAnnotationID(mainID);
             //Search per layer the annotation data corresponding the demand of highlight
-            /*
-            if (mainID.Layer == 0)
-                annot = PickPanoModel.Annotations.Find((annot) => annot.Color.r == mainID.ID);
-            else if(mainID.Layer == 1)
-                annot = PickPanoModel.Annotations.Find((annot) => annot.Color.r == 0 && annot.Color.g == mainID.ID);
-            else if(mainID.Layer == 2)
-                annot = PickPanoModel.Annotations.Find((annot) => annot.Color.r == 0 && annot.Color.g == 0 && annot.Color.b == mainID.ID);
-            */
             if(annot!=null)
             {
                 lock (this)

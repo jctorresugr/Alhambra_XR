@@ -1,6 +1,7 @@
 package com.alhambra.view.graphics;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.view.MotionEvent;
 import android.view.View;
@@ -35,5 +36,13 @@ public abstract class CanvasInteractiveElement extends CanvasBaseElement {
     @Override
     public void onLoseFocus(MotionEvent e) {
         setMouseDown(false);
+    }
+
+    protected static Paint newPaint(int r,int g,int b,int a, float stroke, Paint.Style style) {
+        Paint p = new Paint();
+        p.setColor(Color.argb(a,r,g,b));
+        p.setStrokeWidth(stroke);
+        p.setStyle(style);
+        return p;
     }
 }

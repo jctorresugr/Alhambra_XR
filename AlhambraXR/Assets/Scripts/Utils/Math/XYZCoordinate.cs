@@ -83,4 +83,28 @@ public struct XYZCoordinate
             )+translatePos;
     }
 
+    public float ProjectionX(Vector3 pos)
+    {
+        return Vector3.Dot(pos - translatePos, x);
+    }
+
+    public float ProjectionY(Vector3 pos)
+    {
+        return Vector3.Dot(pos - translatePos, y);
+    }
+
+    public float ProjectionZ(Vector3 pos)
+    {
+        return Vector3.Dot(pos - translatePos, z);
+    }
+
+    public Vector3 Projection(Vector3 pos)
+    {
+        Vector3 d = pos - translatePos;
+        return new Vector3(
+            Vector3.Dot(x, d),
+            Vector3.Dot(y, d),
+            Vector3.Dot(z, d)
+            );
+    }
 }

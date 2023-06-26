@@ -46,12 +46,12 @@ public class CycleBin
 
     public float BestDeg()
     {
-        int halfIndex = data.Length / 2;
-        long[] temp = new long[halfIndex];
-        for (int i = 0; i < halfIndex; i++)
+        int halfIndex = data.Length;// / 2;
+        long[] temp = data;//new long[halfIndex];
+        /*for (int i = 0; i < halfIndex; i++)
         {
             temp[i] = data[i] + data[i + halfIndex];
-        }
+        }*/
         float invScale = 1.0f / scale;
         // find a lowest variance for all other values
         float bestScore = float.MaxValue;
@@ -64,8 +64,8 @@ public class CycleBin
             {
                 long vj = temp[j];
                 float degDis = (i - j) * invScale;
-                float cosDis = Mathf.Cos(degDis);
-                distance += cosDis*cosDis * vj;
+                float cosDis = Mathf.Abs(Mathf.Cos(degDis));
+                distance += cosDis * vj;
             }
             if(distance<bestScore)
             {

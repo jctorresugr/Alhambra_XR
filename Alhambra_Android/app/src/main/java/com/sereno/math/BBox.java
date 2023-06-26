@@ -22,4 +22,16 @@ public class BBox {
         addPoint(v.x,v.y,v.z);
     }
 
+    public float getCenterX() {
+        return (min.x+max.x)*0.5f;
+    }
+
+    public float getCenterY() {
+        return (min.y+max.y)*0.5f;
+    }
+
+    public float getCenterZ() {
+        return (min.z+max.z)*0.5f;
+    }
+
 }

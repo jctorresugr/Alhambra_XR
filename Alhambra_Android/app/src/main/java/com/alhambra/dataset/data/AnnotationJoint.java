@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public class AnnotationJoint {
     private Vector3 position;
@@ -32,6 +33,10 @@ public class AnnotationJoint {
         return Collections.unmodifiableList(annotationsID);
     }
 
+    public Set<Annotation> getAnnotations()
+    {
+        return Collections.unmodifiableSet(annotations);
+    }
 
 
     public void addAnnotation(Annotation annotation){

@@ -642,8 +642,6 @@ GameObject:
   - component: {fileID: 293561426}
   - component: {fileID: 293561427}
   - component: {fileID: 293561428}
-  - component: {fileID: 293561430}
-  - component: {fileID: 293561429}
   - component: {fileID: 293561431}
   - component: {fileID: 293561432}
   m_Layer: 0
@@ -753,38 +751,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   main: {fileID: 293561423}
   data: {fileID: 293561425}
---- !u!114 &293561429
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 293561422}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d34c8a959ffeb2b489a07dfe53010abc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  template: {fileID: 1705202515}
---- !u!114 &293561430
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 293561422}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ea73d9e3ecfe9544bac19198dd18130b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  normalOffset: 0.001
-  splitThreshold: 0.01
-  annotations: []
-  userTransform: {fileID: 963194228}
-  refTrans: {fileID: 293561427}
-  lineRenderManager: {fileID: 293561429}
-  viewOffset: {x: 0, y: -0.05, z: 1}
 --- !u!114 &293561431
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2468,7 +2434,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1512517128
 Transform:
   m_ObjectHideFlags: 0

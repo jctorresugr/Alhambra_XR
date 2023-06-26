@@ -22,8 +22,9 @@ public class DebugOBB: MonoBehaviour
         XYZCoordinate xYZCoordinate = new XYZCoordinate(normal,tangent);
         xYZCoordinate.translatePos = center;
         xYZCoordinate.Orthogonalization();
-        transform.rotation =  Quaternion.LookRotation(xYZCoordinate.x, xYZCoordinate.y);
-        transform.position = referenceTransform.MapPosition(
+        transform.rotation =  Quaternion.LookRotation(xYZCoordinate.z, xYZCoordinate.y);
+        transform.position = referenceTransform.MapPosition(center);
+            referenceTransform.MapPosition(
           xYZCoordinate.TransformToGlobalPos(localCenter)
           );
         transform.localScale = 

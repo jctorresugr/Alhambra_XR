@@ -113,7 +113,6 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
 
         //-----
         // added by Yucheng: generate normal map
-        //m_normalTexture = new Texture2D(indexTexture.width, indexTexture.height, TextureFormat.RGBAFloat, false);// maybe RGB565 for optimization?
         CommandBuffer buf2 = new CommandBuffer();
         buf.SetRenderTarget(colorRT, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
         buf.DrawMesh(Mesh, Matrix4x4.identity, UVToNormal, 0, -1); 
@@ -128,7 +127,6 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
 
         //-----
         // added by Yucheng: generate tangent map
-        //m_normalTexture = new Texture2D(indexTexture.width, indexTexture.height, TextureFormat.RGBAFloat, false);// maybe RGB565 for optimization?
         CommandBuffer buf3 = new CommandBuffer();
         buf.SetRenderTarget(colorRT, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
         buf.DrawMesh(Mesh, Matrix4x4.identity, UVToTangent, 0, -1);
@@ -234,99 +232,16 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                 Debug.Log($"Tangent&Normal {annot.ID} >>\t A{renderInfo.averagePosition} >>\t C{renderInfo.pointCount} >>> T{renderInfo.Tangent} >>\t N{renderInfo.Normal}");
             });
 
-        ConcurrentDictionary<AnnotationID, CycleBin> bins = new ConcurrentDictionary<AnnotationID, CycleBin>();
         ConcurrentDictionary<AnnotationID,XYZCoordinate> annotCoord = new ConcurrentDictionary<AnnotationID, XYZCoordinate>();
-        foreach (Annotation annot in data.Annotations)
-        {
-            bins.TryAdd(annot.ID, new CycleBin(360));
-        }
 
         foreach (Annotation annot in data.Annotations)
         {
             AnnotationID id = annot.ID;
             AnnotationRenderInfo renderInfo = annot.renderInfo;
             XYZCoordinate xYZCoordinate = new XYZCoordinate(renderInfo.Normal, renderInfo.Tangent);
-            xYZCoordinate.Orthogonalization();
             xYZCoordinate.translatePos = renderInfo.averagePosition;
             annotCoord.TryAdd(id, xYZCoordinate);
-            /*
-            Vector3 tempPos = xYZCoordinate.TransformToLocalPos(renderInfo.Bounds.center);
-            renderInfo.OBBBounds.SetMinMax(tempPos, tempPos);*/
         }
-
-        Parallel.For(0, indexTexture.width * indexTexture.height,
-            (i) =>
-            {
-                int idx = 4 * i;
-                if (srcRGBA[idx + 3] > 0 && m_uvToPositionPixels[idx + 3] > 0) // if exists annotation in this pixel
-                {
-                    Vector3 pos = new Vector3(m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2]);
-                    
-                    int cr = srcRGBA[idx + 0];
-                    int cg = srcRGBA[idx + 1];
-                    int cb = srcRGBA[idx + 2];
-
-                    void checkAnnotation(AnnotationID id)
-                    {
-                        CycleBin cb;
-                        if(bins.TryGetValue(id, out cb))
-                        {
-                            Annotation annotation = data.FindAnnotationID(id);
-                            if(annotation!=null && annotation.renderInfo!=null)
-                            {
-                                AnnotationRenderInfo renderInfo = annotation.renderInfo;
-                                XYZCoordinate coord = annotCoord[id];
-                                Vector3 localPos = coord.TransformToLocalPos(pos);
-                                cb.AtomicTick(localPos.x, localPos.z, 1.0f);
-                                //debug code
-                                float yAxis = Vector3.Dot((pos - renderInfo.averagePosition), renderInfo.Normal);
-                                //use projection values to compute, remember to remove y component
-                                renderInfo.yMin = Mathf.Min(renderInfo.yMin, yAxis);
-                                renderInfo.yMax = Mathf.Max(renderInfo.yMax, yAxis);
-
-                            }
-                        }
-                        
-                    }
-                    if(cr>0)
-                    {
-                        checkAnnotation(new AnnotationID(0, cr));
-                    }
-                    if (cg > 0)
-                    {
-                        checkAnnotation(new AnnotationID(1, cg));
-                    }
-                    if (cb > 0)
-                    {
-                        checkAnnotation(new AnnotationID(2, cb));
-                    }
-                }
-            }
-            );
-        Parallel.ForEach(bins.Keys, k =>
-         {
-             CycleBin bin = bins[k];
-             float bestDeg = bin.BestDeg();
-             Annotation annotation = data.FindAnnotationID(k);
-             XYZCoordinate coord = annotCoord[k];
-             Vector3 tangent = annotation.renderInfo.Tangent;
-             Vector3 normal = annotation.renderInfo.Normal;
-             coord.x= tangent = Quaternion.AngleAxis(bestDeg, normal)*tangent;
-             //coord = new XYZCoordinate(normal, tangent);
-             coord.Orthogonalization();
-             Vector3 averagePosition = annotation.renderInfo.averagePosition;
-             coord.translatePos = averagePosition;
-             //annotCoord.TryAdd(k, coord);
-             annotCoord[k] = coord;
-             annotation.renderInfo.Tangent = tangent;
-
-             annotation.renderInfo.OBBBounds.SetMinMax(Vector3.zero, Vector3.zero);//averagePos
-
-             //debug code
-             Debug.Log($"Update Tangent {k} >>\t T{annotation.renderInfo.Tangent} >>\t N{annotation.renderInfo.Normal}");
-             Debug.Log($"Y axis {k} >>\t T{annotation.renderInfo.yMin} >>\t N{annotation.renderInfo.yMax}");
-
-         });
         
 
         Parallel.For(0, indexTexture.width * indexTexture.height,
@@ -346,22 +261,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                         if (annotation != null && annotation.renderInfo!=null)
                         {
                             XYZCoordinate coord = annotCoord[id];
-                            Vector3 localPos = coord.TransformToLocalPos(pos);
-                            //localPos.y = 0;
-                            //debugging code:================
-                            /*
-                            Vector3 nPos = coord.TransformToGlobalPos(localPos);
-                            XYZCoordinate coord2 = coord;
-                            coord.translatePos = Vector3.zero;
-                            Vector3 localPos2 = coord2.TransformToLocalPos(pos);
-                            Vector3 nPos2 = coord.TransformToLocalPos(localPos2);
-
-                            if(nPos!=localPos || localPos2!=nPos2)
-                            {
-                                
-                                //Debug.Log($"Not Equal transform {localPos} || {nPos}");
-                            }*/
-                            //=============
+                            Vector3 localPos = coord.Projection(pos);
+                            
                             lock (annotation)
                             {
                                 if(

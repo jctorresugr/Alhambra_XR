@@ -14,6 +14,7 @@ import com.alhambra.dataset.data.AnnotationID;
 import com.alhambra.dataset.data.AnnotationJoint;
 import com.alhambra.view.graphics.BaseCanvasElementView;
 import com.alhambra.view.graphics.CanvasAnnotation;
+import com.alhambra.view.graphics.CanvasAnnotationJoint;
 import com.sereno.math.BBox;
 import com.sereno.math.TranslateMatrix;
 
@@ -27,21 +28,12 @@ public class MapView extends BaseCanvasElementView
     //data
     private AnnotationDataset m_dataset;
     private HashMap<AnnotationID,CanvasAnnotation> annotationElements = new HashMap<>();
-
-    private Paint annotationPaint;
+    private HashMap<Integer, CanvasAnnotationJoint> annotationJointElements = new HashMap<>();
 
     public TranslateMatrix translateInfo; //TODO: getter setter for interaction
 
     public void init(){
-        annotationPaint = new Paint();
-        annotationPaint.setColor(Color.YELLOW);
-        annotationPaint.setStrokeWidth(2.0f);
-        annotationPaint.setStyle(Paint.Style.FILL);
         translateInfo = new TranslateMatrix();
-        translateInfo.scaleX=9000.0f;
-        translateInfo.scaleY=9000.0f;
-        translateInfo.translateX=400.0f;
-        translateInfo.translateY=900.0f;
         this.addOnLayoutChangeListener(this);
     }
     public AnnotationDataset getDataset() {
@@ -66,6 +58,7 @@ public class MapView extends BaseCanvasElementView
     public void regenerateElement(){
         this.elements.clear();
         annotationElements.clear();
+        annotationJointElements.clear();
         updateDataset();
     }
 
@@ -88,6 +81,9 @@ public class MapView extends BaseCanvasElementView
         for (Annotation annotation : m_dataset.getAnnotationList()) {
             updateElement(annotation);
         }
+        for(AnnotationJoint annotationJoint: m_dataset.getAnnotationJoint()){
+            updateElement(annotationJoint);
+        }
     }
 
     public CanvasAnnotation addElement(Annotation annotation) {
@@ -98,7 +94,6 @@ public class MapView extends BaseCanvasElementView
         if(curElement==null) {
             curElement = new CanvasAnnotation();
             curElement.setAnnotation(annotation,translateInfo);
-            curElement.setPaint(annotationPaint);
             annotationElements.put(annotation.id,curElement);
             this.addElement(curElement);
             curElement.dirty();
@@ -119,6 +114,17 @@ public class MapView extends BaseCanvasElementView
         return canvasAnnotation;
     }
 
+    public CanvasAnnotationJoint removeElement(AnnotationJoint annotationJoint){
+        CanvasAnnotationJoint canvasAnnotation = annotationJointElements.get(annotationJoint.getId());
+        if(canvasAnnotation==null){
+            return null;
+        }else{
+            annotationJointElements.remove(annotationJoint.getId());
+            this.removeElement(canvasAnnotation);
+        }
+        return canvasAnnotation;
+    }
+
     public void updateElement(Annotation annotation){
         CanvasAnnotation canvasAnnotation = annotationElements.get(annotation.id);
         if(canvasAnnotation!=null){
@@ -126,6 +132,31 @@ public class MapView extends BaseCanvasElementView
         }else{
             addElement(annotation);
         }
+    }
+
+    public void updateElement(AnnotationJoint annotationJoint){
+        CanvasAnnotationJoint canvasAnnotationJoint = annotationJointElements.get(annotationJoint.getId());
+        if(canvasAnnotationJoint!=null){
+            canvasAnnotationJoint.setAnnotationJoint(annotationJoint,translateInfo);
+        }else{
+            addElement(annotationJoint);
+        }
+    }
+
+    public CanvasAnnotationJoint addElement(AnnotationJoint annotationJoint){
+        if(annotationJoint==null){
+            return null;
+        }
+        CanvasAnnotationJoint canvasAnnotationJoint = annotationJointElements.get(annotationJoint.getId());
+        if(canvasAnnotationJoint==null){
+            canvasAnnotationJoint = new CanvasAnnotationJoint();
+            this.addElement(canvasAnnotationJoint);
+            canvasAnnotationJoint.setAnnotationJoint(annotationJoint,translateInfo);
+            canvasAnnotationJoint.dirty();
+        }else{
+            canvasAnnotationJoint.setAnnotationJoint(annotationJoint,translateInfo);
+        }
+        return canvasAnnotationJoint;
     }
 
     @Override
@@ -155,17 +186,17 @@ public class MapView extends BaseCanvasElementView
 
     @Override
     public void onAddJoint(AnnotationJoint annotationJoint) {
-
+        addElement(annotationJoint);
     }
 
     @Override
     public void onRemoveJoint(AnnotationJoint annotationJoint) {
-
+        removeElement(annotationJoint);
     }
 
     @Override
     public void onChangeJoint(AnnotationJoint annotationJoint) {
-
+        updateElement(annotationJoint);
     }
 
     @Override
@@ -202,5 +233,13 @@ public class MapView extends BaseCanvasElementView
     public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
         refreshBoundsInfo();
 
+    }
+
+    public CanvasAnnotation getAnnotationElement(AnnotationID annotationID) {
+        return annotationElements.get(annotationID);
+    }
+
+    public CanvasAnnotationJoint getAnnotationJointElement(int jointID) {
+        return annotationJointElements.get(jointID);
     }
 }

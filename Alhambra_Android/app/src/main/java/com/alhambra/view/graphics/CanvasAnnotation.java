@@ -14,15 +14,15 @@ import com.sereno.math.TranslateMatrix;
 
 public class CanvasAnnotation extends CanvasInteractiveElement{
     protected Annotation annotation;
-    private static float radius=30.0f;
-    private boolean highlight = false;
+    private static final float radius=30.0f;
+    //private boolean highlight = false;
 
 
     //styles
-    private static Paint normalPaint;
-    private static Paint normalBorderPaint;
-    private static Paint mouseDownPaint;
-    private static Paint mouseDownBorderPaint;
+    private static final Paint normalPaint;
+    private static final Paint normalBorderPaint;
+    private static final Paint mouseDownPaint;
+    private static final Paint mouseDownBorderPaint;
 
     static{
         normalPaint =           newPaint(20,80,255,100,2.0f,Paint.Style.FILL);
@@ -31,13 +31,7 @@ public class CanvasAnnotation extends CanvasInteractiveElement{
         mouseDownBorderPaint =  newPaint(110,120,205,255,10.0f,Paint.Style.STROKE);
     }
 
-    private static Paint newPaint(int r,int g,int b,int a, float stroke, Paint.Style style) {
-        Paint p = new Paint();
-        p.setColor(Color.argb(a,r,g,b));
-        p.setStrokeWidth(stroke);
-        p.setStyle(style);
-        return p;
-    }
+
 
 
     public void setAnnotation(Annotation annotation) {
@@ -72,4 +66,7 @@ public class CanvasAnnotation extends CanvasInteractiveElement{
         return MathUtils.distanceSqr(x0,y0,x,y)<radius*radius*2;
     }
 
+    public Annotation getAnnotation() {
+        return annotation;
+    }
 }
