@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-public abstract class AnnotationJointRenderBase : MonoBehaviour
+public abstract class AnnotationJointRenderBase : ViewBase<AnnotationJoint>
 {
-    public abstract void Init(AnnotationJoint annotationJoint);
 }

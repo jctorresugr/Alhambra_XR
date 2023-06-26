@@ -19,6 +19,8 @@ public class AnnotationRenderInfo
     [FormerlySerializedAs("bounds")] // not worked, do not know why...
     [SerializeField]
     public Bounds Bounds;
+    [NonSerialized]
+    public Bounds OBBBounds;
     /*
     public Bounds Bounds
     {
@@ -47,7 +49,17 @@ public class AnnotationRenderInfo
     [SerializeField]
     private Vector3 normal;
 
+    [NonSerialized]
+    private Vector3 tangent;
+    [NonSerialized]
+    public Vector3 averagePosition;
+    [NonSerialized]
+    public int pointCount;
+    [NonSerialized]
+    public float yMax,yMin;
+
     public Vector3 Normal { get=>normal; set=>normal=value; }
+    public Vector3 Tangent { get=> tangent; set=> tangent = value; }
 
     /// <summary>
     /// The central position of this annotation in the local space of the 3D model.

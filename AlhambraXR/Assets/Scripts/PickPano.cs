@@ -8,7 +8,7 @@ using Unity.Collections;
 using UnityEngine;
 using Unity.Burst;
 using UnityEngine.Rendering;
-
+using System.Collections.Concurrent;
 
 public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, SelectionModelData.ISelectionModelDataListener
 {
@@ -27,6 +27,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         /// Use 'c[i]*255' to retrieve the ID of the selection (if ID > 0) for the layer i. If no layer is selected, all c[i], 0 <= i < 3, equal 0
         /// </param>
         void OnSelection(PickPano pano, Color c);
+        void OnHover(PickPano pano, Color c);//
     }
 
     /// <summary>
@@ -65,11 +66,13 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
     public Material UVToPosition;
 
     public Material UVToNormal;
+    public Material UVToTangent;
 
     /// <summary>
     /// The camera used to render data on RenderTexture
     /// </summary>
     public Camera RTCamera;
+    private float[] m_uvToTangentPixels;
 
     /// <summary>
     /// Initialize this GameObject and link it with the other components of the Scene
@@ -108,6 +111,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         //Save the pixels for later usages
         m_uvToPositionPixels = colorScreenShot.GetRawTextureData<float>().ToArray();
 
+        //-----
         // added by Yucheng: generate normal map
         //m_normalTexture = new Texture2D(indexTexture.width, indexTexture.height, TextureFormat.RGBAFloat, false);// maybe RGB565 for optimization?
         CommandBuffer buf2 = new CommandBuffer();
@@ -122,6 +126,21 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         colorScreenShot.ReadPixels(new Rect(0, 0, colorScreenShot.width, colorScreenShot.height), 0, 0);
         m_uvToNormalPixels = colorScreenShot.GetRawTextureData<float>().ToArray();
 
+        //-----
+        // added by Yucheng: generate tangent map
+        //m_normalTexture = new Texture2D(indexTexture.width, indexTexture.height, TextureFormat.RGBAFloat, false);// maybe RGB565 for optimization?
+        CommandBuffer buf3 = new CommandBuffer();
+        buf.SetRenderTarget(colorRT, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
+        buf.DrawMesh(Mesh, Matrix4x4.identity, UVToTangent, 0, -1);
+        RTCamera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
+        RTCamera.Render();
+        RTCamera.RemoveCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
+
+        //Read back the pixels from the render texture to the texture
+        RenderTexture.active = colorRT;
+        colorScreenShot.ReadPixels(new Rect(0, 0, colorScreenShot.width, colorScreenShot.height), 0, 0);
+        m_uvToTangentPixels = colorScreenShot.GetRawTextureData<float>().ToArray();
+
         //Clean up our messes
         RTCamera.targetTexture = null;
         RenderTexture.active = null;
@@ -134,7 +153,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         //Read the index texture to know which colors (at which positions) are used (parallelize the reading to speed up the process)
         NativeArray<byte> srcRGBA = indexTexture.GetRawTextureData<byte>();
 
-        //TODO: check if this the w h of texture affect position mapping calculation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        
         Parallel.For(0, indexTexture.width * indexTexture.height,
             () => new List<AnnotationRenderInfo>(),
             (i, state, partialRes) =>
@@ -146,24 +165,31 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                                                                      annot.Color.g == srcRGBA[idx + 1] &&
                                                                      annot.Color.b == srcRGBA[idx + 2]); // find annotation we stored here
 
+                    Vector3 pos = new Vector3(m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2]);
                     if (srcAnnot == null) // cannot find :(
                         partialRes.Add(new AnnotationRenderInfo() // add the annotation to the record list
                         {
                             Color = new Color32(srcRGBA[idx + 0],
                                                 srcRGBA[idx + 1],
                                                 srcRGBA[idx + 2], 255),
-                            BoundingMin = new Vector3 ( m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2] ),
-                            BoundingMax = new Vector3 ( m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2] ),
-                            Normal = new Vector3(m_uvToNormalPixels[idx + 0], m_uvToNormalPixels[idx + 1], m_uvToNormalPixels[idx + 2])
+                            BoundingMin = pos,
+                            BoundingMax = pos,
+                            Normal = new Vector3(m_uvToNormalPixels[idx + 0], m_uvToNormalPixels[idx + 1], m_uvToNormalPixels[idx + 2]),
+                            Tangent = new Vector3(m_uvToTangentPixels[idx + 0], m_uvToTangentPixels[idx + 1], m_uvToTangentPixels[idx + 2]),
+                            averagePosition = pos,
+                            pointCount = 1
                         });
                     else
                     {
-                        lock(srcAnnot)
+                        //lock(srcAnnot)
                         {
-                            srcAnnot.Bounds.Encapsulate(new Vector3(m_uvToPositionPixels[idx], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2]));
+                            srcAnnot.Bounds.Encapsulate(pos);
                             srcAnnot.Normal += new Vector3(m_uvToNormalPixels[idx + 0], m_uvToNormalPixels[idx + 1], m_uvToNormalPixels[idx + 2]);
+                            srcAnnot.Tangent += new Vector3(m_uvToTangentPixels[idx + 0], m_uvToTangentPixels[idx + 1], m_uvToTangentPixels[idx + 2]);
+                            srcAnnot.averagePosition += pos;
+                            srcAnnot.pointCount++;
                         }
-                        
+
                     }
                 }
 
@@ -187,6 +213,11 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                         else //Merge annotations in the parallel computation
                         {
                             srcAnnot.renderInfo.Bounds.Encapsulate(annot.Bounds);
+                            srcAnnot.renderInfo.Normal += annot.Normal;
+                            srcAnnot.renderInfo.Tangent += annot.Tangent;
+                            srcAnnot.renderInfo.averagePosition += annot.averagePosition;
+                            srcAnnot.renderInfo.pointCount += annot.pointCount;
+                            
                         }
                     }
                 }
@@ -196,9 +227,174 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         Parallel.ForEach(data.Annotations,
             (annot) =>
             {
-                annot.renderInfo.Normal = annot.renderInfo.Normal.normalized;
+                AnnotationRenderInfo renderInfo = annot.renderInfo;
+                renderInfo.Normal = renderInfo.Normal.normalized;
+                renderInfo.Tangent = renderInfo.Tangent.normalized;
+                renderInfo.averagePosition /= renderInfo.pointCount;
+                Debug.Log($"Tangent&Normal {annot.ID} >>\t A{renderInfo.averagePosition} >>\t C{renderInfo.pointCount} >>> T{renderInfo.Tangent} >>\t N{renderInfo.Normal}");
             });
 
+        ConcurrentDictionary<AnnotationID, CycleBin> bins = new ConcurrentDictionary<AnnotationID, CycleBin>();
+        ConcurrentDictionary<AnnotationID,XYZCoordinate> annotCoord = new ConcurrentDictionary<AnnotationID, XYZCoordinate>();
+        foreach (Annotation annot in data.Annotations)
+        {
+            bins.TryAdd(annot.ID, new CycleBin(360));
+        }
+
+        foreach (Annotation annot in data.Annotations)
+        {
+            AnnotationID id = annot.ID;
+            AnnotationRenderInfo renderInfo = annot.renderInfo;
+            XYZCoordinate xYZCoordinate = new XYZCoordinate(renderInfo.Normal, renderInfo.Tangent);
+            xYZCoordinate.Orthogonalization();
+            xYZCoordinate.translatePos = renderInfo.averagePosition;
+            annotCoord.TryAdd(id, xYZCoordinate);
+            /*
+            Vector3 tempPos = xYZCoordinate.TransformToLocalPos(renderInfo.Bounds.center);
+            renderInfo.OBBBounds.SetMinMax(tempPos, tempPos);*/
+        }
+
+        Parallel.For(0, indexTexture.width * indexTexture.height,
+            (i) =>
+            {
+                int idx = 4 * i;
+                if (srcRGBA[idx + 3] > 0 && m_uvToPositionPixels[idx + 3] > 0) // if exists annotation in this pixel
+                {
+                    Vector3 pos = new Vector3(m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2]);
+                    
+                    int cr = srcRGBA[idx + 0];
+                    int cg = srcRGBA[idx + 1];
+                    int cb = srcRGBA[idx + 2];
+
+                    void checkAnnotation(AnnotationID id)
+                    {
+                        CycleBin cb;
+                        if(bins.TryGetValue(id, out cb))
+                        {
+                            Annotation annotation = data.FindAnnotationID(id);
+                            if(annotation!=null && annotation.renderInfo!=null)
+                            {
+                                AnnotationRenderInfo renderInfo = annotation.renderInfo;
+                                XYZCoordinate coord = annotCoord[id];
+                                Vector3 localPos = coord.TransformToLocalPos(pos);
+                                cb.AtomicTick(localPos.x, localPos.z, 1.0f);
+                                //debug code
+                                float yAxis = Vector3.Dot((pos - renderInfo.averagePosition), renderInfo.Normal);
+                                //use projection values to compute, remember to remove y component
+                                renderInfo.yMin = Mathf.Min(renderInfo.yMin, yAxis);
+                                renderInfo.yMax = Mathf.Max(renderInfo.yMax, yAxis);
+
+                            }
+                        }
+                        
+                    }
+                    if(cr>0)
+                    {
+                        checkAnnotation(new AnnotationID(0, cr));
+                    }
+                    if (cg > 0)
+                    {
+                        checkAnnotation(new AnnotationID(1, cg));
+                    }
+                    if (cb > 0)
+                    {
+                        checkAnnotation(new AnnotationID(2, cb));
+                    }
+                }
+            }
+            );
+        Parallel.ForEach(bins.Keys, k =>
+         {
+             CycleBin bin = bins[k];
+             float bestDeg = bin.BestDeg();
+             Annotation annotation = data.FindAnnotationID(k);
+             XYZCoordinate coord = annotCoord[k];
+             Vector3 tangent = annotation.renderInfo.Tangent;
+             Vector3 normal = annotation.renderInfo.Normal;
+             coord.x= tangent = Quaternion.AngleAxis(bestDeg, normal)*tangent;
+             //coord = new XYZCoordinate(normal, tangent);
+             coord.Orthogonalization();
+             Vector3 averagePosition = annotation.renderInfo.averagePosition;
+             coord.translatePos = averagePosition;
+             //annotCoord.TryAdd(k, coord);
+             annotCoord[k] = coord;
+             annotation.renderInfo.Tangent = tangent;
+
+             annotation.renderInfo.OBBBounds.SetMinMax(Vector3.zero, Vector3.zero);//averagePos
+
+             //debug code
+             Debug.Log($"Update Tangent {k} >>\t T{annotation.renderInfo.Tangent} >>\t N{annotation.renderInfo.Normal}");
+             Debug.Log($"Y axis {k} >>\t T{annotation.renderInfo.yMin} >>\t N{annotation.renderInfo.yMax}");
+
+         });
+        
+
+        Parallel.For(0, indexTexture.width * indexTexture.height,
+            (i) =>
+            {
+                int idx = 4 * i;
+                if (srcRGBA[idx + 3] > 0 && m_uvToPositionPixels[idx + 3] > 0) // if exists annotation in this pixel
+                {
+                    Vector3 pos = new Vector3(m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2]);
+
+                    int cr = srcRGBA[idx + 0];
+                    int cg = srcRGBA[idx + 1];
+                    int cb = srcRGBA[idx + 2];
+                    void checkAnnotation(AnnotationID id)
+                    {
+                        Annotation annotation = data.FindAnnotationID(id);
+                        if (annotation != null && annotation.renderInfo!=null)
+                        {
+                            XYZCoordinate coord = annotCoord[id];
+                            Vector3 localPos = coord.TransformToLocalPos(pos);
+                            //localPos.y = 0;
+                            //debugging code:================
+                            /*
+                            Vector3 nPos = coord.TransformToGlobalPos(localPos);
+                            XYZCoordinate coord2 = coord;
+                            coord.translatePos = Vector3.zero;
+                            Vector3 localPos2 = coord2.TransformToLocalPos(pos);
+                            Vector3 nPos2 = coord.TransformToLocalPos(localPos2);
+
+                            if(nPos!=localPos || localPos2!=nPos2)
+                            {
+                                
+                                //Debug.Log($"Not Equal transform {localPos} || {nPos}");
+                            }*/
+                            //=============
+                            lock (annotation)
+                            {
+                                if(
+                                annotation.renderInfo.OBBBounds.min==Vector3.zero &&
+                                annotation.renderInfo.OBBBounds.max==Vector3.zero
+                                )
+                                {
+                                    annotation.renderInfo.OBBBounds.SetMinMax(localPos, localPos);
+                                    Debug.Log($"UpdateAnnotOBB {id}");
+                                }else
+                                {
+                                    annotation.renderInfo.OBBBounds.Encapsulate(localPos);
+                                }
+                                
+                            }
+                            
+                        }
+                    }
+                    if (cr > 0)
+                    {
+                        checkAnnotation(new AnnotationID(0, cr));
+                    }
+                    if (cg > 0)
+                    {
+                        checkAnnotation(new AnnotationID(1, cg));
+                    }
+                    if (cb > 0)
+                    {
+                        checkAnnotation(new AnnotationID(2, cb));
+                    }
+                }
+            }
+            );
         //Debug purposes, to check that annotations are anchored at their correct position.
         //GameObject originGO = GameObject.Find("Origin");
         //foreach(Annotation annot in m_annotations)
@@ -234,6 +430,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                         if(inputSource.Pointers[0].Controller.ControllerHandedness == Microsoft.MixedReality.Toolkit.Utilities.Handedness.Left)
                             hand = Handedness.LEFT;
                         SetShaderLayerParams(c.Value, hand);
+                        foreach(var l in m_listeners)
+                        {
+                            l.OnHover(this, c.Value);
+                        }
                     }
                 }
             }

@@ -69,7 +69,9 @@ public class TreeRenderCurved : BasicRouteGraphRender
             if(curNode.Degree==1) //is leaf
             {
                 GenerateSegment(preDrawPos, curPos);
-            }else
+                Debug.Log("Leaf! " + curNode.index);
+            }
+            else
             {
                 Vector3 curDrawPos = Vector3.Lerp(curPos, prePos, bendRatio);
                 GenerateSegment(preDrawPos, curDrawPos);

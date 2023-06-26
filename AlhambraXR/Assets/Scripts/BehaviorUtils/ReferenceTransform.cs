@@ -9,9 +9,6 @@ public class ReferenceTransform : MonoBehaviour
     /// The transformation of the model, 
     /// </summary>
     public Transform referTransform;
-    protected Bounds bounds;
-    public Bounds ModelBound => bounds;
-    //TODO: compute model bounds
 
     public Vector3 MapPosition(Vector3 pos)
     {

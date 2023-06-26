@@ -43,7 +43,6 @@ Shader "Unlit/UVToPosition"
 
             float4 frag(v2f i) : SV_Target
             {
-                //return float4(1.0, 1.0, 1.0, 1.0);
                 return float4(i.color, 1.0);
             }
             ENDCG

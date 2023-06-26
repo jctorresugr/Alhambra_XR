@@ -135,6 +135,7 @@ public class Main : MonoBehaviour,
     //public LineNavigatorManager lineNavigatorManager;
 
     public NavigationManager navigationManager;
+    public AnnotationRenderBuilder annotationRenderBuilder;
     //public VolumeNavigation volumeNavigation;
 
     //public VolumeAnalyze volumeAnalyze;
@@ -181,6 +182,10 @@ public class Main : MonoBehaviour,
         data.modelBounds = PickPanoModel.Mesh.bounds;
 
         navigationManager.Init(m_model);
+
+        annotationRenderBuilder.Init();
+        annotationRenderBuilder.DrawAllAnnotation();
+
         annotationJointRenderBuilder.Init();
         annotationJointRenderBuilder.DrawAllAnnotationJoints();
 
@@ -382,6 +387,12 @@ public class Main : MonoBehaviour,
             m_model.CurrentAction = CurrentAction.IN_HIGHLIGHT;
             m_model.CurrentHighlightMain = new AnnotationID(detailedMsg.data.layer, detailedMsg.data.id);
             m_model.CurrentHighlightSecond = AnnotationID.INVALID_ID;
+            m_model.ClearSelectedAnnotations();
+            if(m_model.CurrentHighlightMain.IsValid)
+            {
+                m_model.AddSelectedAnnotations(m_model.CurrentHighlightMain);
+            }
+            
             //lineNavigatorManager.SetAnnotations(data.FindAnnotationID(m_model.CurrentHighlightMain));
         }
 
@@ -926,6 +937,10 @@ public class Main : MonoBehaviour,
     }
 
     void SelectionModelData.ISelectionModelDataListener.OnSetSelectedAnnotations(SelectionModelData model, List<AnnotationID> ids)
+    {
+    }
+
+    void PickPano.IPickPanoListener.OnHover(PickPano pano, Color c)
     {
     }
 }

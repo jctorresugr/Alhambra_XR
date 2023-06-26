@@ -4,7 +4,7 @@ using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 
-public class Utils
+public static class Utils
 {
     public static T EnsureComponent<T>(MonoBehaviour obj, ref T comp)
     {
@@ -248,5 +248,31 @@ public class Utils
         return size.x * size.y * size.z;
     }
 
-
+    //restrict to [0,2*pi)
+    public static double RadRestrict(double rad)
+    {
+        if(rad<0)
+        {
+            int count = (-(int)(rad / Mathf.PI))+1;
+            return count * Mathf.PI + rad;
+        }else
+        {
+            int count = (int)(rad / Mathf.PI);
+            return rad- count * Mathf.PI;
+        }
+    }
+    //restrict to [0,360)
+    public static double DegRestrict(double deg)
+    {
+        if(deg<0)
+        {
+            int count = ((int)(deg / 360.0f)) + 1;
+            return deg + 360 * count;
+        }
+        else
+        {
+            int count = (int)(deg / 360.0f);
+            return deg - 360 * count;
+        }
+    }
 }

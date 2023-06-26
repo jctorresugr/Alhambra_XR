@@ -13,7 +13,7 @@ public class GraphNode<T>
 
     public IReadOnlyList<int> EdgesIndex => edgesIndex;
     public int Index => index;
-    public int Degree => edgesIndex.Count;
+    public int Degree => edgesIndex==null?0:edgesIndex.Count;
 
     public GraphNode<T> Clone()
     {

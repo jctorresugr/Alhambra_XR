@@ -64,6 +64,19 @@ public struct AnnotationID : IEquatable<AnnotationID>
         }
     }
 
+    public bool IsIncludedInColor(Color32 color)
+    {
+        if (m_layer >= 0 && m_layer < 3)
+            return color[m_layer] == m_index;
+        else
+            return false;
+    }
+
+    public bool IsIncludedInColor(Color color)
+    {
+        return IsIncludedInColor(color.Color32());
+    }
+
     public bool IsValid
     {
         get => 0 <= m_layer && m_layer <= 3 && m_index > 0 && m_index <= 255;

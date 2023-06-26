@@ -66,8 +66,9 @@ public class VolumeNavigation : MonoBehaviour
 
     protected Vector3 GetAnnotationPos(Annotation annot)
     {
+        return annot.renderInfo.averagePosition + annot.renderInfo.Normal * normalOffset;
+        /*
         Vector3 center = annot.renderInfo.Center;
-        //return center;
         Vector3 normal = annot.renderInfo.Normal;
         Vector3 size = annot.renderInfo.Bounds.size*0.5f;
         float outBoxDis = float.MaxValue;
@@ -86,14 +87,14 @@ public class VolumeNavigation : MonoBehaviour
 
         Vector3 worldPos = referenceTransform.MapPosition(pos);
         RaycastHit rayHit;
-        if(Physics.Raycast(worldPos,-annot.renderInfo.Normal, out rayHit, /*annot.renderInfo.Bounds.size.magnitude*data.ReferLength*5.0f*/10000.0f,layerMask))
+        if(Physics.Raycast(worldPos,-annot.renderInfo.Normal, out rayHit, 10000.0f,layerMask))
         {
             return referenceTransform.InvMapPosition(rayHit.point)+ annot.renderInfo.Normal * normalOffset;
         }
         else
         {
             return pos + annot.renderInfo.Normal * normalOffset;
-        }
+        }*/
     }
 
     protected float Distance(GraphNode<AnnotationNodeData> a, GraphNode<AnnotationNodeData> b)
@@ -205,6 +206,7 @@ public class VolumeNavigation : MonoBehaviour
      */
     public NavigationInfo Navigate(List<Annotation> annotations, Vector3 userLocalPos, Vector3 suggestForward)
     {
+        annotations = annotations.FindAll(a => a.IsValid && a.renderInfo != null && a.renderInfo.IsValid);
         //=========================
         //preprocess
         graph.Clear();
@@ -369,9 +371,10 @@ public class VolumeNavigation : MonoBehaviour
         foreach(var node in originalNode)
         {
             Annotation annot = data.FindAnnotationID(node.data.id);
-            Vector3 pos = node.data.centerPos;// -annot.renderInfo.Normal*normalOffset;
+            //Vector3 d = annot.renderInfo.Normal * normalOffset * 0.1f;
+            Vector3 pos = annot.renderInfo.averagePosition;// + d;// node.data.centerPos-annot.renderInfo.Normal*normalOffset;
             GraphNode<AnnotationNodeData> annotNode = treeGraph.AddNode(new AnnotationNodeData(AnnotationID.INVALID_ID, pos));
-            treeGraph.AddEdge(node, annotNode, new EdgeDistanceData());
+            treeGraph.AddEdge(node.index, annotNode.index, new EdgeDistanceData());
         }
         return result;
     }
