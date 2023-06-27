@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 /// <summary>
@@ -28,6 +29,8 @@ public class DataManager : MonoBehaviour
 
     public float ReferLength => modelBounds.size.magnitude;
 
+    public string loadPath = "Database/";
+
     public Annotation FindAnnotation(Predicate<Annotation> predicate)
     {
         return annotations.Find(predicate);
@@ -46,19 +49,30 @@ public class DataManager : MonoBehaviour
 
     public void LoadDefaultData()
     {
-        LoadData(this);
-
-        foreach(Annotation annot in annotations)
+        if(loadPath!="" && loadPath!=null && Directory.Exists(loadPath))
         {
-            annot.isLocalData = true;
+            LoadData(this, loadPath);
         }
 
-        //TODO: test code, commnet it for real dataset
-        AnnotationJoint joint = AddAnnotationJoint("Room A");
-        foreach (var annot in annotations)
+
+        
+        //dirty code
+        if (loadPath== "Database/")
         {
-            joint.AddAnnotation(annot);
+            foreach (Annotation annot in annotations)
+            {
+                annot.isLocalData = true;
+            }
+            //TODO: test code, commnet it for real dataset
+            AnnotationJoint joint = AddAnnotationJoint("Room A");
+            foreach (var annot in annotations)
+            {
+                joint.AddAnnotation(annot);
+            }
         }
+
+
+        
     }
 
     public Annotation FindAnnotationID(AnnotationID id)
@@ -236,9 +250,8 @@ public class DataManager : MonoBehaviour
         }
     }
 
-    public static void LoadData(DataManager dataManager)
+    public static void LoadData(DataManager dataManager, string folder = "Database/")
     {
-        const string folder = "Database/";
         TextAsset ta = Resources.Load<TextAsset>(folder + "SpotList");
         string[][] csvData = DataLoader.CSVLoader(ta.text);
         if (csvData.Length <= 0)
