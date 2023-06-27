@@ -9,6 +9,8 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.alhambra.view.MapView;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,12 +23,12 @@ public class BaseCanvasElementView extends View implements View.OnTouchListener 
     protected ArrayList<CanvasBaseElement> elements = new ArrayList<>();
     public Matrix matrix;
     public boolean impedeEvents = false;
+    public int cleanColor= Color.WHITE;
 
     public void addElement(CanvasBaseElement e){
         e.index = elements.size();
         elements.add(e);
         e.parent = this;
-        e.dirty();
     }
 
     public List<CanvasBaseElement> getElements() {
@@ -78,30 +80,28 @@ public class BaseCanvasElementView extends View implements View.OnTouchListener 
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         canvas.setMatrix(matrix);
-        //this.getHeight();
-        //canvas.drawColor(Color.WHITE, PorterDuff.Mode.CLEAR);
-        canvas.drawColor(Color.WHITE);
-        boolean continueDraw = false;
+        canvas.drawColor(cleanColor);
         for(CanvasBaseElement e: elements){
             e.update();
-            //if(e.isDirty()){
-                e.draw(canvas);
-                e.decreaseDirty();
-                if(e.isDirty()){
-                    continueDraw=true;
-                }
-            //}
+            e.draw(canvas);
         }
-        if(continueDraw){
-            redraw();
-        }
+        redraw();
     }
 
+    private final Matrix matrixInvCache = new Matrix();
+    private final float[] pointsCache = new float[2];
     //dispatch Event
     @Override
     public boolean onTouch(View v, MotionEvent e) {
         float x = e.getX();
         float y = e.getY();
+        matrix.invert(matrixInvCache);
+        pointsCache[0]=x;
+        pointsCache[1]=y;
+        matrixInvCache.mapPoints(pointsCache);
+        x=pointsCache[0];
+        y=pointsCache[1];
+        e.setLocation(x,y);
         Log.i("BaseCanvasView","Click "+x+" \t"+y+" "+e.getAction());
         for(CanvasBaseElement element: elements){
             if(element.isInRange(x,y)){

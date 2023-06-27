@@ -41,9 +41,6 @@ public abstract class CanvasInteractiveElement extends CanvasBaseElement {
     }
 
     public void setMouseDown(boolean mouseDown) {
-        if(mouseDown!=this.mouseDown){
-            dirty();
-        }
         this.mouseDown = mouseDown;
     }
 

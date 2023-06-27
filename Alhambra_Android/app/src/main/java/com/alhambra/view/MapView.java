@@ -35,6 +35,7 @@ public class MapView extends BaseCanvasElementView
     private HashMap<Integer, CanvasAnnotationJoint> annotationJointElements = new HashMap<>();
     private UserData userData;
     private CanvasUser canvasUser;
+    public boolean fixedBounds =false;
 
     public TranslateMatrix translateInfo; //TODO: getter setter for interaction
     public ListenerSubscriber<OnClickSymbols> onClickSymbolsListeners = new ListenerSubscriber<>();
@@ -122,7 +123,6 @@ public class MapView extends BaseCanvasElementView
             curElement.setAnnotation(annotation,translateInfo);
             annotationElements.put(annotation.id,curElement);
             this.addElement(curElement);
-            curElement.dirty();
             curElement.onClickListeners.addListener(
                     l->onClickSymbolsListeners.invoke(i->i.onClickAnnotation(((CanvasAnnotation)l).getAnnotation()))
             );
@@ -182,7 +182,6 @@ public class MapView extends BaseCanvasElementView
             canvasAnnotationJoint = new CanvasAnnotationJoint();
             this.addElement(canvasAnnotationJoint);
             canvasAnnotationJoint.setAnnotationJoint(annotationJoint,translateInfo);
-            canvasAnnotationJoint.dirty();
             canvasAnnotationJoint.onClickListeners.addListener(
                     l->onClickSymbolsListeners.invoke(i->i.onClickAnnotationJoint(((CanvasAnnotationJoint)l).getAnnotationJoint()))
             );
@@ -256,9 +255,11 @@ public class MapView extends BaseCanvasElementView
         translateInfo.scaleX = translateInfo.scaleY = Math.min(translateInfo.scaleX,translateInfo.scaleY);
         translateInfo.translateX = -x0*translateInfo.scaleX+paddingRatio*0.5f*w;
         translateInfo.translateY = -z0*translateInfo.scaleY+paddingRatio*0.5f*h;
+        /*
         Log.i("TranslateInfo","screen size: "+w+" "+h);
         Log.i("TranslateInfo","scale "+translateInfo.scaleX+" "+translateInfo.scaleY+
                 " | trans "+translateInfo.translateX+" "+translateInfo.translateY);
+        */
     }
 
     public void refreshBoundsInfo(){
@@ -268,6 +269,9 @@ public class MapView extends BaseCanvasElementView
 
     @Override
     public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+        if(fixedBounds){
+            return;
+        }
         refreshBoundsInfo();
 
     }

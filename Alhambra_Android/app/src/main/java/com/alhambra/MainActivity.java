@@ -104,6 +104,7 @@ public class MainActivity
     public UserData userData = new UserData();
 
     private MinimapInteraction minimapInteraction;
+    private MinimapInteraction minimapInteractionTiny;
 
     /*--------------------------------------*/
     /*-----Initialization of everything-----*/
@@ -126,6 +127,11 @@ public class MainActivity
         minimapInteraction.selectionData=selectionData;
         minimapInteraction.viewPager=m_viewPager;
         this.addInteraction(minimapInteraction);
+        minimapInteractionTiny = new MinimapInteraction();
+        minimapInteractionTiny.viewPager=m_viewPager;
+        minimapInteractionTiny.selectionData=selectionData;
+        minimapInteractionTiny.setMapView(floatView.getMapView());
+        this.addInteraction(minimapInteractionTiny);
     }
 
     public void regReceiveMessageListener(String actionName, IReceiveMessageListener l){

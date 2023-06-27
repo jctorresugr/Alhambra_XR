@@ -25,7 +25,7 @@ public class MinimapInteraction extends IInteraction implements MapView.OnClickS
         mainActivity.sendServerAction("TeleportAnnotation",annotation.id);
         AnnotationDataset annotationDataset = mainActivity.getAnnotationDataset();
         annotationDataset.setMainEntryIndex(annotation.info.getIndex());
-        viewPager.setCurrentItem(0);
+        //viewPager.setCurrentItem(0);
     }
 
     @Override
@@ -33,7 +33,7 @@ public class MinimapInteraction extends IInteraction implements MapView.OnClickS
         mainActivity.sendServerAction("TeleportAnnotationJoint",annotationJoint.getId());
         selectionData.clearSelectedGroup();
         selectionData.addSelectedGroup(annotationJoint.getId());
-        viewPager.setCurrentItem(0);
+        //viewPager.setCurrentItem(0);
     }
 
     public void setMapView(MapView mapView) {

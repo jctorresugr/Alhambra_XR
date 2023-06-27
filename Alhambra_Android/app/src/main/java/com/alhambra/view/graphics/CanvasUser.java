@@ -36,10 +36,9 @@ public class CanvasUser extends CanvasInteractiveElement
     public void draw(Canvas canvas) {
         float deg = userData.getRotation().y;
         canvas.translate(x,y);
-        canvas.rotate(deg);
-        //canvas.drawCircle(x,y,radius,pathPaint);
-        canvas.drawPath(path,pathPaint);
         canvas.rotate(-deg);
+        canvas.drawPath(path,pathPaint);
+        canvas.rotate(deg);
         canvas.translate(-x,-y);
     }
 
@@ -74,7 +73,6 @@ public class CanvasUser extends CanvasInteractiveElement
     @Override
     public void onUserDataChange(UserData data) {
         updatePosition();
-        dirty();
     }
 
     public void updatePosition(){
