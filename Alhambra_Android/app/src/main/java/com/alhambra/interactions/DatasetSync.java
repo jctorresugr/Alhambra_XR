@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.alhambra.MainActivity;
 import com.alhambra.dataset.AnnotationDataset;
+import com.alhambra.dataset.UserData;
 import com.alhambra.dataset.data.Annotation;
 import com.alhambra.dataset.data.AnnotationID;
 import com.alhambra.dataset.data.AnnotationJoint;
@@ -11,6 +12,8 @@ import com.alhambra.dataset.data.AnnotationRenderInfo;
 import com.alhambra.network.JSONUtils;
 import com.google.gson.JsonElement;
 import com.sereno.math.BBox;
+import com.sereno.math.Transform;
+import com.sereno.math.Vector3;
 
 import java.util.ArrayList;
 
@@ -48,6 +51,7 @@ public class DatasetSync extends IInteraction{
         mainActivity.regReceiveMessageListener("RemoveAnnotationJoint", (ma, je) -> this.onReceiveRemoveAnnotationJoint(ad,je));
         mainActivity.regReceiveMessageListener("UpdateAnnotationRenderInfo", (ma, je) -> this.onReceiveUpdateAnnotationRenderInfo(ad,je));
         mainActivity.regReceiveMessageListener("UpdateModelBounds", (ma, je) -> this.onReceiveUpdateModelBounds(ad,je));
+        mainActivity.regReceiveMessageListener("SyncPos", (ma, je) -> this.onReceiveSyncPositionData(ad,je));
     }
 
     private static final String LOG_TAG = "DatasetSync";
@@ -158,6 +162,13 @@ public class DatasetSync extends IInteraction{
         if(bBox!=null){
             dataset.setModelBounds(bBox);
         }
+    }
+
+    public void onReceiveSyncPositionData(AnnotationDataset dataset, JsonElement jsonElement){
+        Transform info = JSONUtils.gson.fromJson(jsonElement,Transform.class);
+        UserData userData = mainActivity.userData;
+        userData.setPosition(info.position);
+        userData.setRotation(info.rotation);
     }
 
 

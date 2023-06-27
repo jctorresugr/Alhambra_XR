@@ -1,20 +1,21 @@
 package com.alhambra.view;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewTreeObserver;
 
+import com.alhambra.ListenerSubscriber;
+import com.alhambra.MainActivity;
 import com.alhambra.dataset.AnnotationDataset;
+import com.alhambra.dataset.UserData;
 import com.alhambra.dataset.data.Annotation;
 import com.alhambra.dataset.data.AnnotationID;
 import com.alhambra.dataset.data.AnnotationJoint;
-import com.alhambra.view.graphics.BaseCanvasElementView;
+import com.alhambra.view.base.BaseCanvasElementView;
 import com.alhambra.view.graphics.CanvasAnnotation;
 import com.alhambra.view.graphics.CanvasAnnotationJoint;
+import com.alhambra.view.graphics.CanvasUser;
 import com.sereno.math.BBox;
 import com.sereno.math.TranslateMatrix;
 
@@ -25,12 +26,18 @@ public class MapView extends BaseCanvasElementView
         AnnotationDataset.IDatasetListener,
         View.OnLayoutChangeListener {
 
-    //data
+    public interface OnClickSymbols{
+        void onClickAnnotation(Annotation annotation);
+        void onClickAnnotationJoint(AnnotationJoint annotationJoint);
+    }
     private AnnotationDataset m_dataset;
     private HashMap<AnnotationID,CanvasAnnotation> annotationElements = new HashMap<>();
     private HashMap<Integer, CanvasAnnotationJoint> annotationJointElements = new HashMap<>();
+    private UserData userData;
+    private CanvasUser canvasUser;
 
     public TranslateMatrix translateInfo; //TODO: getter setter for interaction
+    public ListenerSubscriber<OnClickSymbols> onClickSymbolsListeners = new ListenerSubscriber<>();
 
     public void init(){
         translateInfo = new TranslateMatrix();
@@ -47,12 +54,28 @@ public class MapView extends BaseCanvasElementView
         this.m_dataset = m_dataset;
         this.elements.clear();
         annotationElements.clear();
+        this.annotationJointElements.clear();
         if(m_dataset==null){
             return;
         }
         recalculateBounds(m_dataset.getModelBounds());
         m_dataset.addListener(this);
         updateDataset();
+    }
+
+    public UserData getUserData() {
+        return userData;
+    }
+
+    public void setUserData(UserData userData) {
+        if(this.userData==userData){
+            return;
+        }
+        this.userData = userData;
+        canvasUser = new CanvasUser();
+        this.addElement(canvasUser);
+        canvasUser.setUserData(userData);
+        canvasUser.setTranslateMatrix(this.translateInfo);
     }
 
     public void regenerateElement(){
@@ -84,6 +107,9 @@ public class MapView extends BaseCanvasElementView
         for(AnnotationJoint annotationJoint: m_dataset.getAnnotationJoint()){
             updateElement(annotationJoint);
         }
+
+        if(canvasUser!=null)
+            this.addElement(canvasUser);
     }
 
     public CanvasAnnotation addElement(Annotation annotation) {
@@ -97,6 +123,9 @@ public class MapView extends BaseCanvasElementView
             annotationElements.put(annotation.id,curElement);
             this.addElement(curElement);
             curElement.dirty();
+            curElement.onClickListeners.addListener(
+                    l->onClickSymbolsListeners.invoke(i->i.onClickAnnotation(((CanvasAnnotation)l).getAnnotation()))
+            );
         }else{
             curElement.setAnnotation(annotation,translateInfo);
         }
@@ -121,6 +150,7 @@ public class MapView extends BaseCanvasElementView
         }else{
             annotationJointElements.remove(annotationJoint.getId());
             this.removeElement(canvasAnnotation);
+
         }
         return canvasAnnotation;
     }
@@ -153,6 +183,9 @@ public class MapView extends BaseCanvasElementView
             this.addElement(canvasAnnotationJoint);
             canvasAnnotationJoint.setAnnotationJoint(annotationJoint,translateInfo);
             canvasAnnotationJoint.dirty();
+            canvasAnnotationJoint.onClickListeners.addListener(
+                    l->onClickSymbolsListeners.invoke(i->i.onClickAnnotationJoint(((CanvasAnnotationJoint)l).getAnnotationJoint()))
+            );
         }else{
             canvasAnnotationJoint.setAnnotationJoint(annotationJoint,translateInfo);
         }
@@ -205,6 +238,9 @@ public class MapView extends BaseCanvasElementView
     }
 
     protected void recalculateBounds(BBox bounds){
+        if(bounds==null || bounds.min==null){
+            return;
+        }
         final float paddingRatio=0.1f;
         final float paddingLeftRatio=1.0f-paddingRatio;
         float x0 = bounds.min.x;
@@ -217,6 +253,7 @@ public class MapView extends BaseCanvasElementView
 
         translateInfo.scaleX = w/Math.max(x1-x0,1e-5f);
         translateInfo.scaleY = h/Math.max(z1-z0,1e-5f);
+        translateInfo.scaleX = translateInfo.scaleY = Math.min(translateInfo.scaleX,translateInfo.scaleY);
         translateInfo.translateX = -x0*translateInfo.scaleX+paddingRatio*0.5f*w;
         translateInfo.translateY = -z0*translateInfo.scaleY+paddingRatio*0.5f*h;
         Log.i("TranslateInfo","screen size: "+w+" "+h);

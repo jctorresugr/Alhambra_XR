@@ -1,5 +1,9 @@
 package com.alhambra;
 
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
+
 import com.google.gson.Gson;
 
 import java.lang.reflect.Array;
@@ -24,6 +28,27 @@ public class Utils {
             result[i]=x;
             i++;
         }
+        return result;
+    }
+
+    public static void drawCenterText(Canvas canvas,String text,float x,float y, Paint paint) {
+        float textWidth = paint.measureText(text);
+        float xOffset = textWidth*0.5f;
+        canvas.drawText(text,x-xOffset,y,paint);
+    }
+
+    public static Path trianglePath(
+            Path result,
+            float x0,float y0,
+            float x1,float y1,
+            float x2,float y2
+    ){
+        result.setFillType(Path.FillType.EVEN_ODD);
+        result.moveTo(x0,y0);
+        result.lineTo(x1,y1);
+        result.lineTo(x2,y2);
+        result.lineTo(x0,y0);
+        result.close();
         return result;
     }
 }

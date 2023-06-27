@@ -155,3 +155,18 @@ public class BoundsClass
         m_Extent = bounds.extents;
     }
 }
+
+
+[Serializable]
+public class TransformClass
+{
+    [SerializeField]
+    public Vector3 position;
+    [SerializeField]
+    public Vector3 rotation;//euler angles!
+    public TransformClass(Transform transform)
+    {
+        position = transform.position;
+        rotation = transform.eulerAngles;
+    }
+}

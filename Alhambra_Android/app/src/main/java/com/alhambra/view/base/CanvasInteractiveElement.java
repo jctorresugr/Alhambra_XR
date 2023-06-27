@@ -1,14 +1,20 @@
-package com.alhambra.view.graphics;
+package com.alhambra.view.base;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 import com.alhambra.ListenerSubscriber;
+import com.alhambra.view.base.CanvasBaseElement;
 
 public abstract class CanvasInteractiveElement extends CanvasBaseElement {
+    public interface OnClickCanvasElementListener{
+        void onClick(CanvasInteractiveElement e);
+    }
+    public ListenerSubscriber<OnClickCanvasElementListener> onClickListeners = new ListenerSubscriber<>();
     private boolean mouseDown = false;
     @Override
     public void onTouch(View v, MotionEvent e) {
@@ -17,9 +23,17 @@ public abstract class CanvasInteractiveElement extends CanvasBaseElement {
                 setMouseDown(true);
                 break;
             case MotionEvent.ACTION_UP:
+                if(mouseDown){
+                    onClick(e);
+                }
                 setMouseDown(false);
                 break;
         }
+    }
+
+    public void onClick(MotionEvent e){
+        onClickListeners.invoke(l->l.onClick(this));
+        Log.i("CanvasElement","Clicked "+this);
     }
 
     public boolean isMouseDown() {
@@ -44,5 +58,10 @@ public abstract class CanvasInteractiveElement extends CanvasBaseElement {
         p.setStrokeWidth(stroke);
         p.setStyle(style);
         return p;
+    }
+
+    protected void translateAndRotate(Canvas canvas,float dx,float dy, float angle){
+        canvas.translate(dx,dy);
+        canvas.rotate(angle);
     }
 }

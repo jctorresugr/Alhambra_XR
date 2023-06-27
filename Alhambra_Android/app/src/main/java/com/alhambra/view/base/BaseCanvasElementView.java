@@ -1,27 +1,17 @@
-package com.alhambra.view.graphics;
+package com.alhambra.view.base;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
-import android.text.TextPaint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
-import com.alhambra.R;
-import com.alhambra.dataset.AnnotationDataset;
-import com.alhambra.dataset.data.Annotation;
-import com.alhambra.view.graphics.CanvasAnnotation;
-import com.alhambra.view.graphics.CanvasBaseElement;
-import com.sereno.math.BBox;
-
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * TODO: document your custom view class.
@@ -29,12 +19,18 @@ import java.util.Collection;
 public class BaseCanvasElementView extends View implements View.OnTouchListener {
 
     protected ArrayList<CanvasBaseElement> elements = new ArrayList<>();
+    public Matrix matrix;
+    public boolean impedeEvents = false;
 
     public void addElement(CanvasBaseElement e){
         e.index = elements.size();
         elements.add(e);
         e.parent = this;
         e.dirty();
+    }
+
+    public List<CanvasBaseElement> getElements() {
+        return Collections.unmodifiableList(elements);
     }
 
     public void removeElement(CanvasBaseElement e){
@@ -70,6 +66,7 @@ public class BaseCanvasElementView extends View implements View.OnTouchListener 
 
     private void init(AttributeSet attrs, int defStyle) {
         this.setOnTouchListener(this);
+        matrix = new Matrix();
     }
 
     public void redraw(){
@@ -80,6 +77,7 @@ public class BaseCanvasElementView extends View implements View.OnTouchListener 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        canvas.setMatrix(matrix);
         //this.getHeight();
         //canvas.drawColor(Color.WHITE, PorterDuff.Mode.CLEAR);
         canvas.drawColor(Color.WHITE);
@@ -104,6 +102,7 @@ public class BaseCanvasElementView extends View implements View.OnTouchListener 
     public boolean onTouch(View v, MotionEvent e) {
         float x = e.getX();
         float y = e.getY();
+        Log.i("BaseCanvasView","Click "+x+" \t"+y+" "+e.getAction());
         for(CanvasBaseElement element: elements){
             if(element.isInRange(x,y)){
                 element.triggerClick(v,e);
@@ -111,7 +110,8 @@ public class BaseCanvasElementView extends View implements View.OnTouchListener 
                 element.triggerLoseFocus(e);
             }
         }
-        return true;
+        return impedeEvents;
     }
+
 
 }

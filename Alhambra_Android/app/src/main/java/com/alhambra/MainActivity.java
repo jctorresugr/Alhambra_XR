@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.EditText;
 
 import com.alhambra.dataset.SelectionData;
+import com.alhambra.dataset.UserData;
 import com.alhambra.interactions.DatasetSync;
 import com.alhambra.dataset.data.AnnotationInfo;
 import com.alhambra.dataset.AnnotationDataset;
@@ -19,6 +20,7 @@ import com.alhambra.fragment.PageViewer;
 import com.alhambra.fragment.PreviewFragment;
 import com.alhambra.fragment.ViewPagerAdapter;
 import com.alhambra.interactions.IInteraction;
+import com.alhambra.interactions.MinimapInteraction;
 import com.alhambra.interactions.SearchInteraction;
 import com.alhambra.interactions.SelectionInteraction;
 import com.alhambra.network.JSONUtils;
@@ -31,6 +33,7 @@ import com.alhambra.network.sendingmsg.FinishAnnotation;
 import com.alhambra.network.sendingmsg.HighlightDataChunk;
 import com.alhambra.network.sendingmsg.OverviewMessage;
 import com.alhambra.network.sendingmsg.StartAnnotation;
+import com.alhambra.view.FloatMiniMapView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.tabs.TabLayout;
 import com.google.gson.JsonElement;
@@ -98,6 +101,10 @@ public class MainActivity
 
     public SelectionData selectionData = new SelectionData();
 
+    public UserData userData = new UserData();
+
+    private MinimapInteraction minimapInteraction;
+
     /*--------------------------------------*/
     /*-----Initialization of everything-----*/
     /*--------------------------------------*/
@@ -115,6 +122,10 @@ public class MainActivity
         this.addInteraction(new DatasetSync());
         this.addInteraction(new SelectionInteraction());
         this.addInteraction(new SearchInteraction());
+        minimapInteraction = new MinimapInteraction();
+        minimapInteraction.selectionData=selectionData;
+        minimapInteraction.viewPager=m_viewPager;
+        this.addInteraction(minimapInteraction);
     }
 
     public void regReceiveMessageListener(String actionName, IReceiveMessageListener l){
@@ -292,6 +303,7 @@ public class MainActivity
         });
     }
 
+    FloatMiniMapView floatView;
     /** Initialize the layout and all its widgets.*/
     private void initLayout()
     {
@@ -319,6 +331,7 @@ public class MainActivity
         m_overviewFragment = new OverviewFragment();
         m_overviewFragment.addListener((OverviewFragment.OverviewFragmentListener) this);
         m_overviewFragment.setAnnotationDataset(m_Annotation_dataset);
+        m_overviewFragment.setUserData(userData);
         adapter.addFragment(m_overviewFragment, "Overview");
 
 
@@ -331,6 +344,22 @@ public class MainActivity
 
         //Set the dataset on the UI thread for redoing all the widgets of the PreviewFragment
         this.runOnUiThread(() -> m_previewFragment.setDataset(m_Annotation_dataset,selectionData));
+
+
+        floatView = new FloatMiniMapView(MainActivity.this);
+        floatView.setData(m_Annotation_dataset,userData);
+        floatView.pager=m_viewPager;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        floatView.show();
     }
 
     /** Disable the annotation tab. This will lock the application in the preview tab (works because we only have two tabs here)*/
@@ -431,6 +460,11 @@ public class MainActivity
     @Override
     public void stopShowAllAnnotation(OverviewFragment frag) {
         m_socket.push(OverviewMessage.generateStopShowAllJSON());
+    }
+
+    @Override
+    public void onOverViewUIInit(OverviewFragment frag) {
+        minimapInteraction.setMapView(m_overviewFragment.getMapView());
     }
 
     public AnnotationDataset getAnnotationDataset() {

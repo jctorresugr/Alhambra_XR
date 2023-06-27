@@ -1,18 +1,17 @@
 package com.alhambra.view.graphics;
 
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
-import android.util.Log;
 import android.view.MotionEvent;
-import android.view.View;
 
+import com.alhambra.MainActivity;
 import com.alhambra.dataset.data.Annotation;
+import com.alhambra.view.base.CanvasInteractiveElement;
 import com.sereno.math.BBox;
 import com.sereno.math.MathUtils;
 import com.sereno.math.TranslateMatrix;
 
-public class CanvasAnnotation extends CanvasInteractiveElement{
+public class CanvasAnnotation extends CanvasInteractiveElement {
     protected Annotation annotation;
     private static final float radius=30.0f;
     //private boolean highlight = false;
@@ -58,7 +57,7 @@ public class CanvasAnnotation extends CanvasInteractiveElement{
             canvas.drawCircle(x,y,radius,normalBorderPaint);
         }
 
-        Log.i("Draw","At: "+x+" \t|\t "+y);
+        //Log.i("Draw","At: "+x+" \t|\t "+y);
     }
 
     @Override
@@ -69,4 +68,5 @@ public class CanvasAnnotation extends CanvasInteractiveElement{
     public Annotation getAnnotation() {
         return annotation;
     }
+
 }

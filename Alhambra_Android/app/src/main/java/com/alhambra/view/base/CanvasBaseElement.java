@@ -1,4 +1,4 @@
-package com.alhambra.view.graphics;
+package com.alhambra.view.base;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -6,14 +6,16 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import com.alhambra.ListenerSubscriber;
+import com.alhambra.view.base.BaseCanvasElementView;
 
 public abstract class CanvasBaseElement {
+
 
     protected float x,y;
     protected Paint paint;
     private int dirtyFrames;
     int index;
-    BaseCanvasElementView parent;
+    protected BaseCanvasElementView parent;
     private boolean isFocused;
 
     public void dirty(){
@@ -95,4 +97,20 @@ public abstract class CanvasBaseElement {
     }
 
     public abstract boolean isInRange(float x0, float y0);
+
+    public float getX() {
+        return x;
+    }
+
+    public float getY() {
+        return y;
+    }
+
+    public Paint getPaint() {
+        return paint;
+    }
+
+    public BaseCanvasElementView getParent() {
+        return parent;
+    }
 }

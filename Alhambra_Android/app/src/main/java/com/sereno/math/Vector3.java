@@ -64,4 +64,7 @@ public class Vector3
         return new float[]{x,y,z};
     }
 
+    public static Vector3 getZero(){
+        return new Vector3();
+    }
 }

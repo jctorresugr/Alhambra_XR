@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment;
 
 import com.alhambra.R;
 import com.alhambra.dataset.AnnotationDataset;
+import com.alhambra.dataset.UserData;
 import com.alhambra.view.MapView;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ public class OverviewFragment extends AlhambraFragment {
     private Button m_stopShowAllBtn;
     private MapView m_mapView;
     private AnnotationDataset annotationDataset;
+    private UserData userData;
     public OverviewFragment() {
         super();
     }
@@ -30,6 +32,7 @@ public class OverviewFragment extends AlhambraFragment {
     {
         void showAllAnnotation(OverviewFragment frag);
         void stopShowAllAnnotation(OverviewFragment frag);
+        void onOverViewUIInit(OverviewFragment frag);
     }
 
     private ArrayList<OverviewFragmentListener> m_listeners = new ArrayList<>();
@@ -56,9 +59,10 @@ public class OverviewFragment extends AlhambraFragment {
         m_showAllBtn = v.findViewById(R.id.showAllBtn);
         m_stopShowAllBtn = v.findViewById(R.id.stopShowAllBtn);
         m_mapView = v.findViewById(R.id.annotationMapView2);
+        m_mapView.setUserData(userData);
         m_mapView.setDataset(annotationDataset);
+        m_mapView.impedeEvents=true;
         m_showAllBtn.setOnClickListener(view -> {
-            //TODO: add show all
             for(OverviewFragmentListener l:m_listeners) {
                 l.showAllAnnotation(this);
             }
@@ -68,7 +72,16 @@ public class OverviewFragment extends AlhambraFragment {
                 l.stopShowAllAnnotation(this);
             }
         });
+
         return v;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        for(OverviewFragmentListener l:m_listeners) {
+            l.onOverViewUIInit(this);
+        }
     }
 
     public AnnotationDataset getAnnotationDataset() {
@@ -80,5 +93,20 @@ public class OverviewFragment extends AlhambraFragment {
         if(m_mapView!=null){
             m_mapView.setDataset(annotationDataset);
         }
+    }
+
+    public UserData getUserData() {
+        return userData;
+    }
+
+    public void setUserData(UserData userData) {
+        this.userData = userData;
+        if(m_mapView!=null){
+            m_mapView.setUserData(userData);
+        }
+    }
+
+    public MapView getMapView() {
+        return m_mapView;
     }
 }

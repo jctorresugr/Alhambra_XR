@@ -218,7 +218,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   render: {fileID: 11926942}
   user: {fileID: 963194228}
-  sqrThreshold: 5
+  sqrThreshold: 0.1
 --- !u!1 &31229075
 GameObject:
   m_ObjectHideFlags: 0
@@ -644,6 +644,7 @@ GameObject:
   - component: {fileID: 293561428}
   - component: {fileID: 293561431}
   - component: {fileID: 293561432}
+  - component: {fileID: 293561429}
   m_Layer: 0
   m_Name: Main
   m_TagString: Untagged
@@ -664,6 +665,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   data: {fileID: 293561425}
+  mainCamera: {fileID: 963194227}
   PickPanoModel: {fileID: 7568032346716495948}
   PointingArrow: {fileID: 600857965}
   UVMaterial: {fileID: 2100000, guid: c7069d79f1e96f24aad06f92e8f5b24f, type: 2}
@@ -751,6 +753,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   main: {fileID: 293561423}
   data: {fileID: 293561425}
+--- !u!114 &293561429
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 293561422}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 340c7a6069fdb6248954c18cdc2bc7a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  main: {fileID: 293561423}
+  data: {fileID: 293561425}
+  referenceTransform: {fileID: 293561427}
+  teleportOffset: 1
+  upOffset: 1
+  updateTime: 0.25
 --- !u!114 &293561431
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2739,7 +2759,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1714625634
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2747,7 +2767,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1714625633}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 85f385bc7bf62b84ba08e577428b65bb, type: 3}
   m_Name: 

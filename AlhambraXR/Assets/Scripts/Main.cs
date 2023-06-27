@@ -31,6 +31,7 @@ public class Main : MonoBehaviour,
     /// Store all data here!
     /// </summary>
     public DataManager data;
+    public Camera mainCamera;
     
     /// <summary>
     /// Should we enable the IPText?
@@ -297,6 +298,11 @@ public class Main : MonoBehaviour,
             Action tasks = m_tasksInMainThread.Dequeue();
             tasks.Invoke();
         }
+    }
+
+    public void AddTask(Action action)
+    {
+        m_tasksInMainThread.Enqueue(action);
     }
 
     public void OnConnectionStatus(AlhambraServer server, ConnectionStatus status)
