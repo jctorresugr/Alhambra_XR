@@ -10,10 +10,14 @@ public class VolumeNavigation : MonoBehaviour
     public VolumeAnalyze volumeAnalyze;
     public DataManager data;
     public ReferenceTransform referenceTransform;
+    public IHelpNodeProvider helpNodeProvider;
     [Header("Settings")]
+    [Header("Settings - Nav Weight")]
     public float depthRatio = 0.01f;
     public float branchRatio = 0.01f;
     public float splitEdgeThreshold = 0.001f;
+    public float mainNodeWeight = 0.1f;
+    [Header("Settings - Nav Space Adjust")]
     public LayerMask layerMask = 1 >> 6;
     public float normalOffset = 0.001f;
     public Vector3 tempX = Vector3.right;
@@ -67,34 +71,6 @@ public class VolumeNavigation : MonoBehaviour
     protected Vector3 GetAnnotationPos(Annotation annot)
     {
         return annot.renderInfo.averagePosition + annot.renderInfo.Normal * normalOffset;
-        /*
-        Vector3 center = annot.renderInfo.Center;
-        Vector3 normal = annot.renderInfo.Normal;
-        Vector3 size = annot.renderInfo.Bounds.size*0.5f;
-        float outBoxDis = float.MaxValue;
-        for(int i=0;i<3;i++)
-        {
-            if(normal[i]!=0)
-            {
-                outBoxDis = Mathf.Min(outBoxDis, Mathf.Abs(size[i] / normal[i]));
-            }
-        }
-        if(outBoxDis==float.MaxValue)
-        {
-            outBoxDis = 0.0f;
-        }
-        Vector3 pos =  center + annot.renderInfo.Normal * outBoxDis;
-
-        Vector3 worldPos = referenceTransform.MapPosition(pos);
-        RaycastHit rayHit;
-        if(Physics.Raycast(worldPos,-annot.renderInfo.Normal, out rayHit, 10000.0f,layerMask))
-        {
-            return referenceTransform.InvMapPosition(rayHit.point)+ annot.renderInfo.Normal * normalOffset;
-        }
-        else
-        {
-            return pos + annot.renderInfo.Normal * normalOffset;
-        }*/
     }
 
     protected float Distance(GraphNode<AnnotationNodeData> a, GraphNode<AnnotationNodeData> b)
@@ -218,19 +194,41 @@ public class VolumeNavigation : MonoBehaviour
             Debug.Log($"{annotations[i].ID} .bounds => {annotations[i].renderInfo.Bounds}");
         }
 
+        //Fetch helpNode
+        List<Vector3> helpNodes = helpNodeProvider.GetHelpNodePositions();
+        foreach(Vector3 v in helpNodes)
+        {
+            graph.AddNode(new AnnotationNodeData(AnnotationID.INVALID_ID, v));
+        }
+
         for (int i = 0; i < annotCount; i++)
         {
             GraphNode<AnnotationNodeData> ai = graph.GetNode(i);
             for (int j = i + 1; j < annotCount; j++)
             {
                 GraphNode<AnnotationNodeData> aj = graph.GetNode(j);
-                //TODO: optimize the graph generation
+                if(isHit(ai.data.centerPos,aj.data.centerPos))
+                {
+                    continue;
+                }
                 graph.AddEdge(i, j, new EdgeDistanceData(Distance(ai, aj)));
             }
         }
 
+        //debug code
+        graph.ForeachNode(
+            n =>
+            {
+                if(n.Degree==0)
+                {
+                    Debug.LogWarning("Cannot find a link for node " + n.index + " \t| id=" + n.data.id);
+                }
+            });
+
+        float modelScaleFactor = 1.0f / data.modelBounds.size.magnitude;
+
         //==================================
-        //begin!
+        //add user position
         userLocalPos = referenceTransform.InvMapPosition(userLocalPos);
         
         List<GraphNode<AnnotationNodeData>> originalNode = new List<GraphNode<AnnotationNodeData>>();
@@ -238,9 +236,8 @@ public class VolumeNavigation : MonoBehaviour
         GraphNode<AnnotationNodeData> userNode = AddNode(new AnnotationNodeData(AnnotationID.LIGHTALL_ID, userLocalPos));
         userNode.data.depth = 0;
 
-        // normalize distance
-        //TODO:.... get bounds and process;
-
+        //==================================
+        // begin!
         // Minimum span tree algorithm (Prim), but we have a fixed root, with extra evaluation calculations
         Heap<EdgePickInfo> edgeHeap = new Heap<EdgePickInfo>();
 
@@ -254,13 +251,18 @@ public class VolumeNavigation : MonoBehaviour
             //add Edge
             graph.ForeachNodeNeighbor(
                 lastNode,
-                node=> { },
-                edge=>
+                (node,edge)=>
                 {
                     EdgePickInfo pi = new EdgePickInfo();
                     pi.edgeIndex = edge.index;
                     pi.nodeIndex = edge.GetAnotherNodeIndex(lastNode.index);
-                    pi.distance = edge.data.basicDistance + lastNode.data.depth * depthRatio + lastNode.Degree * branchRatio;
+                    pi.distance = 
+                        edge.data.basicDistance + 
+                        lastNode.data.depth * depthRatio * modelScaleFactor + 
+                        lastNode.Degree * branchRatio * modelScaleFactor +
+                        (lastNode.data.id.IsValid ? 0:mainNodeWeight) +
+                        (node.data.id.IsValid ? 0: mainNodeWeight)
+                        ;
                     edgeHeap.Enqueue(pi);
                     Debug.Log($"Push {edge.fromNode}->{edge.toNode} \t| dis = {pi.distance} \t| d={lastNode.data.depth}");
                 }
@@ -345,7 +347,6 @@ public class VolumeNavigation : MonoBehaviour
                     resultEdges.Add(newEdge);
                     Debug.Log($"Set node depth {newNode.index} d={newNode.data.depth}");
                 }
-                //addNodeCount++;
                 break;
             }
         }
@@ -357,23 +358,46 @@ public class VolumeNavigation : MonoBehaviour
         {
             treeGraph.AddEdge(edge.fromNode, edge.toNode, new EdgeDistanceData(edge.data.basicDistance));
         }
-        /*
-        foreach(var node in additionalNode)
-        {
-            graph.RemoveNode(node);
-        }*/
+
         userNode = treeGraph.GetNode(userNode.index);
         NavigationInfo result = new NavigationInfo();
         result.treeGraph = treeGraph;
         result.root = userNode;
-        //ClearVisited();
+
+        //remove useless leaf node
+        List<GraphNode<AnnotationNodeData>> removeNodes = new List<GraphNode<AnnotationNodeData>>();
+        while(true)
+        {
+            treeGraph.ForeachNode(
+            n =>
+            {
+                if (n.Degree==1 && n.data.id == AnnotationID.INVALID_ID)
+                {
+                    removeNodes.Add(n);
+                    Debug.Log("Remove tree node " + n.index);
+                }
+            });
+            if(removeNodes.Count==0)
+            {
+                break;
+            }
+            foreach(var n in removeNodes)
+            {
+                treeGraph.RemoveNode(n);
+            }
+            removeNodes.Clear();
+        }
+        
 
         //further process result
         foreach(var node in originalNode)
         {
+            if(!node.data.id.IsValid)
+            {
+                continue;
+            }
             Annotation annot = data.FindAnnotationID(node.data.id);
-            //Vector3 d = annot.renderInfo.Normal * normalOffset * 0.1f;
-            Vector3 pos = annot.renderInfo.averagePosition;// + d;// node.data.centerPos-annot.renderInfo.Normal*normalOffset;
+            Vector3 pos = annot.renderInfo.averagePosition;
             GraphNode<AnnotationNodeData> annotNode = treeGraph.AddNode(new AnnotationNodeData(AnnotationID.INVALID_ID, pos));
             treeGraph.AddEdge(node.index, annotNode.index, new EdgeDistanceData());
         }
@@ -498,6 +522,18 @@ public class VolumeNavigation : MonoBehaviour
         Vector3 n2 = SearchHit(pos, -dir);
         Vector3 nd = n2 - n1;
         return nd == Vector3.zero ? nd : nd.normalized;
+    }
+
+    protected bool isHit(Vector3 modelPos1,Vector3 modelPos2)
+    {
+        modelPos1 = referenceTransform.MapPosition(modelPos1);
+        modelPos2 = referenceTransform.MapPosition(modelPos2);
+        Vector3 d = modelPos2 - modelPos1;
+        if (d == Vector3.zero)
+        {
+            return false;
+        }
+        return Physics.Raycast(modelPos1, d.normalized, d.magnitude, layerMask);
     }
 
 }
