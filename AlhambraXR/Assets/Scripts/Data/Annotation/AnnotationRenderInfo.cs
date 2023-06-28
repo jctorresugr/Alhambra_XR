@@ -19,14 +19,8 @@ public class AnnotationRenderInfo
     [FormerlySerializedAs("bounds")] // not worked, do not know why...
     [SerializeField]
     public Bounds Bounds;
-    [NonSerialized]
+    [SerializeField]
     public Bounds OBBBounds;
-    /*
-    public Bounds Bounds
-    {
-        get => m_bounds;
-        set => m_bounds = Bounds;
-    }*/
 
     /// <summary>
     /// The bounding box (min XYZ position) in the local space of the 3D model where this annotation belongs to.
@@ -49,14 +43,12 @@ public class AnnotationRenderInfo
     [SerializeField]
     private Vector3 normal;
 
-    [NonSerialized]
+    [SerializeField]
     private Vector3 tangent;
-    [NonSerialized]
+    [SerializeField]
     public Vector3 averagePosition;
-    [NonSerialized]
+    [SerializeField]
     public int pointCount;
-    [NonSerialized]
-    public float yMax,yMin;
 
     public Vector3 Normal { get=>normal; set=>normal=value; }
     public Vector3 Tangent { get=> tangent; set=> tangent = value; }
@@ -72,6 +64,13 @@ public class AnnotationRenderInfo
     }
 
     public bool IsValid => normal != Vector3.zero;
+
+    public XYZCoordinate CreateCoordinate()
+    {
+        XYZCoordinate xYZCoordinate = new XYZCoordinate(Normal, Tangent);
+        xYZCoordinate.translatePos = averagePosition;
+        return xYZCoordinate;
+    }
 
     /// <summary>
     /// Constructor. Initialize everything with default values.

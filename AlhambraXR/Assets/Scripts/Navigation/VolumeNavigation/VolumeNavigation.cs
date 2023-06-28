@@ -357,15 +357,16 @@ public class VolumeNavigation : MonoBehaviour
         {
             treeGraph.AddEdge(edge.fromNode, edge.toNode, new EdgeDistanceData(edge.data.basicDistance));
         }
+        /*
         foreach(var node in additionalNode)
         {
             graph.RemoveNode(node);
-        }
+        }*/
         userNode = treeGraph.GetNode(userNode.index);
         NavigationInfo result = new NavigationInfo();
         result.treeGraph = treeGraph;
         result.root = userNode;
-        ClearVisited();
+        //ClearVisited();
 
         //further process result
         foreach(var node in originalNode)

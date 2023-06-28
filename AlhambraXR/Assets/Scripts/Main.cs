@@ -137,6 +137,7 @@ public class Main : MonoBehaviour,
 
     public NavigationManager navigationManager;
     public AnnotationRenderBuilder annotationRenderBuilder;
+    public SaveAndLoader saveAndLoader;
     //public VolumeNavigation volumeNavigation;
 
     //public VolumeAnalyze volumeAnalyze;
@@ -171,15 +172,13 @@ public class Main : MonoBehaviour,
             Debug.LogWarning("Issue with ARGBFloat or ARGB32 textures... This device cannot anchor annotations correctly.");
         }
 
-        data.Init();
         // init ui first, add listeners
 
-        
+        saveAndLoader.Load();
         m_model.AddListener(this);
         PickPanoModel.Init(m_model);
         PickPanoModel.AddListener(this);
 
-        data.LoadDefaultData();
         data.modelBounds = PickPanoModel.Mesh.bounds;
 
         navigationManager.Init(m_model);

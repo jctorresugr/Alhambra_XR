@@ -228,7 +228,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                 AnnotationRenderInfo renderInfo = annot.renderInfo;
                 renderInfo.Normal = renderInfo.Normal.normalized;
                 renderInfo.Tangent = renderInfo.Tangent.normalized;
-                renderInfo.averagePosition /= renderInfo.pointCount;
+                if(renderInfo.pointCount>0)
+                {
+                    renderInfo.averagePosition /= renderInfo.pointCount;
+                }
                 Debug.Log($"Tangent&Normal {annot.ID} >>\t A{renderInfo.averagePosition} >>\t C{renderInfo.pointCount} >>> T{renderInfo.Tangent} >>\t N{renderInfo.Normal}");
             });
 
@@ -240,6 +243,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
             AnnotationRenderInfo renderInfo = annot.renderInfo;
             XYZCoordinate xYZCoordinate = new XYZCoordinate(renderInfo.Normal, renderInfo.Tangent);
             xYZCoordinate.translatePos = renderInfo.averagePosition;
+            renderInfo.OBBBounds = new Bounds(Vector3.zero, Vector3.zero);
             annotCoord.TryAdd(id, xYZCoordinate);
         }
         
@@ -265,17 +269,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                             
                             lock (annotation)
                             {
-                                if(
-                                annotation.renderInfo.OBBBounds.min==Vector3.zero &&
-                                annotation.renderInfo.OBBBounds.max==Vector3.zero
-                                )
-                                {
-                                    annotation.renderInfo.OBBBounds.SetMinMax(localPos, localPos);
-                                    Debug.Log($"UpdateAnnotOBB {id}");
-                                }else
-                                {
-                                    annotation.renderInfo.OBBBounds.Encapsulate(localPos);
-                                }
+                                annotation.renderInfo.OBBBounds.Encapsulate(localPos);
                                 
                             }
                             
@@ -503,8 +497,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         {
             int r = 1;
             for(; r < (1<<8); r++)
-            { 
-                //if(!m_annotations.Exists((annot) => annot.Color.r == r))
+            {
                 if(!data.ExistAnnotation((annot) => annot.renderInfo.Color.r == r))
                 {
                     layerColor.r = (byte)r;
@@ -524,8 +517,6 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
             int g = 1;
             for (; g < (1 << 8); g++) //Search that layer (g, b) does not exist first
             {
-                //if(!m_annotations.Exists((annot) => annot.Color.r == 0 &&
-                //                                    annot.Color.g == g))
                 if(!data.ExistAnnotation((annot) => annot.renderInfo.Color.r == 0 &&
                                                     annot.renderInfo.Color.g == g))
                 {
@@ -546,9 +537,6 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
             int b = 1;
             for (; b < (1 << 8); b++) //Search that layer (b) does not exist first
             {
-                //if(!m_annotations.Exists((annot) => annot.Color.r == 0 &&
-                //                                    annot.Color.g == 0 &&
-                //                                    annot.Color.b == b))
                 if (!data.ExistAnnotation((annot) => annot.renderInfo.Color.r == 0 &&
                                                      annot.renderInfo.Color.g == 0 &&
                                                      annot.renderInfo.Color.b == b))
@@ -569,26 +557,34 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         //Initialize the new annotation to register
         AnnotationRenderInfo annot = new AnnotationRenderInfo() 
         { 
-            Color = layerColor, 
-            //BoundingMin = new float[3] { float.MaxValue, float.MaxValue, float.MaxValue }, 
-            //BoundingMax = new float[3] { float.MinValue, float.MinValue, float.MinValue },
-            Normal = Vector3.zero
+            Color = layerColor,
+            Normal = Vector3.zero,
+            Tangent = Vector3.zero,
+            pointCount = 0,
+            Bounds = BoundsExt.INVALID_BOUNDS,
+            OBBBounds = BoundsExt.INVALID_BOUNDS
         };
 
         //Now that we know on which layer to put that annotation, anchor it
         //Since every pixel are independent, and that multiple write is not an issue, parallelize the code
         Parallel.For(0, uvHeight, new ParallelOptions { MaxDegreeOfParallelism = 8 },
-            () => new float[6] { float.MaxValue, float.MaxValue, float.MaxValue, 
-                                 float.MinValue, float.MinValue, float.MinValue },
+            () => new AnnotationRenderInfo() { 
+                    Color = layerColor,
+                    Normal = Vector3.zero,
+                    Tangent = Vector3.zero,
+                    pointCount = 0,
+                    Bounds = BoundsExt.INVALID_BOUNDS
+            },
             (j, state, partialRes) =>
             {
                 for(int i = 0; i < uvWidth; i++)
                 {
-                    if(newRGBA[j * uvWidth + i].a == 0) //Transparent UV
+                    int uvIndex = (int)(j * uvWidth + i);
+                    if (newRGBA[uvIndex].a == 0) //Transparent UV
                         continue;
 
-                    int srcJ   = (int)(newRGBA[j * uvWidth + i].g * srcHeight);
-                    int srcI   = (int)(newRGBA[j * uvWidth + i].r * srcWidth);
+                    int srcJ   = (int)(newRGBA[uvIndex].g * srcHeight);
+                    int srcI   = (int)(newRGBA[uvIndex].r * srcWidth);
                     int srcIdx = 4 * (srcJ * srcWidth + srcI);
 
                     if(m_uvToPositionPixels[srcIdx + 3] == 0) //Unknown 3D position
@@ -596,12 +592,13 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
 
                     for(int k = 0; k < 4; k++)
                         srcRGBA[srcIdx + k] = layerColor[k];
-                    
-                    for(int k = 0; k < 3; k++)
-                    {
-                        partialRes[k]   = Math.Min(m_uvToPositionPixels[srcIdx + k], partialRes[k]);
-                        partialRes[k+3] = Math.Max(m_uvToPositionPixels[srcIdx + k], partialRes[k+3]);
-                    }
+
+                    partialRes.Normal += new Vector3(m_uvToNormalPixels[srcIdx], m_uvToNormalPixels[srcIdx + 1], m_uvToNormalPixels[srcIdx + 2]);
+                    partialRes.Tangent += new Vector3(m_uvToTangentPixels[srcIdx], m_uvToTangentPixels[srcIdx + 1], m_uvToTangentPixels[srcIdx + 2]);
+                    Vector3 pos = new Vector3(m_uvToPositionPixels[srcIdx], m_uvToPositionPixels[srcIdx + 1], m_uvToPositionPixels[srcIdx + 2]);
+                    partialRes.averagePosition += pos;
+                    partialRes.Bounds.Add(pos);
+                    partialRes.pointCount++;
                     
                 }
                 return partialRes;
@@ -610,38 +607,45 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
             {
                 lock(annot)
                 {
-                    if(annot.Bounds.min[0]==float.MinValue)
-                    {
-                        annot.Bounds.SetMinMax(new Vector3(partialRes[0], partialRes[1], partialRes[2]), new Vector3(partialRes[3], partialRes[4], partialRes[5]));
-                    }
-                    annot.Bounds.Encapsulate(new Vector3(partialRes[0], partialRes[1], partialRes[2]));
-                    annot.Bounds.Encapsulate(new Vector3(partialRes[3], partialRes[4], partialRes[5]));
-                    /*for(int i = 0; i < 3; i++)
-                    {
-                        annot.BoundingMin[i] = Math.Min(annot.BoundingMin[i], partialRes[i]);
-                        annot.BoundingMax[i] = Math.Max(annot.BoundingMax[i], partialRes[i+3]);
-                    }*/
+                    annot.Bounds.Add(partialRes.Bounds);
+                    annot.Normal += partialRes.Normal;
+                    annot.Tangent += partialRes.Tangent;
+                    annot.averagePosition += partialRes.averagePosition;
+                    annot.pointCount += partialRes.pointCount;
                 }
             }
         );
 
-        Parallel.For(0, uvHeight,
-            () => new Vector3(0,0,0),
+        annot.Tangent = annot.Tangent.normalized;
+        annot.Normal = annot.Normal.normalized;
+        if(annot.pointCount>0)
+        {
+            annot.averagePosition /= annot.pointCount;
+        }
+
+        XYZCoordinate coord = annot.CreateCoordinate();
+
+        Parallel.For(0, uvHeight, new ParallelOptions { MaxDegreeOfParallelism = 8 },
+            () => BoundsExt.INVALID_BOUNDS,
             (j, state, partialRes) =>
             {
                 for (int i = 0; i < uvWidth; i++)
                 {
-                    if (newRGBA[j * uvWidth + i].a == 0) //Transparent UV
+                    int uvIndex = (int)(j * uvWidth + i);
+                    if (newRGBA[uvIndex].a == 0) //Transparent UV
                         continue;
 
-                    int srcJ = (int)(newRGBA[j * uvWidth + i].g * srcHeight);
-                    int srcI = (int)(newRGBA[j * uvWidth + i].r * srcWidth);
-                    int srcIdx = (srcJ * srcWidth + srcI)*4;
+                    int srcJ = (int)(newRGBA[uvIndex].g * srcHeight);
+                    int srcI = (int)(newRGBA[uvIndex].r * srcWidth);
+                    int srcIdx = 4 * (srcJ * srcWidth + srcI);
 
                     if (m_uvToPositionPixels[srcIdx + 3] == 0) //Unknown 3D position
                         continue;
 
-                    partialRes += new Vector3(m_uvToNormalPixels[srcIdx], m_uvToNormalPixels[srcIdx+1], m_uvToNormalPixels[srcIdx+2]);
+                    Vector3 pos = new Vector3(m_uvToPositionPixels[srcIdx], m_uvToPositionPixels[srcIdx + 1], m_uvToPositionPixels[srcIdx + 2]);
+                    Vector3 projections = coord.Projection(pos);
+                    partialRes.Add(projections);
+
 
                 }
                 return partialRes;
@@ -650,13 +654,12 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
             {
                 lock (annot)
                 {
-                    annot.Normal += partialRes;
+                    annot.OBBBounds.Add(partialRes);
                 }
             }
         );
-        annot.Normal = annot.Normal.normalized;
+
         Debug.Log($"Finish to add annotation Color {layerColor}");
-        //m_annotations.Add(annot);
         data.AddAnnoationRenderInfo(annot);
 
         srcAnnotationTexture.Apply();
@@ -732,11 +735,4 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         get => gameObject.GetComponent<MeshFilter>().mesh;
     }
 
-    /// <summary>
-    /// The list of all registered annotations
-    /// </summary>
-    //public List<AnnotationRenderInfo> Annotations
-    //{
-    //    get => m_annotations;
-    //}
 }

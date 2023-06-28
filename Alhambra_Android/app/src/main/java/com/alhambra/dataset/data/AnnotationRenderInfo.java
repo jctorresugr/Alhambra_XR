@@ -6,28 +6,38 @@ import com.sereno.math.BBox;
 import com.sereno.math.Vector3;
 
 public class AnnotationRenderInfo {
-    @SerializedName("color")
-    private Color m_color;
+    private Color color;
     @SerializedName("Bounds")
-    private BBox m_bounds;
-    @SerializedName("normal")
-    private Vector3 m_normal;
+    private BBox bounds;
+    private Vector3 normal;
 
-    public AnnotationRenderInfo(Color m_color, BBox m_bounds, Vector3 m_normal) {
-        this.m_color = m_color;
-        this.m_bounds = m_bounds;
-        this.m_normal = m_normal;
-    }
+    private Vector3 tangent;
+
+    private Vector3 averagePosition;
+
+    private int pointCount;
 
     public Color getColor() {
-        return m_color;
+        return color;
     }
 
     public BBox getBounds() {
-        return m_bounds;
+        return bounds;
     }
 
     public Vector3 getNormal() {
-        return m_normal;
+        return normal;
+    }
+
+    public Vector3 getTangent() {
+        return tangent;
+    }
+
+    public Vector3 getAveragePosition() {
+        return averagePosition;
+    }
+
+    public int getPointCount() {
+        return pointCount;
     }
 }

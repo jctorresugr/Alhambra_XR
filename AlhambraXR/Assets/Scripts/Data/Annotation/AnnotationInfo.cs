@@ -80,6 +80,7 @@ public class AnnotationInfo
     public byte[] SnapshotRGBA
     {
         get => m_snapshotRGBA;
+        set => m_snapshotRGBA = value;
     }
 
     /// <summary>

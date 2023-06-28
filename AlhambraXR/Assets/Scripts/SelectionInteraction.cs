@@ -22,23 +22,6 @@ public class SelectionInteraction : SocketDataBasic, ISelectionModelDataListener
 
     public void OnReceiveHighlightGroups(int[] joints)
     {
-        /*
-        HashSet<AnnotationID> annotations = new HashSet<AnnotationID>();
-        foreach(int jointId in joints)
-        {
-            AnnotationJoint annotationJoint = data.FindJointID(jointId);
-            if(annotationJoint==null)
-            {
-                Debug.LogWarning("Cannot resolve joint id " + jointId);
-                continue;
-            }
-            foreach(Annotation annot in annotationJoint.Annotations)
-            {
-                annotations.Add(annot.ID);
-            }
-        }
-        main.SelectionData.SelectedAnnotations = annotations.ToList();
-        navigationManager.refreshNow = true;*/
     }
 
     public void OnSetCurrentAction(SelectionModelData model, CurrentAction action)

@@ -20,8 +20,11 @@ public class DataManager : MonoBehaviour
     public event AnnotationJoint.AnnotationAndJointChangeFunc OnJointAddAnnotationEvent;
     public event AnnotationJoint.AnnotationAndJointChangeFunc OnJointRemoveAnnotationEvent;
 
-    private List<Annotation> annotations;
-    private List<AnnotationJoint> annotationJoints;
+    [SerializeField]
+    private List<Annotation> annotations = new List<Annotation>();
+    [SerializeField]
+    private List<AnnotationJoint> annotationJoints = new List<AnnotationJoint>();
+    [SerializeField]
     public Bounds modelBounds;
 
     public List<Annotation> Annotations => annotations;  
@@ -29,6 +32,7 @@ public class DataManager : MonoBehaviour
 
     public float ReferLength => modelBounds.size.magnitude;
 
+    [NonSerialized]
     public string loadPath = "Database/";
 
     public Annotation FindAnnotation(Predicate<Annotation> predicate)
@@ -40,7 +44,7 @@ public class DataManager : MonoBehaviour
     {
         return FindAnnotation(predicate)!=null;
     }
-
+    /*
     public void Init()
     {
         annotationJoints = new List<AnnotationJoint>();
@@ -73,7 +77,7 @@ public class DataManager : MonoBehaviour
 
 
         
-    }
+    }*/
 
     public Annotation FindAnnotationID(AnnotationID id)
     {
