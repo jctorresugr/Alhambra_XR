@@ -50,6 +50,13 @@ public class GraphEdge<T>
         return curIndex == fromNode ? toNode : fromNode;
     }
 
+    public bool IsSameConnection(int node1, int node2)
+    {
+        return
+            node1 == fromNode && node2 == toNode ||
+            node2 == fromNode && node1 == toNode;
+    }
+
     public GraphEdge<T> Clone()
     {
         GraphEdge<T> e = new GraphEdge<T>();
@@ -133,29 +140,6 @@ public class Graph<N,E>
         GraphNode<N> node = nodes[index];
         return RemoveNode(node);
     }
-
-    /*
-    protected void ChangeNodeIndex(GraphNode<N> node, int newIndex)
-    {
-        int oldIndex = node.index;
-        foreach(int edgeIndex in node.edgesIndex)
-        {
-            GraphEdge<E> edge = edges[edgeIndex];
-            if(edge.fromNode==oldIndex)
-            {
-                edge.fromNode = newIndex;
-            }else if(edge.toNode==oldIndex)
-            {
-                edge.toNode = newIndex;
-            }else
-            {
-                Debug.LogError($"Detect unknown edge in node {node}, before change to id {newIndex}");
-                continue;
-            }
-        }
-        nodes[newIndex] = node;
-        nodes[oldIndex] = null;
-    }*/
 
     public GraphEdge<E> AddEdge(int n1, int n2, E data)
     {
@@ -282,7 +266,7 @@ public class Graph<N,E>
         }
     }
 
-    public void ForeachNodeNeighbor(GraphNode<N> baseNode, Action<GraphNode<N>> actionNode, Action<GraphEdge<E>> actionEdge = null)
+    public void ForeachNodeNeighbor(GraphNode<N> baseNode, Action<GraphNode<N>> actionNode, Action<GraphEdge<E>> actionEdge)
     {
         if(baseNode.edgesIndex==null)
         {
@@ -292,6 +276,26 @@ public class Graph<N,E>
         {
             GraphEdge<E> edge = edges[edgeIndex];
             actionEdge(edge);
+            if (edge.fromNode == baseNode.index)
+            {
+                actionNode(nodes[edge.toNode]);
+            }
+            else
+            {
+                actionNode(nodes[edge.fromNode]);
+            }
+        }
+    }
+
+    public void ForeachNodeNeighbor(GraphNode<N> baseNode, Action<GraphNode<N>> actionNode)
+    {
+        if (baseNode.edgesIndex == null)
+        {
+            return;
+        }
+        foreach (int edgeIndex in baseNode.edgesIndex)
+        {
+            GraphEdge<E> edge = edges[edgeIndex];
             if (edge.fromNode == baseNode.index)
             {
                 actionNode(nodes[edge.toNode]);
@@ -383,6 +387,5 @@ public class Graph<N,E>
         }
         return null;
     }
-
 
 }

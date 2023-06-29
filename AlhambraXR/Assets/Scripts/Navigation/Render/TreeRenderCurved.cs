@@ -42,11 +42,20 @@ public class TreeRenderCurved : BasicRouteGraphRender
     {
         Queue<StateInfo> queue =new Queue<StateInfo>();
         queue.Enqueue(new StateInfo { preNode = null, curNode = rootNode });
+        HashSet<int> nodeIndex = new HashSet<int>();
         while(queue.Count>0)
         {
             StateInfo stateInfo = queue.Dequeue();
             GraphNode<N> preNode = stateInfo.preNode;
             GraphNode<N> curNode = stateInfo.curNode;
+            if(nodeIndex.Contains(curNode.index))
+            {
+                Debug.LogWarning($"Detect Loop Ref for {preNode?.index} -> {curNode.index}");
+                continue;
+            }else
+            {
+                nodeIndex.Add(curNode.index);
+            }
             Debug.Log($"Process: {preNode?.index} -> {curNode.index}");
             Vector3 preDrawPos = stateInfo.preDrawPos;
             if (preNode==null)//root node

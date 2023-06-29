@@ -21,6 +21,8 @@ public class VolumeNavigation : MonoBehaviour
     public LayerMask layerMask = 1 >> 6;
     public float normalOffset = 0.001f;
     public Vector3 tempX = Vector3.right;
+    public bool useProjection = true;
+    public float projectionExceedRatio = 0.05f;
     //public float clipEdgeThreshold=0.2f;
     [Header("Cache Data")]
     [SerializeField]
@@ -70,7 +72,9 @@ public class VolumeNavigation : MonoBehaviour
 
     protected Vector3 GetAnnotationPos(Annotation annot)
     {
-        return annot.renderInfo.averagePosition + annot.renderInfo.Normal * normalOffset;
+        return annot.renderInfo.averagePosition + 
+            annot.renderInfo.OBBBounds.extents.y*annot.renderInfo.CreateCoordinate().y + 
+            annot.renderInfo.Normal * normalOffset;
     }
 
     protected float Distance(GraphNode<AnnotationNodeData> a, GraphNode<AnnotationNodeData> b)
@@ -127,26 +131,54 @@ public class VolumeNavigation : MonoBehaviour
     }
 
    
-
+    //add temp node
     public GraphNode<AnnotationNodeData> AddNode(AnnotationNodeData nodeData)
     {
         GraphNode<AnnotationNodeData> graphNode = graph.AddNode(nodeData);
         graph.ForeachNode(n =>
         {
-            if (n != graphNode)
+            if (n != graphNode && !n.data.IsVisited)
             {
-                float distance = Distance(n, graphNode);
-                graph.AddEdge(n, graphNode, new EdgeDistanceData(distance));
+                if(!IsHit(nodeData.centerPos, n.data.centerPos))
+                {
+                    float distance = Distance(n, graphNode);
+                    graph.AddEdge(n, graphNode, new EdgeDistanceData(distance));
+                }
             }
         });
         return graphNode;
     }
 
+    protected GraphEdge<EdgeDistanceData> AddEdge(GraphNode<AnnotationNodeData> n1, GraphNode<AnnotationNodeData> n2)
+    {
+        return graph.AddEdge(n1, n2, new EdgeDistanceData(Vector3.Distance(n1.data.centerPos, n2.data.centerPos)));
+    }
+    struct EdgeExtraExtendInfo
+    {
+        /*
+         * O
+         * |
+         * | < fromEdge
+         * |
+         * |--------O < nodeTo
+         * |\
+         * | position
+         * O
+         */
+        public int nodeTo; 
+        public int fromEdge;
+        public Vector3 position;
+    }
     struct EdgePickInfo: IComparable<EdgePickInfo>
     {
         public int edgeIndex;
         public int nodeIndex;
         public float distance;
+
+        //if true, then the edge and node not exists in the graph
+        //we need add it when we want to use this edge
+        public bool isFakeEdge;
+        public EdgeExtraExtendInfo info;
 
         public int CompareTo(EdgePickInfo other)
         {
@@ -186,9 +218,8 @@ public class VolumeNavigation : MonoBehaviour
         //=========================
         //preprocess
         graph.Clear();
-        int annotCount = annotations.Count;
 
-        for (int i = 0; i < annotCount; i++)
+        for (int i = 0; i < annotations.Count; i++)
         {
             graph.AddNode(new AnnotationNodeData(annotations[i].ID, GetAnnotationPos(annotations[i])));
             Debug.Log($"{annotations[i].ID} .bounds => {annotations[i].renderInfo.Bounds}");
@@ -201,13 +232,13 @@ public class VolumeNavigation : MonoBehaviour
             graph.AddNode(new AnnotationNodeData(AnnotationID.INVALID_ID, v));
         }
 
-        for (int i = 0; i < annotCount; i++)
+        for (int i = 0; i < graph.NodeCount; i++)
         {
             GraphNode<AnnotationNodeData> ai = graph.GetNode(i);
-            for (int j = i + 1; j < annotCount; j++)
+            for (int j = i + 1; j < graph.NodeCount; j++)
             {
                 GraphNode<AnnotationNodeData> aj = graph.GetNode(j);
-                if(isHit(ai.data.centerPos,aj.data.centerPos))
+                if(IsHit(ai.data.centerPos,aj.data.centerPos))
                 {
                     continue;
                 }
@@ -246,32 +277,97 @@ public class VolumeNavigation : MonoBehaviour
         additionalNode.Add(userNode);
         GraphNode<AnnotationNodeData> lastNode = userNode;
         bool flag = true;
+
+        //functions
+        // add a simulated edge
+        void AddFakeEdge(GraphEdge<EdgeDistanceData> edge)
+        {
+            if(!useProjection)
+            {
+                return;
+            }
+            GraphNode<AnnotationNodeData> fromNode = graph.GetNode(edge.fromNode);
+            GraphNode<AnnotationNodeData> toNode = graph.GetNode(edge.toNode);
+            Vector3 fromPos = fromNode.data.centerPos;
+            Vector3 toPos = toNode.data.centerPos;
+            Vector3 dPos = toPos - fromPos;
+            float maxDis = dPos.magnitude;
+            if (dPos == Vector3.zero) // || maxDis<splitEdgeThreshold)
+            {
+                return;
+            }
+            // find visible nodes
+            HashSet<GraphNode<AnnotationNodeData>> visibleNodes = new HashSet<GraphNode<AnnotationNodeData>>();
+            graph.ForeachNodeNeighbor(fromNode,n => visibleNodes.Add(n));
+            graph.ForeachNodeNeighbor(toNode,n => visibleNodes.Add(n));
+            Vector3 dir = dPos.normalized;
+            float depth = Mathf.Min(fromNode.data.depth, toNode.data.depth) + 1;
+            foreach (var n in visibleNodes)
+            {
+                Vector3 nPos = n.data.centerPos;
+                float dis = Vector3.Dot(dir, nPos-fromPos);
+                if(dis<-maxDis* projectionExceedRatio || dis>maxDis*(1+ projectionExceedRatio))
+                {
+                    continue;
+                }
+                Vector3 intersectPos = fromPos + dis * dir;
+                /*
+                if(
+                    Vector3.Distance(intersectPos,fromPos)<splitEdgeThreshold ||
+                    Vector3.Distance(intersectPos,toPos)<splitEdgeThreshold
+                    )
+                {
+                    continue;
+                }*/
+                if(IsHit(nPos,intersectPos))
+                {
+                    continue;
+                }
+                //make fake edge
+                EdgePickInfo epi = new EdgePickInfo();
+                epi.isFakeEdge = true;
+                epi.info.fromEdge = edge.index;
+                epi.info.nodeTo = n.index;
+                epi.info.position = intersectPos;
+                epi.distance = FakeEdgeDistance(n, depth, dis);
+                edgeHeap.Enqueue(epi);
+            }
+        }
+
+        void AddCandidateEdge(GraphNode<AnnotationNodeData> interNode)
+        {
+            graph.ForeachNodeNeighbor(
+                 interNode,
+                 (node, edge) =>
+                 {
+                     EdgePickInfo pi = new EdgePickInfo();
+                     pi.edgeIndex = edge.index;
+                     pi.nodeIndex = edge.GetAnotherNodeIndex(interNode.index);
+                     pi.distance = EdgeDistance(interNode, node, edge);
+                     edgeHeap.Enqueue(pi);
+                     //Debug.Log($"Push {edge.fromNode}->{edge.toNode} \t| dis = {pi.distance} \t| d={interNode.data.depth}");
+                 }
+                 );
+        }
+        //Begin!
         while (resultEdges.Count < (graph.NodeCount-1) && flag)
         {
             //add Edge
-            graph.ForeachNodeNeighbor(
-                lastNode,
-                (node,edge)=>
-                {
-                    EdgePickInfo pi = new EdgePickInfo();
-                    pi.edgeIndex = edge.index;
-                    pi.nodeIndex = edge.GetAnotherNodeIndex(lastNode.index);
-                    pi.distance = 
-                        edge.data.basicDistance + 
-                        lastNode.data.depth * depthRatio * modelScaleFactor + 
-                        lastNode.Degree * branchRatio * modelScaleFactor +
-                        (lastNode.data.id.IsValid ? 0:mainNodeWeight) +
-                        (node.data.id.IsValid ? 0: mainNodeWeight)
-                        ;
-                    edgeHeap.Enqueue(pi);
-                    Debug.Log($"Push {edge.fromNode}->{edge.toNode} \t| dis = {pi.distance} \t| d={lastNode.data.depth}");
-                }
-                );
+            AddCandidateEdge(lastNode);
             //pick up a minimum edge, add it to the tree
             while(edgeHeap.Count>0)
             {
                 EdgePickInfo minEdge = edgeHeap.Dequeue();
-                GraphNode<AnnotationNodeData> newNode = graph.GetNode(minEdge.nodeIndex);
+                GraphNode<AnnotationNodeData> newNode = null;
+                if (minEdge.isFakeEdge)
+                {
+                    newNode = graph.GetNode(minEdge.info.nodeTo);
+                }else
+                {
+                    newNode = graph.GetNode(minEdge.nodeIndex);
+                }
+                
+                
                 if (newNode.data.IsVisited)
                 {
                     if(edgeHeap.Count==0)
@@ -285,9 +381,53 @@ public class VolumeNavigation : MonoBehaviour
                 //Add new edge!
                 lastNode = newNode;
                 // add new node if possible
-                GraphEdge<EdgeDistanceData> newEdge = graph.GetEdge(minEdge.edgeIndex);
-                GraphNode<AnnotationNodeData> anotherNode = graph.GetNode(newEdge.GetAnotherNodeIndex(newNode.index));
-                Debug.Log($"Add edge {newEdge.fromNode}->{newEdge.toNode}");
+                GraphEdge<EdgeDistanceData> newEdge;
+                GraphNode<AnnotationNodeData> anotherNode;
+                if (minEdge.isFakeEdge)
+                {
+                    GraphEdge<EdgeDistanceData> oldEdge = graph.GetEdge(minEdge.info.fromEdge);
+                    GraphNode<AnnotationNodeData> fromNode = graph.GetNode(oldEdge.fromNode);
+                    GraphNode<AnnotationNodeData> toNode = graph.GetNode(oldEdge.toNode);
+
+                    if(!resultEdges.Remove(oldEdge))
+                    {
+                        //already removed
+                        continue;
+                    }
+
+                    GraphNode<AnnotationNodeData> newIntersectNode =
+                        AddNode(new AnnotationNodeData(AnnotationID.INVALID_ID, minEdge.info.position));
+                    AddCandidateEdge(newIntersectNode);
+                    newIntersectNode.data.depth = Mathf.Min(fromNode.data.depth, toNode.data.depth);
+
+                    GraphEdge<EdgeDistanceData> edge1 = AddEdge(fromNode, newIntersectNode);
+                    GraphEdge<EdgeDistanceData> edge2 = AddEdge(newIntersectNode, toNode);
+                    resultEdges.Add(edge1);
+                    resultEdges.Add(edge2);
+                    AddFakeEdge(edge1);
+                    AddFakeEdge(edge2);
+                    newEdge = graph.GetEdge(newIntersectNode, newNode);
+                    anotherNode = newIntersectNode;
+
+                    Debug.Log($"--- Try to Add fake edge {newEdge.fromNode}->{newEdge.toNode} (New node:{newIntersectNode.index}) Insert in {oldEdge.fromNode}=>{oldEdge.toNode}");
+                    Debug.Log($"Add node (proj) {newIntersectNode.index} d={newIntersectNode.data.depth}");
+
+                    Debug.Log($"Remove edge {oldEdge.fromNode}->{oldEdge.toNode}");
+                    Debug.Log($"Add edge {fromNode.index}->{newIntersectNode.index}");
+                    Debug.Log($"Add edge {newIntersectNode.index}->{toNode.index}");
+                    /*
+                    newNode.data.depth = newIntersectNode.data.depth + 1;
+                    resultEdges.Add(newEdge);
+                    AddFakeEdge(newEdge);
+                    break;*/
+                }
+                else
+                {
+                    newEdge = graph.GetEdge(minEdge.edgeIndex);
+                    anotherNode = graph.GetNode(newEdge.GetAnotherNodeIndex(newNode.index));
+                    Debug.Log($"--- Try to Add edge {newEdge.fromNode}->{newEdge.toNode}");
+                }
+                
                 //Vector3 dirX = volumeAnalyze.SampleDir(newNode.data.centerPos, Vector3Int.right);
                 //Vector3 dirY = volumeAnalyze.SampleDir(newNode.data.centerPos, Vector3Int.up);
                 //Vector3 dirZ = volumeAnalyze.SampleDir(newNode.data.centerPos, Vector3Int.forward);
@@ -317,42 +457,40 @@ public class VolumeNavigation : MonoBehaviour
                                 AnnotationID.INVALID_ID,
                                 xyzCoordinate.TransformToGlobalPos(posCur)));
                         additionalNode.Add(interNode);
-                        interNode.data.depth = lastNodeInner.data.depth + 1;
+                        interNode.data.depth = lastNodeInner.data.depth;
                         interNode.data.coord = xyzCoordinate;
-                        Debug.Log($"Add node {interNode.index} d={interNode.data.depth}");
-                        graph.ForeachNodeNeighbor(
-                            interNode,
-                            node => { },
-                            edge =>
-                            {
-                                EdgePickInfo pi = new EdgePickInfo();
-                                pi.edgeIndex = edge.index;
-                                pi.nodeIndex = edge.GetAnotherNodeIndex(interNode.index);
-                                pi.distance = edge.data.basicDistance + interNode.data.depth * depthRatio;
-                                edgeHeap.Enqueue(pi);
-                                Debug.Log($"Push {edge.fromNode}->{edge.toNode} \t| dis = {pi.distance} \t| d={interNode.data.depth}");
-                            }
-                            );
-                        GraphEdge<EdgeDistanceData> interNewEdge = graph.GetEdge(lastNodeInner, interNode);
+                        Debug.Log($"Add node (coord) {interNode.index} d={interNode.data.depth}");
+                        AddCandidateEdge(interNode);
+
+                        GraphEdge<EdgeDistanceData> interNewEdge = 
+                            graph.AddEdge(lastNodeInner, interNode,
+                            new EdgeDistanceData(Vector3.Distance(lastNode.data.centerPos,interNode.data.centerPos)));//graph.GetEdge(lastNodeInner, interNode);
                         resultEdges.Add(interNewEdge);
+                        Debug.Log($"Add edge {interNewEdge.fromNode}->{interNewEdge.toNode}");
+                        AddFakeEdge(interNewEdge);
                         lastNodeInner = interNode;
                     }
                     // last
-                    resultEdges.Add(graph.GetEdge(lastNodeInner, newNode));
+                    GraphEdge<EdgeDistanceData> lastEdge = graph.GetEdge(lastNodeInner, newNode);
+                    resultEdges.Add(lastEdge);
+                    Debug.Log($"Add edge {lastEdge.fromNode}->{lastEdge.toNode}");
                     newNode.data.depth = lastNodeInner.data.depth + 1;
+                    AddFakeEdge(lastEdge);
                 }
                 else
                 {
                     newNode.data.depth = anotherNode.data.depth + 1;
                     resultEdges.Add(newEdge);
-                    Debug.Log($"Set node depth {newNode.index} d={newNode.data.depth}");
+                    Debug.Log($"Add edge {newEdge.fromNode}->{newEdge.toNode}");
+                    AddFakeEdge(newEdge);
                 }
                 break;
             }
         }
 
-        //build graph
+        //result
         Graph<AnnotationNodeData, EdgeDistanceData> treeGraph = new Graph<AnnotationNodeData, EdgeDistanceData>();
+        //build graph
         treeGraph.CopyNodes(graph);
         foreach(GraphEdge<EdgeDistanceData> edge in resultEdges)
         {
@@ -524,7 +662,7 @@ public class VolumeNavigation : MonoBehaviour
         return nd == Vector3.zero ? nd : nd.normalized;
     }
 
-    protected bool isHit(Vector3 modelPos1,Vector3 modelPos2)
+    protected bool IsHit(Vector3 modelPos1,Vector3 modelPos2)
     {
         modelPos1 = referenceTransform.MapPosition(modelPos1);
         modelPos2 = referenceTransform.MapPosition(modelPos2);
@@ -533,7 +671,37 @@ public class VolumeNavigation : MonoBehaviour
         {
             return false;
         }
-        return Physics.Raycast(modelPos1, d.normalized, d.magnitude, layerMask);
+        return Physics.Raycast(modelPos1, d.normalized, d.magnitude*0.9f, layerMask);
+    }
+
+    protected float EdgeDistance(
+        GraphNode<AnnotationNodeData> nodeFrom,
+        GraphNode<AnnotationNodeData> nodeTo,
+        GraphEdge<EdgeDistanceData> edge
+        )
+    {
+        float modelScaleFactor = 1.0f / data.modelBounds.size.magnitude;
+
+        return edge.data.basicDistance +
+            nodeFrom.data.depth * depthRatio * modelScaleFactor +
+            nodeFrom.Degree * branchRatio * modelScaleFactor +
+            (nodeFrom.data.id.IsValid ? 0 : mainNodeWeight) +
+            (nodeTo.data.id.IsValid ? 0 : mainNodeWeight)
+            ;
+    }
+
+    protected float FakeEdgeDistance(
+        GraphNode<AnnotationNodeData> nodeTo,
+        float depth,
+        float basicDistance
+        )
+    {
+        float modelScaleFactor = 1.0f / data.modelBounds.size.magnitude;
+        return basicDistance +
+            depth * depthRatio * modelScaleFactor +
+            2 * branchRatio * modelScaleFactor +
+            (nodeTo.data.id.IsValid ? 0 : mainNodeWeight)
+            ;
     }
 
 }

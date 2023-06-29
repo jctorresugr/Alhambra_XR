@@ -2882,8 +2882,8 @@ MonoBehaviour:
   data: {fileID: 293561425}
   referenceTransform: {fileID: 293561427}
   helpNodeProvider: {fileID: 1371994802}
-  depthRatio: 0.01
-  branchRatio: 0
+  depthRatio: 0
+  branchRatio: 0.01
   splitEdgeThreshold: 0.01
   mainNodeWeight: 0.1
   layerMask:
@@ -2891,6 +2891,7 @@ MonoBehaviour:
     m_Bits: 64
   normalOffset: 0.002
   tempX: {x: 1, y: 0, z: 0.6}
+  useProjection: 1
   graph:
     nodes: []
     edges: []
