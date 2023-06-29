@@ -275,4 +275,14 @@ public static class Utils
             return deg - 360 * count;
         }
     }
+
+    public static void CreateFolder(string filePath)
+    {
+        string folderPath = Path.GetDirectoryName(filePath);
+
+        if (!Directory.Exists(folderPath))
+        {
+            Directory.CreateDirectory(folderPath);
+        }
+    }
 }

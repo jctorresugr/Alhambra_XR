@@ -301,10 +301,17 @@ public class AnnotationDataset
      * @param assetHeader  the main file describing the dataset*/
     public AnnotationDataset(AssetManager assetManager, String assetHeader) throws IOException, IllegalArgumentException
     {
+        //TODO: debug code, remove all local cache
+        if(true || true && true){
+            return;
+        }
+
         InputStream dataset = assetManager.open(assetHeader);
 
         List<String[]> csvData = CSVReader.read(dataset);
         dataset.close();
+
+
 
         if(csvData.size() == 0)
             return;
@@ -523,7 +530,11 @@ public class AnnotationDataset
      * @return the data that contains this, normally, unique ID. See isIndexValid before calling this function to check that the ID is a valid one*/
     public AnnotationInfo getDataFromIndex(int index)
     {
-        return m_data.get(index).info;
+        Annotation annotation = m_data.get(index);
+        if(annotation==null){
+            return null;
+        }
+        return annotation.info;
     }
 
     /** Get all the data contained in layer == layer

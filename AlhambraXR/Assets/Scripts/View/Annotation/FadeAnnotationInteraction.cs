@@ -9,6 +9,7 @@ public class FadeAnnotationInteraction : MonoBehaviour, IPickPanoListener
     public PickPano pickPano;
     public Transform user;
     public float sqrDistanceThreshold = 3.0f;
+    [SerializeField]
     private bool isSelected = false;
 
     void IPickPanoListener.OnSelection(PickPano pano, Color c)

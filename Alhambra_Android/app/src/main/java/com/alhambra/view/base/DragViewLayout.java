@@ -32,6 +32,8 @@ public class DragViewLayout extends RelativeLayout {
      */
     int mTouchSlop = 0;
 
+    private boolean hasShown=false;
+
     WindowManager.LayoutParams floatLayoutParams;
     WindowManager mWindowManager;
 
@@ -150,6 +152,10 @@ public class DragViewLayout extends RelativeLayout {
 
     //悬浮球显示
     public void show() {
+        if(hasShown){
+            return;
+        }
+        hasShown=true;
         floatLayoutParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,

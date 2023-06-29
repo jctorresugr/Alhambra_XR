@@ -25,14 +25,16 @@ public class Annotation
     public IReadOnlyList<AnnotationJoint> Joints => joints;
 
     [SerializeField]
+    private AnnotationID id;
+
     public AnnotationID ID
     {
-        get;
+        get=>id;
     }
 
     public Annotation(AnnotationID _id)
     {
-        ID = _id;
+        id = _id;
     }
 
     public void RemoveJoint(AnnotationJoint joint)
@@ -60,6 +62,15 @@ public class Annotation
         get => info != null && ID.IsValid;
     }
 
-    
+    public void PostDeserialize()
+    {
+        if(joints==null)
+        {
+            joints = new List<AnnotationJoint>();
+        }
+    }
+
+
+
 
 }

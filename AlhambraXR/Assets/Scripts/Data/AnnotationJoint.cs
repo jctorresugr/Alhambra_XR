@@ -104,13 +104,14 @@ public class AnnotationJoint
         }
     }
 
-    public void PostDeserialize(List<Annotation> annotations)
+    public void PostDeserialize(List<Annotation> annotationExternal)
     {
+        this.annotations = new List<Annotation>();
         List<AnnotationID> aids = annotationsID;
         annotationsID = new List<AnnotationID>();
         foreach(AnnotationID aid in aids)
         {
-            Annotation annotation = annotations.Find(x => x.ID == aid);
+            Annotation annotation = annotationExternal.Find(x => x.ID == aid);
             if(annotation==null)
             {
                 Debug.LogWarning($"Unknown annotation ID {aid} when joint.PostDeserialize()");

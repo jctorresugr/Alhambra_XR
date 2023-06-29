@@ -226,11 +226,15 @@ public class VolumeNavigation : MonoBehaviour
         }
 
         //Fetch helpNode
-        List<Vector3> helpNodes = helpNodeProvider.GetHelpNodePositions();
-        foreach(Vector3 v in helpNodes)
+        if(helpNodeProvider!=null)
         {
-            graph.AddNode(new AnnotationNodeData(AnnotationID.INVALID_ID, v));
+            List<Vector3> helpNodes = helpNodeProvider.GetHelpNodePositions();
+            foreach (Vector3 v in helpNodes)
+            {
+                graph.AddNode(new AnnotationNodeData(AnnotationID.INVALID_ID, v));
+            }
         }
+        
 
         for (int i = 0; i < graph.NodeCount; i++)
         {

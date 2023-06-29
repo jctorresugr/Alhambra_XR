@@ -23,6 +23,7 @@ public class AnnotationJointLinesRender : AnnotationJointRenderBase
     public void OnDataChange(AnnotationJoint annotationJoint, Annotation annotation)
     {
         ComputeData();
+        navigateCacheData.Hide();
     }
 
     public void ComputeData()

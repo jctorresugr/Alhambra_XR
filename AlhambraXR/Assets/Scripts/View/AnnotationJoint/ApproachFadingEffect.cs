@@ -8,8 +8,6 @@ public class ApproachFadingEffect : MonoBehaviour
     public Transform user;
     public float sqrThreshold = 1.0f;
 
-    private bool stateShow = false;
-
     void Start()
     {
         Utils.EnsureComponent(this, ref render);
@@ -20,20 +18,18 @@ public class ApproachFadingEffect : MonoBehaviour
         float distance = (user.position - transform.position).sqrMagnitude;
         if(distance<sqrThreshold)
         {
-            if(!stateShow)
+            if(render.navigateCacheData.IsHided)
             {
                 render.navigateCacheData.Show();
             }
-            stateShow = true;
         }
         else
         {
-            if(stateShow)
+            if(!render.navigateCacheData.IsHided)
             {
                 render.navigateCacheData.Hide();
 
             }
-            stateShow = false;
         }
     }
 }

@@ -1,6 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using UnityEditor;
 using UnityEngine;
 
@@ -13,11 +15,17 @@ public class SaveAndLoader : MonoBehaviour
     public string imagePath = "MiddleSave/";
     //old loading method, if this field is setted, then we use old method to load data.
     public string oldPath = "Database/";
-    public bool debugSaveAsPNG = true;
+    public bool debugSaveAsPng = true;
 
     public void Save()
     {
         Debug.Log("Save at " + jsonPath);
+        Utils.CreateFolder(jsonPath);
+        if(!Directory.Exists(imagePath))
+        {
+            Directory.CreateDirectory(imagePath);
+        }
+        
         string s = JsonUtility.ToJson(data);
         File.WriteAllText(jsonPath, s);
 
@@ -31,6 +39,14 @@ public class SaveAndLoader : MonoBehaviour
                 annot.info.SnapshotHeight
                 );
         }
+
+        SaveImage(
+            imagePath + "index",
+            data.IndexTexture.GetPixelData<byte>(0).ToArray(),
+            data.IndexTexture.width,
+            data.IndexTexture.height,
+            true
+            );
     }
 
     protected string AnnotationIDSuffix(AnnotationID id)
@@ -38,25 +54,29 @@ public class SaveAndLoader : MonoBehaviour
         return $"{id.Layer}_{id.ID}";
     }
 
-    protected void SaveImage(string path, byte[] data,int w, int h)
+
+    protected void SaveImage(string path, byte[] data,int w, int h,bool saveAsPNG=false)
     {
         //debug visualization
-        if(debugSaveAsPNG)
+        if(debugSaveAsPng || saveAsPNG)
         {
-            byte[] pngCodings = ImageConversion.EncodeArrayToPNG(
+            SaveImagePNG(path, data, w, h);
+        }
+        File.WriteAllBytes(path + ".bin", data);
+    }
+
+    protected void SaveImagePNG(string path, byte[] data, int w, int h)
+    {
+        byte[] pngCodings = ImageConversion.EncodeArrayToPNG(
             data,
             UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_SRGB,
             (uint)w, (uint)h);
-            File.WriteAllBytes(path + ".png", pngCodings);
-        }
-        File.WriteAllBytes(path+".bin", data);
-
+        File.WriteAllBytes(path + ".png", pngCodings);
     }
 
-    protected void LoadImage(string path, AnnotationInfo info)
+    protected byte[] LoadImage(string path)
     {
-        byte[] codings = File.ReadAllBytes(path+".bin");
-        info.SnapshotRGBA = codings;
+        return File.ReadAllBytes(path+".png");
     }
 
     public void Load()
@@ -82,16 +102,38 @@ public class SaveAndLoader : MonoBehaviour
         }
         else
         {
+            if(!File.Exists(jsonPath))
+            {
+                Debug.LogWarning("Cannot find file <" + jsonPath+">, ignore");
+                return;
+            }
             string s = File.ReadAllText(jsonPath);
             Debug.Log("Load at " + jsonPath);
             JsonUtility.FromJsonOverwrite(s, data);
 
             foreach (Annotation annot in data.Annotations)
             {
-                LoadImage(
-                    imagePath + AnnotationIDSuffix(annot.ID),
-                    annot.info);
+
+                annot.info.SnapshotRGBA = LoadImage(imagePath + AnnotationIDSuffix(annot.ID));
             }
+            data.PostDeserialize();
+            if(File.Exists(imagePath + "index.png"))
+            {
+                byte[] indexImageBytes = LoadImage(imagePath + "index");
+                Texture2D texture2D = new Texture2D(2, 2);
+                ImageConversion.LoadImage(texture2D, indexImageBytes);
+                texture2D.filterMode = FilterMode.Point;
+                texture2D.minimumMipmapLevel = 0;
+                texture2D.requestedMipmapLevel = 0;
+                texture2D.Apply();
+                data.IndexTexture = texture2D;
+            }
+            else
+            {
+                Debug.LogWarning("Cannot find index texture: " + imagePath + "index");
+            }
+            
+
         }
 
         

@@ -587,6 +587,7 @@ MonoBehaviour:
   navigationManager: {fileID: 1731095514}
   annotationRenderBuilder: {fileID: 293561432}
   saveAndLoader: {fileID: 293561430}
+  indexTextureManager: {fileID: 0}
 --- !u!4 &293561424
 Transform:
   m_ObjectHideFlags: 0
@@ -623,6 +624,8 @@ MonoBehaviour:
   modelBounds:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 0, y: 0, z: 0}
+  datasetName: Tiny
+  indexTexture: {fileID: 2800000, guid: 2cd5673e93f5f044caecb50a1f00db2e, type: 3}
 --- !u!114 &293561426
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -682,7 +685,7 @@ MonoBehaviour:
   referenceTransform: {fileID: 293561427}
   teleportOffset: 1
   upOffset: 1
-  updateTime: 0.25
+  updateTime: 5
 --- !u!114 &293561430
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -699,7 +702,7 @@ MonoBehaviour:
   jsonPath: MiddleSave/tinyAnnotations.json
   imagePath: MiddleSave/
   oldPath: Database/
-  debugSaveAsPNG: 1
+  debugSaveAsPng: 1
 --- !u!114 &293561431
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1990,6 +1993,9 @@ MonoBehaviour:
       tangent: {x: 0, y: 0, z: 0}
       averagePosition: {x: 0, y: 0, z: 0}
       pointCount: 0
+    id:
+      m_layer: 0
+      m_index: 0
   frame: {fileID: 961215705}
   referenceTransform: {fileID: 293561427}
   isHidden: 1
@@ -2025,6 +2031,7 @@ MonoBehaviour:
   pickPano: {fileID: 7568032346716495948}
   user: {fileID: 963194228}
   sqrDistanceThreshold: 7
+  isSelected: 0
 --- !u!1 &1218675092
 GameObject:
   m_ObjectHideFlags: 0
@@ -2892,6 +2899,7 @@ MonoBehaviour:
   normalOffset: 0.002
   tempX: {x: 1, y: 0, z: 0.6}
   useProjection: 1
+  projectionExceedRatio: 0.05
   graph:
     nodes: []
     edges: []

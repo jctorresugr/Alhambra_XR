@@ -138,6 +138,7 @@ public class Main : MonoBehaviour,
     public NavigationManager navigationManager;
     public AnnotationRenderBuilder annotationRenderBuilder;
     public SaveAndLoader saveAndLoader;
+    public IndexTextureManager indexTextureManager;
     //public VolumeNavigation volumeNavigation;
 
     //public VolumeAnalyze volumeAnalyze;
@@ -174,6 +175,8 @@ public class Main : MonoBehaviour,
 
         // init ui first, add listeners
 
+        if(indexTextureManager!=null)
+            indexTextureManager.Init();
         saveAndLoader.Load();
         m_model.AddListener(this);
         PickPanoModel.Init(m_model);
@@ -202,8 +205,6 @@ public class Main : MonoBehaviour,
         CoreServices.InputSystem?.RegisterHandler<IMixedRealityInputActionHandler>(this);
         //Debug messages
         //OnRead(null, "{\"action\": \"highlight\", \"data\": { \"layer\": 0, \"id\": 112} }");
-
-        
 
     }
 
@@ -458,12 +459,14 @@ public class Main : MonoBehaviour,
                 Mesh mesh = GenerateMeshFromStrokesPolygons(detailedMsg.data.strokes, detailedMsg.data.polygons, detailedMsg.data.width, detailedMsg.data.height); //Generate the mesh from the strokes and polygons.
 
                 //Create the texture that we will read, and a RenderTexture that the camera will render into for UV mappings
-                Texture2D uvScreenShot = new Texture2D(2048, 2048, TextureFormat.RGBAFloat, false);
+                int width = 2048;// data.IndexTexture.width;
+                int height = 2048;// data.IndexTexture.height;
+                Texture2D uvScreenShot = new Texture2D(width,height, TextureFormat.RGBAFloat, false);
                 RenderTexture uvRT = new RenderTexture(uvScreenShot.width, uvScreenShot.height, 24, RenderTextureFormat.ARGBFloat);
                 uvRT.Create();
 
                 //Create the texture that we will read, and a RenderTexture that the camera will render into for the generated color texture
-                Texture2D colorScreenShot = new Texture2D(2048, 2048, TextureFormat.RGBA32, false);
+                Texture2D colorScreenShot = new Texture2D(width, height, TextureFormat.RGBA32, false);
                 RenderTexture colorRT = new RenderTexture(colorScreenShot.width, colorScreenShot.height, 24, RenderTextureFormat.ARGB32);
                 colorRT.Create();
 
@@ -536,7 +539,6 @@ public class Main : MonoBehaviour,
                         // send annotation information
                         PackedJSONMessages pack = new PackedJSONMessages();
                         pack.AddString(JSONMessage.AddAnnotationToJSON(annotation));
-                        //m_server.SendASCIIStringToClients(JSONMessage.AddAnnotationToJSON(annotation));
                         // send add joint
                         foreach (int jointID in detailedMsg.data.selectedJointID)
                         {
@@ -547,15 +549,12 @@ public class Main : MonoBehaviour,
                                 continue;
                             }
                             AnnotationID annotationID = annotation.ID;
-                            //dataSync.SendAddAnnotationToJoint(jointID, annotationID);
                             pack.AddString(dataSync.GetAddAnnotationToJoint(jointID, annotationID));
                         }
                         // send new joint, add annot to new joint
                         foreach (AnnotationJoint newJoint in newJoints)
                         {
-                            //dataSync.SendAddAnnotationJoint(newJoint);
                             pack.AddString(dataSync.GetAddAnnotationJoint(newJoint));
-                            //dataSync.SendAddAnnotationToJoint(newJoint.ID, annotation.ID);
                             pack.AddString(dataSync.GetAddAnnotationToJoint(newJoint.ID, annotation.ID));
                         }
                         m_server.SendASCIIStringToClients(pack.ToString());

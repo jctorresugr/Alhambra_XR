@@ -368,6 +368,9 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
     public void updateCurrentAnnotation() {
         m_chipGroup.post(() -> {
             AnnotationInfo annotationInfo = m_Annotation_dataset.getDataFromIndex(m_currentSelection);
+            if(annotationInfo==null){ // if you do not have any annotations, this will trigger.
+                return;
+            }
             m_mainImageView.setImageDrawable(annotationInfo.getImage());
             m_mainTextView.setText(annotationInfo.getText());
             m_chipGroup.removeAllViews();

@@ -103,15 +103,12 @@ public class CustomChipTextEditorController implements TextWatcher, View.OnFocus
         HashSet<String> realTokens = new HashSet<>();
         String[] splits = editText.getText().toString().split(splitChar + "");
         for(String splitString: splits) {
-            realTokens.add(splitString.trim());
-        }
-        /*
-        HashSet<String> finalTokens = new HashSet<>();
-        for(String token : tokens) {
-            if(realTokens.contains(token)){
-                finalTokens.add(token);
+            String trimedStr = splitString.trim();
+            if(trimedStr.length()>0){
+                realTokens.add(trimedStr);
             }
-        }*/
+
+        }
         tokens = new ArrayList<>(realTokens);
         return tokens;
     }

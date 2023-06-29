@@ -11,6 +11,7 @@ public class DataManager : MonoBehaviour
 {
     public delegate void AnnotationChangeFunc(Annotation annotation);
     public delegate void AnnotationJointChangeFunc(AnnotationJoint annotationJoint);
+    public delegate void IndexTextureChangeFunc(Texture2D newIndexTexture);
 
     public event AnnotationChangeFunc OnAnnotationAddEvent;
     public event AnnotationChangeFunc OnAnnotationRemoveEvent;
@@ -20,20 +21,39 @@ public class DataManager : MonoBehaviour
     public event AnnotationJoint.AnnotationAndJointChangeFunc OnJointAddAnnotationEvent;
     public event AnnotationJoint.AnnotationAndJointChangeFunc OnJointRemoveAnnotationEvent;
 
+    public event IndexTextureChangeFunc OnIndexTextureChange;
+
     [SerializeField]
     private List<Annotation> annotations = new List<Annotation>();
     [SerializeField]
     private List<AnnotationJoint> annotationJoints = new List<AnnotationJoint>();
     [SerializeField]
     public Bounds modelBounds;
+    [SerializeField]
+    public string datasetName="Default";
+
+
+    [SerializeField]
+    private Texture2D indexTexture;
+
+    public Texture2D IndexTexture
+    {
+        get => indexTexture;
+        set
+        {
+            if(indexTexture!=value)
+            {
+                indexTexture = value;
+                OnIndexTextureChange?.Invoke(indexTexture);
+            }
+            
+        }
+    }
 
     public List<Annotation> Annotations => annotations;  
     public List<AnnotationJoint> AnnotationJoints => annotationJoints;
 
     public float ReferLength => modelBounds.size.magnitude;
-
-    [NonSerialized]
-    public string loadPath = "Database/";
 
     public Annotation FindAnnotation(Predicate<Annotation> predicate)
     {
@@ -44,40 +64,6 @@ public class DataManager : MonoBehaviour
     {
         return FindAnnotation(predicate)!=null;
     }
-    /*
-    public void Init()
-    {
-        annotationJoints = new List<AnnotationJoint>();
-        annotations = new List<Annotation>();
-    }
-
-    public void LoadDefaultData()
-    {
-        if(loadPath!="" && loadPath!=null && Directory.Exists(loadPath))
-        {
-            LoadData(this, loadPath);
-        }
-
-
-        
-        //dirty code
-        if (loadPath== "Database/")
-        {
-            foreach (Annotation annot in annotations)
-            {
-                annot.isLocalData = true;
-            }
-            //TODO: test code, commnet it for real dataset
-            AnnotationJoint joint = AddAnnotationJoint("Room A");
-            foreach (var annot in annotations)
-            {
-                joint.AddAnnotation(annot);
-            }
-        }
-
-
-        
-    }*/
 
     public Annotation FindAnnotationID(AnnotationID id)
     {
@@ -214,6 +200,18 @@ public class DataManager : MonoBehaviour
         foreach(Annotation a in aj.Annotations)
         {
             a.RemoveJoint(aj);
+        }
+    }
+
+    public void PostDeserialize()
+    {
+        foreach(Annotation annot in annotations)
+        {
+            annot.PostDeserialize();
+        }
+        foreach(AnnotationJoint joint in annotationJoints)
+        {
+            joint.PostDeserialize(annotations);
         }
     }
 
