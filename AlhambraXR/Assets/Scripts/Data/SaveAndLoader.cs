@@ -127,6 +127,8 @@ public class SaveAndLoader : MonoBehaviour
                 texture2D.requestedMipmapLevel = 0;
                 texture2D.Apply();
                 data.IndexTexture = texture2D;
+                //debug code
+                byte[] vs = texture2D.GetPixelData<byte>(0).ToArray();
             }
             else
             {

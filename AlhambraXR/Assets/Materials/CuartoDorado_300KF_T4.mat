@@ -73,10 +73,10 @@ Material:
     - _GlossyReflections: 1
     - _ID: -1
     - _IDLeft: -1
-    - _IDRight: 13
+    - _IDRight: -1
     - _Layer: -1
     - _LayerLeft: -1
-    - _LayerRight: 2
+    - _LayerRight: -1
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1

@@ -20,6 +20,6 @@ public class IndexTextureManager : MonoBehaviour
 
     public void ProcessIndexTexture(Texture2D newTexture)
     {
-        material.SetTexture("Index Texture", newTexture);
+        material.SetTexture("_IndexTex", newTexture);
     }
 }

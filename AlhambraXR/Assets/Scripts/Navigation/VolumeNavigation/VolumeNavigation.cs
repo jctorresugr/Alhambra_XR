@@ -411,6 +411,11 @@ public class VolumeNavigation : MonoBehaviour
                     AddFakeEdge(edge1);
                     AddFakeEdge(edge2);
                     newEdge = graph.GetEdge(newIntersectNode, newNode);
+                    if(newEdge==null)
+                    {
+                        newEdge = AddEdge(newIntersectNode, newNode);
+                        Debug.LogWarning("Force to add edge");
+                    }
                     anotherNode = newIntersectNode;
 
                     Debug.Log($"--- Try to Add fake edge {newEdge.fromNode}->{newEdge.toNode} (New node:{newIntersectNode.index}) Insert in {oldEdge.fromNode}=>{oldEdge.toNode}");
@@ -476,6 +481,11 @@ public class VolumeNavigation : MonoBehaviour
                     }
                     // last
                     GraphEdge<EdgeDistanceData> lastEdge = graph.GetEdge(lastNodeInner, newNode);
+                    if(lastEdge==null)
+                    {
+                        lastEdge = AddEdge(lastNodeInner, newNode); 
+                        Debug.LogWarning($"Lack edge: Add edge {lastEdge.fromNode}->{lastEdge.toNode}");
+                    }
                     resultEdges.Add(lastEdge);
                     Debug.Log($"Add edge {lastEdge.fromNode}->{lastEdge.toNode}");
                     newNode.data.depth = lastNodeInner.data.depth + 1;

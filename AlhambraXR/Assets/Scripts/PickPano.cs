@@ -57,14 +57,13 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
     /// Size: See _IndexTex.
     /// </summary>
     private float[] m_uvToPositionPixels = null;
-
     private float[] m_uvToNormalPixels = null;
+    private float[] m_uvToTangentPixels = null;
 
     /// <summary>
     /// The Material to map UV coordinates to the 3D positions in local space.
     /// </summary>
     public Material UVToPosition;
-
     public Material UVToNormal;
     public Material UVToTangent;
 
@@ -72,26 +71,35 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
     /// The camera used to render data on RenderTexture
     /// </summary>
     public Camera RTCamera;
-    private float[] m_uvToTangentPixels;
+
+    private int defaultWidth, defaultHeight;
 
     /// <summary>
     /// Initialize this GameObject and link it with the other components of the Scene
     /// </summary>
     /// <param name="model">The Model object containing the data of the overall application</param>
     [BurstCompile(FloatPrecision.Medium, FloatMode.Fast)]
-    public void Init(SelectionModelData model)
+    public void Init(SelectionModelData model, Texture2D indexTexture=null)
     {
         m_model = model;
         model.AddListener(this);
-        Texture2D indexTexture = (Texture2D)gameObject.GetComponent<MeshRenderer>().sharedMaterial.GetTexture("_IndexTex");
 
         /*********************************************************************/
         /************First -- Determine the 3D position at each UV************/
         /***(this supposes that not two triangles share the same UV mapping***/
         /*********************************************************************/
-
+        
+        if(indexTexture==null)
+        {
+            defaultWidth = defaultHeight = 4096;
+        }
+        else
+        {
+            defaultHeight = indexTexture.height;
+            defaultWidth = indexTexture.width;
+        }
         //Create a texture to map UV data to position data
-        Texture2D colorScreenShot = new Texture2D(indexTexture.width, indexTexture.height, TextureFormat.RGBAFloat, false);
+        Texture2D colorScreenShot = new Texture2D(defaultWidth, defaultHeight, TextureFormat.RGBAFloat, false);
         RenderTexture colorRT = new RenderTexture(colorScreenShot.width, colorScreenShot.height, 24, RenderTextureFormat.ARGBFloat);
         colorRT.Create();
 
@@ -113,7 +121,6 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
 
         //-----
         // added by Yucheng: generate normal map
-        CommandBuffer buf2 = new CommandBuffer();
         buf.SetRenderTarget(colorRT, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
         buf.DrawMesh(Mesh, Matrix4x4.identity, UVToNormal, 0, -1); 
         RTCamera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
@@ -127,7 +134,6 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
 
         //-----
         // added by Yucheng: generate tangent map
-        CommandBuffer buf3 = new CommandBuffer();
         buf.SetRenderTarget(colorRT, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
         buf.DrawMesh(Mesh, Matrix4x4.identity, UVToTangent, 0, -1);
         RTCamera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
@@ -144,6 +150,22 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         RenderTexture.active = null;
         Destroy(colorRT);
 
+        //Debug purposes, to check that annotations are anchored at their correct position.
+        //GameObject originGO = GameObject.Find("Origin");
+        //foreach(Annotation annot in m_annotations)
+        //{
+        //    GameObject go         = GameObject.Instantiate(originGO);
+        //    go.transform.position = transform.localToWorldMatrix.MultiplyPoint3x4(annot.Center);
+        //}
+        if (indexTexture != null)
+        {
+            ExtractAnnotationsFromIndexTexture(indexTexture);
+        }
+    }
+    
+    public void ExtractAnnotationsFromIndexTexture(Texture2D indexTexture)
+    {
+
         /*********************************************************************/
         /*************Second -- Determine the known annotations***************/
         /*********************************************************************/
@@ -151,13 +173,13 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         //Read the index texture to know which colors (at which positions) are used (parallelize the reading to speed up the process)
         NativeArray<byte> srcRGBA = indexTexture.GetRawTextureData<byte>();
 
-        
+
         Parallel.For(0, indexTexture.width * indexTexture.height,
             () => new List<AnnotationRenderInfo>(),
             (i, state, partialRes) =>
             {
-                int idx = 4*i;
-                if (srcRGBA[idx + 3] > 0 && m_uvToPositionPixels[idx+3] > 0) // if exists annotation in this pixel
+                int idx = 4 * i;
+                if (srcRGBA[idx + 3] > 0 && m_uvToPositionPixels[idx + 3] > 0) // if exists annotation in this pixel
                 {
                     AnnotationRenderInfo srcAnnot = partialRes.Find((annot) => annot.Color.r == srcRGBA[idx + 0] &&
                                                                      annot.Color.g == srcRGBA[idx + 1] &&
@@ -195,9 +217,9 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
             },
             (partialRes) =>
             {
-                lock(this)
-                { 
-                    foreach(AnnotationRenderInfo annot in partialRes)
+                lock (this)
+                {
+                    foreach (AnnotationRenderInfo annot in partialRes)
                     {
                         AnnotationID c = (AnnotationID)annot.Color;
 
@@ -207,7 +229,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                         {
                             data.AddAnnoationRenderInfo(annot);
                         }
-                            //m_annotations.Add(annot);
+                        //m_annotations.Add(annot);
                         else //Merge annotations in the parallel computation
                         {
                             srcAnnot.renderInfo.Bounds.Encapsulate(annot.Bounds);
@@ -215,7 +237,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                             srcAnnot.renderInfo.Tangent += annot.Tangent;
                             srcAnnot.renderInfo.averagePosition += annot.averagePosition;
                             srcAnnot.renderInfo.pointCount += annot.pointCount;
-                            
+
                         }
                     }
                 }
@@ -228,14 +250,14 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                 AnnotationRenderInfo renderInfo = annot.renderInfo;
                 renderInfo.Normal = renderInfo.Normal.normalized;
                 renderInfo.Tangent = renderInfo.Tangent.normalized;
-                if(renderInfo.pointCount>0)
+                if (renderInfo.pointCount > 0)
                 {
                     renderInfo.averagePosition /= renderInfo.pointCount;
                 }
                 Debug.Log($"Tangent&Normal {annot.ID} >>\t A{renderInfo.averagePosition} >>\t C{renderInfo.pointCount} >>> T{renderInfo.Tangent} >>\t N{renderInfo.Normal}");
             });
 
-        ConcurrentDictionary<AnnotationID,XYZCoordinate> annotCoord = new ConcurrentDictionary<AnnotationID, XYZCoordinate>();
+        ConcurrentDictionary<AnnotationID, XYZCoordinate> annotCoord = new ConcurrentDictionary<AnnotationID, XYZCoordinate>();
 
         foreach (Annotation annot in data.Annotations)
         {
@@ -246,7 +268,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
             renderInfo.OBBBounds = new Bounds(Vector3.zero, Vector3.zero);
             annotCoord.TryAdd(id, xYZCoordinate);
         }
-        
+
 
         Parallel.For(0, indexTexture.width * indexTexture.height,
             (i) =>
@@ -262,17 +284,17 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                     void checkAnnotation(AnnotationID id)
                     {
                         Annotation annotation = data.FindAnnotationID(id);
-                        if (annotation != null && annotation.renderInfo!=null)
+                        if (annotation != null && annotation.renderInfo != null)
                         {
                             XYZCoordinate coord = annotCoord[id];
                             Vector3 localPos = coord.Projection(pos);
-                            
+
                             lock (annotation)
                             {
                                 annotation.renderInfo.OBBBounds.Encapsulate(localPos);
-                                
+
                             }
-                            
+
                         }
                     }
                     if (cr > 0)
@@ -290,14 +312,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                 }
             }
             );
-        //Debug purposes, to check that annotations are anchored at their correct position.
-        //GameObject originGO = GameObject.Find("Origin");
-        //foreach(Annotation annot in m_annotations)
-        //{
-        //    GameObject go         = GameObject.Instantiate(originGO);
-        //    go.transform.position = transform.localToWorldMatrix.MultiplyPoint3x4(annot.Center);
-        //}
-    }                                                                                               
+    }
 
 
     void Start()

@@ -179,8 +179,23 @@ public class Main : MonoBehaviour,
             indexTextureManager.Init();
         saveAndLoader.Load();
         m_model.AddListener(this);
-        PickPanoModel.Init(m_model);
+        if (indexTextureManager != null)
+        {
+            PickPanoModel.Init(m_model);
+        }
+        else
+        {
+            Texture2D defaultIndexTexture = 
+                (Texture2D)
+                PickPanoModel
+                .gameObject
+                .GetComponent<MeshRenderer>()
+                .sharedMaterial
+                .GetTexture("_IndexTex");
+            PickPanoModel.Init(m_model,defaultIndexTexture);
+        }
         PickPanoModel.AddListener(this);
+
 
         data.modelBounds = PickPanoModel.Mesh.bounds;
 
