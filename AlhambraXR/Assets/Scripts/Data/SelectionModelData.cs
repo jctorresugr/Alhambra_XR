@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-
+using UnityEngine;
 
 /// <summary>
 /// The different types of action handled by this application
@@ -38,27 +38,11 @@ public enum Handedness
     LEFT  = 1,
 }
 
-/// <summary>
-/// A pair of layer--ID to identify a data chunk
-/// </summary>
-/*
-public struct AnnotationID
-{
-    /// <summary>
-    /// The layer where this data chunk belongs to
-    /// </summary>
-    public int Layer;
-
-    /// <summary>
-    /// Its ID inside this layer
-    /// </summary>
-    public int ID;
-}*/
 
 /// <summary>
 /// The Model class of this application keeping track of all data shared by the different modules of the overall application
 /// </summary>
-public class SelectionModelData
+public class SelectionModelData:MonoBehaviour
 {
     /// <summary>
     /// Listener interface to be notified on events

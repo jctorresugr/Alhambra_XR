@@ -5,35 +5,36 @@ using UnityEngine;
 
 public class SocketDataBasic : MonoBehaviour
 {
-    public Main main;
+    public ServerJsonParser server;
 
+    /*
     protected void Awake()
     {
         Utils.EnsureComponent(this, ref main);
-    }
+    }*/
 
-    protected void RegReceiveInfo(string name, Main.ProcessMessageFunc func)
+    protected void RegReceiveInfo(string name, ServerJsonParser.ProcessMessageFunc func)
     {
-        if(main.onReceiveMessage.ContainsKey(name))
+        if(server.onReceiveMessage.ContainsKey(name))
         {
             Debug.LogWarning("main.onReceiveMessage already has registered" + name);
         }
-        main.onReceiveMessage[name] = func;
+        server.onReceiveMessage[name] = func;
     }
 
     protected void SendClientString(string content)
     {
-        main.Server.SendASCIIStringToClients(content);
+        server.SendASCIIStringToClients(content);
     }
 
     protected void SendClientAction<T>(string actionName, T data)
     {
-        main.Server.SendASCIIStringToClients(JSONMessage.ActionJSON(actionName, data));
+        server.SendASCIIStringToClients(JSONMessage.ActionJSON(actionName, data));
     }
 
     protected void SendClientFailure<T>(T data)
     {
-        main.Server.SendASCIIStringToClients(JSONMessage.FailJSON(data));
+        server.SendASCIIStringToClients(JSONMessage.FailJSON(data));
     }
 
     [Serializable]
@@ -59,7 +60,7 @@ public class SocketDataBasic : MonoBehaviour
     private static List<int> temp = new List<int>();
     protected void SendClientFailure()
     {
-        main.Server.SendASCIIStringToClients(JSONMessage.FailJSON(temp));
+        server.SendASCIIStringToClients(JSONMessage.FailJSON(temp));
     }
 
 

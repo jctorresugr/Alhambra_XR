@@ -4,6 +4,10 @@ using System.Collections.Generic;
 /// <summary>
 /// Triangular class. Create a mesh based on a 2D polygon list of points
 /// This class comes from wiki.unity3d.com/index.php?title=Triangulator&_ga=2.105408325.796467802.1591785143-688777271.1584103287
+/// 
+/// By Yucheng:
+/// I remove the self-intersect detection, so when the user draw on tablet, they will not get a strange result (like lack some triangles)
+/// If you want a proper triangulator for regular scene, please uncomment line 55 & 116: `if(Snip(...)){`
 /// </summary>
 public class Triangulator
 {
@@ -48,7 +52,7 @@ public class Triangulator
             if (nv <= w)
                 w = 0;
 
-            if (Snip(points, u, v, w, nv, V))
+            //if (Snip(points, u, v, w, nv, V))
             {
                 int a, b, c, s, t;
                 a = V[u];
@@ -109,7 +113,7 @@ public class Triangulator
             if (nv <= w)
                 w = 0;
 
-            if (Snip(points, u, v, w, nv, V))
+            //if (Snip(points, u, v, w, nv, V))
             {
                 int a, b, c, s, t;
                 a = V[u];

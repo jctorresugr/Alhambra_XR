@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class PositionDataSync : SocketDataBasic
 {
+    public Main main;
     public DataManager data;
     public ReferenceTransform referenceTransform;
 

@@ -466,7 +466,7 @@ public class AnnotationDataset
         //this.addAnnotation(annotationInfo.getID(),annotationInfo.getAnnotationID());
         //this.addAnnotationInfo(annotationInfo);
         m_serverAnnotations.add(annotationInfo.getIndex());
-
+        Log.i("AddAnnotation","Add annotation "+annotation.id + "complete");
         for(IDatasetListener l : m_listeners)
             l.onAddDataChunk(this, annotation);
         return true;

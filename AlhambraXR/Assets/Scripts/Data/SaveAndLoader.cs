@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 
@@ -79,6 +80,11 @@ public class SaveAndLoader : MonoBehaviour
         return File.ReadAllBytes(path+".png");
     }
 
+    protected byte[] LoadImageBin(string path)
+    {
+        return File.ReadAllBytes(path + ".bin");
+    }
+
     public void Load()
     {
         if (oldPath != "" && oldPath != null)
@@ -114,21 +120,42 @@ public class SaveAndLoader : MonoBehaviour
             foreach (Annotation annot in data.Annotations)
             {
 
-                annot.info.SnapshotRGBA = LoadImage(imagePath + AnnotationIDSuffix(annot.ID));
+                annot.info.SnapshotRGBA = LoadImageBin(imagePath + AnnotationIDSuffix(annot.ID));
             }
             data.PostDeserialize();
             if(File.Exists(imagePath + "index.png"))
             {
                 byte[] indexImageBytes = LoadImage(imagePath + "index");
-                Texture2D texture2D = new Texture2D(2, 2);
-                ImageConversion.LoadImage(texture2D, indexImageBytes);
+                Texture2D texture2D = new Texture2D(2, 2, TextureFormat.RGBA32,false);
+                ImageConversion.LoadImage(texture2D, indexImageBytes, false);
+                //byte[] indexBinBytes = LoadImageBin(imagePath + "index");
+                //texture2D.SetPixelData(indexBinBytes, 0, 0);
+
                 texture2D.filterMode = FilterMode.Point;
                 texture2D.minimumMipmapLevel = 0;
                 texture2D.requestedMipmapLevel = 0;
-                texture2D.Apply();
                 data.IndexTexture = texture2D;
-                //debug code
+
+                //BARG => RGBA, Not clear why it does not read correctly :(
                 byte[] vs = texture2D.GetPixelData<byte>(0).ToArray();
+                Parallel.For(
+                    0, vs.Length/4,
+                    (i)=>
+                    {
+                        int ind = i * 4;
+                        byte b = vs[ind];
+                        byte a = vs[ind+1];
+                        byte r = vs[ind+2];
+                        byte g = vs[ind+3];
+                        vs[ind] = r;
+                        vs[ind+1] = g;
+                        vs[ind+2] = b;
+                        vs[ind+3] = a;
+                    });
+                texture2D.SetPixelData(vs,0);
+
+                texture2D.Apply();
+
             }
             else
             {

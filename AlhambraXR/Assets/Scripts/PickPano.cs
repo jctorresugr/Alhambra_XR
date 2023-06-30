@@ -27,7 +27,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         /// Use 'c[i]*255' to retrieve the ID of the selection (if ID > 0) for the layer i. If no layer is selected, all c[i], 0 <= i < 3, equal 0
         /// </param>
         void OnSelection(PickPano pano, Color c);
-        void OnHover(PickPano pano, Color c);//
+        void OnHover(PickPano pano, Color c);
+        void OnSetTexture(PickPano pano, Texture2D newIndexTexture);
     }
 
     /// <summary>
@@ -74,16 +75,18 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
 
     private int defaultWidth, defaultHeight;
 
+    private Texture2D indexTexture;
+
     /// <summary>
     /// Initialize this GameObject and link it with the other components of the Scene
     /// </summary>
     /// <param name="model">The Model object containing the data of the overall application</param>
     [BurstCompile(FloatPrecision.Medium, FloatMode.Fast)]
-    public void Init(SelectionModelData model, Texture2D indexTexture=null)
+    public void Init(SelectionModelData model, Texture2D indexTexture,bool useIndexTextureInit=true)
     {
         m_model = model;
         model.AddListener(this);
-
+        this.indexTexture = indexTexture;
         /*********************************************************************/
         /************First -- Determine the 3D position at each UV************/
         /***(this supposes that not two triangles share the same UV mapping***/
@@ -157,7 +160,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         //    GameObject go         = GameObject.Instantiate(originGO);
         //    go.transform.position = transform.localToWorldMatrix.MultiplyPoint3x4(annot.Center);
         //}
-        if (indexTexture != null)
+        if (useIndexTextureInit)
         {
             ExtractAnnotationsFromIndexTexture(indexTexture);
         }
@@ -412,7 +415,6 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                 //GameObject.Find("Origin").transform.position = hit.point;
 
                 //Get the corresponding Layer information using the Image that encodes up to 4 layers
-                Texture2D indexTexture = (Texture2D)gameObject.GetComponent<MeshRenderer>().sharedMaterial.GetTexture("_IndexTex");
                 Color c = indexTexture.GetPixel((int)(point.x * indexTexture.width), (int)(point.y * indexTexture.height));
                 return c;
             }
@@ -466,7 +468,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
     {
         //Get the pixels of the uvMapping to anchor, and the texture that contains the annotation
         NativeArray<Color> newRGBA = uvMapping.GetRawTextureData<Color>();
-        Texture2D srcAnnotationTexture = (Texture2D)gameObject.GetComponent<MeshRenderer>().sharedMaterial.GetTexture("_IndexTex");
+        Texture2D srcAnnotationTexture = indexTexture;// (Texture2D)gameObject.GetComponent<MeshRenderer>().sharedMaterial.GetTexture("_IndexTex");
         NativeArray<byte>  srcRGBA = srcAnnotationTexture.GetRawTextureData<byte>();
 
         //Save some texture variables to let us read texture data in separate thread...
@@ -678,7 +680,9 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         data.AddAnnoationRenderInfo(annot);
 
         srcAnnotationTexture.Apply();
-        gameObject.GetComponent<MeshRenderer>().sharedMaterial.SetTexture("_IndexTex", srcAnnotationTexture);
+        foreach (var l in m_listeners)
+            l.OnSetTexture(this, srcAnnotationTexture);
+        //gameObject.GetComponent<MeshRenderer>().sharedMaterial.SetTexture("_IndexTex", srcAnnotationTexture);
 
         //Debug purposes
         //GameObject originGO = GameObject.Find("Origin");

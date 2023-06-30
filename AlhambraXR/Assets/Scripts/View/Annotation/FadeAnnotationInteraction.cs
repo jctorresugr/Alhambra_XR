@@ -84,4 +84,8 @@ public class FadeAnnotationInteraction : MonoBehaviour, IPickPanoListener
             isSelected = false;
         }
     }
+
+    public void OnSetTexture(PickPano pano, Texture2D newIndexTexture)
+    {
+    }
 }

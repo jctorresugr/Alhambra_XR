@@ -8,11 +8,11 @@ using UnityEngine;
 
 public class DataSync : SocketDataBasic
 {
+    public SelectionModelData selectionData;
     public DataManager data;
 
     protected void Start()
     {
-        data = main.data;
 
         FastReg<MessageAnnotationJointModify>(OnReceiveAddAnnotationToJoint);
         FastReg<MessageAnnotationJointModify>(OnReceiveRemoveAnnotationFromJoint);
@@ -200,14 +200,14 @@ public class DataSync : SocketDataBasic
 
     public void OnReceiveselection(List<AnnotationID> aids)
     {
-        main.SelectionData.SelectedAnnotations = aids;
+        selectionData.SelectedAnnotations = aids;
     }
 
     public void OnReceivehighlight(HighlightMessage detailedMsg)
     {
-        main.SelectionData.CurrentAction = CurrentAction.IN_HIGHLIGHT;
-        main.SelectionData.CurrentHighlightMain = new AnnotationID(detailedMsg.layer, detailedMsg.id);
-        main.SelectionData.CurrentHighlightSecond = AnnotationID.INVALID_ID;
+        selectionData.CurrentAction = CurrentAction.IN_HIGHLIGHT;
+        selectionData.CurrentHighlightMain = new AnnotationID(detailedMsg.layer, detailedMsg.id);
+        selectionData.CurrentHighlightSecond = AnnotationID.INVALID_ID;
     }
 
 }

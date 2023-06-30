@@ -8,15 +8,11 @@ public class SelectionInteraction : SocketDataBasic, ISelectionModelDataListener
 {
     //public LineNavigatorManager lineNavigatorManager;
     public NavigationManager navigationManager;
-    public DataManager data;
+    public SelectionModelData selectionData;
     // Start is called before the first frame update
     void Start()
     {
-        if(data==null)
-        {
-            data = main.data;
-        }
-        main.SelectionData.AddListener(this);
+        selectionData.AddListener(this);
         FastReg<int[]>(OnReceiveHighlightGroups);
     }
 

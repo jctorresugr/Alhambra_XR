@@ -22,4 +22,6 @@ public class IndexTextureManager : MonoBehaviour
     {
         material.SetTexture("_IndexTex", newTexture);
     }
+
+    public Texture2D IndexTexture => data.IndexTexture;//(Texture2D)material.GetTexture("_IndexTex");
 }

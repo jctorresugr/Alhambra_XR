@@ -171,7 +171,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   navigation: {fileID: 1731095512}
-  render: {fileID: 0}
+  render: {fileID: 264426282}
   data: []
   rootPos: {fileID: 0}
   cacheResult:
@@ -553,6 +553,8 @@ GameObject:
   - component: {fileID: 293561432}
   - component: {fileID: 293561429}
   - component: {fileID: 293561430}
+  - component: {fileID: 293561434}
+  - component: {fileID: 293561433}
   m_Layer: 0
   m_Name: Main
   m_TagString: Untagged
@@ -574,6 +576,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   data: {fileID: 293561425}
   mainCamera: {fileID: 963194227}
+  m_model: {fileID: 293561433}
   PickPanoModel: {fileID: 7568032346716495948}
   PointingArrow: {fileID: 600857965}
   UVMaterial: {fileID: 2100000, guid: c7069d79f1e96f24aad06f92e8f5b24f, type: 2}
@@ -588,6 +591,7 @@ MonoBehaviour:
   annotationRenderBuilder: {fileID: 293561432}
   saveAndLoader: {fileID: 293561430}
   indexTextureManager: {fileID: 0}
+  serverParser: {fileID: 293561434}
 --- !u!4 &293561424
 Transform:
   m_ObjectHideFlags: 0
@@ -666,7 +670,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e121109d12ae25e458c5bbd7e4bbd136, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  main: {fileID: 293561423}
+  server: {fileID: 293561434}
+  selectionData: {fileID: 293561433}
   data: {fileID: 293561425}
 --- !u!114 &293561429
 MonoBehaviour:
@@ -680,6 +685,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 340c7a6069fdb6248954c18cdc2bc7a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  server: {fileID: 293561434}
   main: {fileID: 293561423}
   data: {fileID: 293561425}
   referenceTransform: {fileID: 293561427}
@@ -715,9 +721,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd93b56e05325d949a603330d94f85fd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  main: {fileID: 293561423}
+  server: {fileID: 293561434}
   navigationManager: {fileID: 1731095514}
-  data: {fileID: 293561425}
+  selectionData: {fileID: 293561433}
 --- !u!114 &293561432
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -733,6 +739,30 @@ MonoBehaviour:
   data: {fileID: 293561425}
   template: {fileID: 1153888389}
   referenceTransform: {fileID: 293561427}
+--- !u!114 &293561433
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 293561422}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7f9768a9277b354e8a960d370e836ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &293561434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 293561422}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b95b44c845596e42b9f5165e13ed4db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &417668009
 GameObject:
   m_ObjectHideFlags: 0
@@ -2905,6 +2935,7 @@ MonoBehaviour:
     edges: []
     emptyNodes: 
     emptyEdges: 
+  returnWholeGraph: 0
 --- !u!114 &1731095513
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2942,6 +2973,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   volumeNavigation: {fileID: 1731095512}
+  selectionModelData: {fileID: 293561433}
   user: {fileID: 963194228}
   render: {fileID: 1731095516}
   refreshNow: 0

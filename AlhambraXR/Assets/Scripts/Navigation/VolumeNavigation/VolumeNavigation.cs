@@ -27,6 +27,8 @@ public class VolumeNavigation : MonoBehaviour
     [Header("Cache Data")]
     [SerializeField]
     Graph<AnnotationNodeData, EdgeDistanceData> graph;
+    [Header("Debug")]
+    public bool returnWholeGraph = false;
     [Serializable]
     public class NavigationInfo
     {
@@ -153,7 +155,7 @@ public class VolumeNavigation : MonoBehaviour
     {
         return graph.AddEdge(n1, n2, new EdgeDistanceData(Vector3.Distance(n1.data.centerPos, n2.data.centerPos)));
     }
-    struct EdgeExtraExtendInfo
+    public struct EdgeExtraExtendInfo
     {
         /*
          * O
@@ -169,7 +171,7 @@ public class VolumeNavigation : MonoBehaviour
         public int fromEdge;
         public Vector3 position;
     }
-    struct EdgePickInfo: IComparable<EdgePickInfo>
+    public struct EdgePickInfo: IComparable<EdgePickInfo>
     {
         public int edgeIndex;
         public int nodeIndex;
@@ -280,8 +282,13 @@ public class VolumeNavigation : MonoBehaviour
         List<GraphNode<AnnotationNodeData>> additionalNode = new List<GraphNode<AnnotationNodeData>>();
         additionalNode.Add(userNode);
         GraphNode<AnnotationNodeData> lastNode = userNode;
-        bool flag = true;
 
+        //debug code
+        if(returnWholeGraph)
+        {
+            return new NavigationInfo { root = userNode, treeGraph = graph };
+        }
+        
         //functions
         // add a simulated edge
         void AddFakeEdge(GraphEdge<EdgeDistanceData> edge)
@@ -354,11 +361,12 @@ public class VolumeNavigation : MonoBehaviour
                  );
         }
         //Begin!
-        while (resultEdges.Count < (graph.NodeCount-1) && flag)
+        while (resultEdges.Count < (graph.NodeCount-1))
         {
             //add Edge
             AddCandidateEdge(lastNode);
             //pick up a minimum edge, add it to the tree
+            
             while(edgeHeap.Count>0)
             {
                 EdgePickInfo minEdge = edgeHeap.Dequeue();
@@ -374,16 +382,9 @@ public class VolumeNavigation : MonoBehaviour
                 
                 if (newNode.data.IsVisited)
                 {
-                    if(edgeHeap.Count==0)
-                    {
-                        Debug.LogWarning($"No more edge found, the graph isn't fully connected! | edges:{resultEdges.Count} | node:{graph.NodeCount}");
-                        flag = false;//break the outer loop
-                        break;
-                    }
                     continue;
                 }
                 //Add new edge!
-                lastNode = newNode;
                 // add new node if possible
                 GraphEdge<EdgeDistanceData> newEdge;
                 GraphNode<AnnotationNodeData> anotherNode;
@@ -398,7 +399,7 @@ public class VolumeNavigation : MonoBehaviour
                         //already removed
                         continue;
                     }
-
+                    
                     GraphNode<AnnotationNodeData> newIntersectNode =
                         AddNode(new AnnotationNodeData(AnnotationID.INVALID_ID, minEdge.info.position));
                     AddCandidateEdge(newIntersectNode);
@@ -406,17 +407,17 @@ public class VolumeNavigation : MonoBehaviour
 
                     GraphEdge<EdgeDistanceData> edge1 = AddEdge(fromNode, newIntersectNode);
                     GraphEdge<EdgeDistanceData> edge2 = AddEdge(newIntersectNode, toNode);
+                    newEdge = graph.GetEdge(newIntersectNode, newNode);
+                    anotherNode = newIntersectNode;
+
+                    if (newEdge == null)
+                    {
+                        continue;
+                    }
                     resultEdges.Add(edge1);
                     resultEdges.Add(edge2);
                     AddFakeEdge(edge1);
                     AddFakeEdge(edge2);
-                    newEdge = graph.GetEdge(newIntersectNode, newNode);
-                    if(newEdge==null)
-                    {
-                        newEdge = AddEdge(newIntersectNode, newNode);
-                        Debug.LogWarning("Force to add edge");
-                    }
-                    anotherNode = newIntersectNode;
 
                     Debug.Log($"--- Try to Add fake edge {newEdge.fromNode}->{newEdge.toNode} (New node:{newIntersectNode.index}) Insert in {oldEdge.fromNode}=>{oldEdge.toNode}");
                     Debug.Log($"Add node (proj) {newIntersectNode.index} d={newIntersectNode.data.depth}");
@@ -424,11 +425,11 @@ public class VolumeNavigation : MonoBehaviour
                     Debug.Log($"Remove edge {oldEdge.fromNode}->{oldEdge.toNode}");
                     Debug.Log($"Add edge {fromNode.index}->{newIntersectNode.index}");
                     Debug.Log($"Add edge {newIntersectNode.index}->{toNode.index}");
-                    /*
+                    
                     newNode.data.depth = newIntersectNode.data.depth + 1;
                     resultEdges.Add(newEdge);
                     AddFakeEdge(newEdge);
-                    break;*/
+                    break;
                 }
                 else
                 {
@@ -436,7 +437,8 @@ public class VolumeNavigation : MonoBehaviour
                     anotherNode = graph.GetNode(newEdge.GetAnotherNodeIndex(newNode.index));
                     Debug.Log($"--- Try to Add edge {newEdge.fromNode}->{newEdge.toNode}");
                 }
-                
+
+                lastNode = newNode;
                 //Vector3 dirX = volumeAnalyze.SampleDir(newNode.data.centerPos, Vector3Int.right);
                 //Vector3 dirY = volumeAnalyze.SampleDir(newNode.data.centerPos, Vector3Int.up);
                 //Vector3 dirZ = volumeAnalyze.SampleDir(newNode.data.centerPos, Vector3Int.forward);
@@ -454,7 +456,11 @@ public class VolumeNavigation : MonoBehaviour
                 Vector3 posDelta = pos1 - pos2;
                 //judge x,y,z, if too large, split them
                 List<Vector3> posSep = SeperateVector(posDelta,pos1,pos2,suggestForward);
-                if(posSep.Count>1)
+                if(posSep==null)
+                {
+                    continue;
+                }
+                if (posSep.Count>1)
                 {
                     Vector3 posCur = pos2;
                     GraphNode<AnnotationNodeData> lastNodeInner = anotherNode;
@@ -498,6 +504,11 @@ public class VolumeNavigation : MonoBehaviour
                     Debug.Log($"Add edge {newEdge.fromNode}->{newEdge.toNode}");
                     AddFakeEdge(newEdge);
                 }
+                break;
+            }
+            if (edgeHeap.Count == 0)
+            {
+                Debug.LogWarning($"Cannot Navigate, not fully connected :( E:{resultEdges.Count} & N:{graph.NodeCount}");
                 break;
             }
         }
@@ -612,7 +623,16 @@ public class VolumeNavigation : MonoBehaviour
                 if(!isImpeded)
                 {
                     float score = Vector3.Dot(suggestForward, results[seq[seqi, 0]]);
-                    if(score>bestScore)
+                    // avoid y axis first
+                    if(results[seq[seqi, 0]].y>splitEdgeThreshold)
+                    {
+                        score *= 0.9f;
+                    }else if (results[seq[seqi, 1]].y > splitEdgeThreshold)
+                    {
+                        score *= 0.95f;
+                    }
+
+                    if (score>bestScore)
                     {
                         List<Vector3> sortedResult = new List<Vector3>();
                         for (int i0 = 0; i0 < results.Count; i0++)
@@ -629,6 +649,7 @@ public class VolumeNavigation : MonoBehaviour
             if(bestScore<=0)
             {
                 Debug.LogWarning($"Navigate line may hit wall {posFrom} -> {posTo}");
+                return null;
             }
             return bestResult;
             

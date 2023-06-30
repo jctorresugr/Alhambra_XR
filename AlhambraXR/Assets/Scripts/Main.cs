@@ -46,7 +46,8 @@ public class Main : MonoBehaviour,
     /// <summary>
     /// The model of the application
     /// </summary>
-    private SelectionModelData m_model = new SelectionModelData();
+    [SerializeField]
+    private SelectionModelData m_model;
 
     /// <summary>
     /// The Random string value
@@ -139,6 +140,7 @@ public class Main : MonoBehaviour,
     public AnnotationRenderBuilder annotationRenderBuilder;
     public SaveAndLoader saveAndLoader;
     public IndexTextureManager indexTextureManager;
+    public ServerJsonParser serverParser;
     //public VolumeNavigation volumeNavigation;
 
     //public VolumeAnalyze volumeAnalyze;
@@ -181,7 +183,7 @@ public class Main : MonoBehaviour,
         m_model.AddListener(this);
         if (indexTextureManager != null)
         {
-            PickPanoModel.Init(m_model);
+            PickPanoModel.Init(m_model,indexTextureManager.IndexTexture,false);
         }
         else
         {
@@ -209,6 +211,11 @@ public class Main : MonoBehaviour,
 
         m_server.Launch();
         m_server.AddListener(this);
+        if(serverParser!=null)
+        {
+            serverParser.Init(m_server);
+        }
+        
 
         //Default text helpful to bind headset to tablet
         m_updateIPTexts = true;
@@ -384,18 +391,7 @@ public class Main : MonoBehaviour,
         //This adds a subtential overhead, but it does not require installation of a third party library
         CommonMessage commonMsg = CommonMessage.FromJSON(msg);
 
-        //read packed message
-        if(commonMsg.action == PackedJSONMessages.ACTION_NAME)
-        {
-            ReceivedMessage<PackedJSONMessages> messages = ReceivedMessage<PackedJSONMessages>.FromJSON(msg);
-            List<string> actions = messages.data.actions;
-            foreach(string action in actions)
-            {
-                OnRead(c, action);
-            }
-        }
-        //Handle the highlight action type
-        else if (commonMsg.action == "highlight")
+        if (commonMsg.action == "highlight")
         {
             ReceivedMessage<HighlightMessage> detailedMsg = ReceivedMessage<HighlightMessage>.FromJSON(msg);
             m_model.CurrentAction = CurrentAction.IN_HIGHLIGHT;
@@ -444,17 +440,7 @@ public class Main : MonoBehaviour,
         else if(commonMsg.action == "stopShowAllAnnotation")
         {
             HandleStopShowAll();
-        }else
-        {
-            ProcessMessageFunc processMessageFunc = onReceiveMessage[commonMsg.action];
-            if(processMessageFunc==null)
-            {
-                Debug.LogWarning("Unknown Action " + commonMsg.action);
-                return;
-            }
-            processMessageFunc.Invoke(c, msg);
         }
-        //TODO: write here!!!!
     }
 
     /// <summary>
@@ -946,5 +932,19 @@ public class Main : MonoBehaviour,
 
     void PickPano.IPickPanoListener.OnHover(PickPano pano, Color c)
     {
+    }
+
+    public void OnSetTexture(PickPano pano, Texture2D newIndexTexture)
+    {
+        data.IndexTexture = newIndexTexture;
+        PickPanoModel.gameObject.GetComponent<MeshRenderer>().sharedMaterial.SetTexture("_IndexTex", newIndexTexture);
+        /*
+        if (indexTextureManager==null)
+        {
+            PickPanoModel.gameObject.GetComponent<MeshRenderer>().sharedMaterial.SetTexture("_IndexTex", newIndexTexture);
+        }else
+        {
+            indexTextureManager.ProcessIndexTexture(newIndexTexture);
+        }*/
     }
 }
