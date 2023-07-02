@@ -373,7 +373,8 @@ public class Main : MonoBehaviour,
                     Debug.Log("Sync AnnotationJoint " + joint.ID);
                 } 
             }
-            m_server.SendASCIIStringToClients(pack.ToString());
+            serverParser.SendSeqMessage(pack);
+            //m_server.SendASCIIStringToClients(pack.ToString());
         }
     }
 

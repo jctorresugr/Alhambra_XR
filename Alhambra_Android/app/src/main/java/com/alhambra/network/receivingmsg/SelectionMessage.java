@@ -29,22 +29,22 @@ public class SelectionMessage
     }
 
     /** The IDs selected*/
-    private final PairLayerID[] m_ids;
+    private final PairLayerID[] ids;
 
     /** Constructor
      * @param data the JSONObject representing the "data" entry of the received JSON object from the network*/
     public SelectionMessage(@NonNull JSONObject data) throws JSONException
     {
         JSONArray idsArr = data.getJSONArray("ids");
-        m_ids = new PairLayerID[idsArr.length()];
+        ids = new PairLayerID[idsArr.length()];
         for(int i = 0; i < idsArr.length(); i++)
         {
             JSONObject pairArr = idsArr.getJSONObject(i);
-            m_ids[i] = new PairLayerID(pairArr.getInt("layer"), pairArr.getInt("id"));
+            ids[i] = new PairLayerID(pairArr.getInt("layer"), pairArr.getInt("id"));
         }
     }
 
     /** Get the parsed IDs of the selection
      * @return an array of IDs*/
-    public PairLayerID[] getIDs() { return m_ids; }
+    public PairLayerID[] getIDs() { return ids; }
 }

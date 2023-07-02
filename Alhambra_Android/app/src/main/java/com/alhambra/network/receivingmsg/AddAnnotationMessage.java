@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import com.alhambra.dataset.data.AnnotationRenderInfo;
 import com.alhambra.network.JSONUtils;
+import com.google.gson.annotations.SerializedName;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,18 +15,23 @@ import org.json.JSONObject;
 public class AddAnnotationMessage
 {
     /** The base64 snapshot image data*/
-    private final byte[] m_image;
+    private String snapshotBase64;
+    private byte[] m_image;
 
     /** The width of the snapshot image*/
+    @SerializedName("snapshotWidth")
     private final int    m_width;
 
     /** The height of the snapshot image*/
+    @SerializedName("snapshotHeight")
     private final int    m_height;
 
     /** The color of the annotation (which encodes the layer + ID of the data chunk)*/
+    @SerializedName("annotationColor")
     private final byte[] m_color;
 
     /** The textual description of the annotation*/
+    @SerializedName("description")
     private final String m_desc;
 
     private AnnotationRenderInfo renderInfo;
@@ -43,6 +49,10 @@ public class AddAnnotationMessage
 
         if(m_color.length != 4)
             throw new JSONException("The length of the JSON array corresponding to a Color (length 4) is: " + m_color.length);
+    }
+
+    public void postSerialize(){
+        m_image = Base64.decode(snapshotBase64, Base64.DEFAULT);
     }
 
     public AnnotationRenderInfo getRenderInfo(){

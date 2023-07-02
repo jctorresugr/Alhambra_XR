@@ -8,23 +8,29 @@ import org.json.JSONObject;
 import androidx.annotation.NonNull;
 
 import com.alhambra.network.JSONUtils;
+import com.google.gson.annotations.SerializedName;
 import com.sereno.math.Quaternion;
 
 public class AnnotationMessage
 {
     /** The base64 image data*/
-    private final byte[] m_image;
+    private byte[] m_image;
+    private String base64;
 
     /** The width of the image*/
+    @SerializedName("width")
     private final int    m_width;
 
     /** The height of the image*/
+    @SerializedName("height")
     private final int    m_height;
 
     /** The camera position of the HoloLens when the annotation screenshot was taken*/
+    @SerializedName("cameraPos")
     private final float[] m_cameraPos;
 
     /** The camera orientation of the HoloLens when the annotation screenshot was taken*/
+    @SerializedName("cameraRot")
     private final Quaternion m_cameraRot;
 
     /** Constructor
@@ -43,6 +49,10 @@ public class AnnotationMessage
         if(quatArr.length != 4)
             throw new JSONException("The length of the JSON array corresponding to a Quaternion is: " + m_cameraPos.length);
         m_cameraRot = new Quaternion(quatArr);
+    }
+
+    public void postSerialize(){
+        m_image = Base64.decode(base64, Base64.DEFAULT);
     }
 
     /** Get the width of the received image

@@ -4558,7 +4558,7 @@ MonoBehaviour:
   render: {fileID: 1731095516}
   refreshNow: 0
   forwardDistance: 0.1
-  updateThreshold: 3
+  updateThreshold: 10000
   triggerDebug: 0
 --- !u!114 &1731095515
 MonoBehaviour:

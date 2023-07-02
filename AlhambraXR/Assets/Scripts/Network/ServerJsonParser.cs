@@ -26,6 +26,23 @@ public class ServerJsonParser : MonoBehaviour,
         server.SendASCIIStringToClients(s);
     }
 
+    public void SendASCIIStringToClients(List<string> ss)
+    {
+        foreach(string s in ss)
+        {
+            server.SendASCIIStringToClients(s);
+        }
+    }
+
+    private int packNumCount = 0;
+
+    public void SendSeqMessage(PackedJSONMessages packed)
+    {
+        List<string> ss = SeqJSONMessage.GenerateSeqJSON(packed, packNumCount);
+        SendASCIIStringToClients(ss);
+        packNumCount++;
+    }
+
     void Client.IClientListener.OnClose(Client c)
     {
     }

@@ -13,7 +13,6 @@ import com.alhambra.network.JSONUtils;
 import com.google.gson.JsonElement;
 import com.sereno.math.BBox;
 import com.sereno.math.Transform;
-import com.sereno.math.Vector3;
 
 import java.util.ArrayList;
 
@@ -44,14 +43,14 @@ public class DatasetSync extends IInteraction{
 
     protected void reg(MainActivity activity){
         AnnotationDataset ad = mainActivity.getAnnotationDataset();
-        mainActivity.regReceiveMessageListener("SyncAnnotationJoint", (mainActivity1, jsonElement) -> this.OnReceiveSyncJoint(ad, jsonElement));
-        mainActivity.regReceiveMessageListener("AddAnnotationToJoint", (ma, je) -> this.onReceiveAddAnnotationToJoint(ad,je));
-        mainActivity.regReceiveMessageListener("RemoveAnnotationFromJoint", (ma, je) -> this.onReceiveRemoveAnnotationFromJoint(ad,je));
-        mainActivity.regReceiveMessageListener("AddAnnotationJoint", (ma, je) -> this.onReceiveAddAnnotationJoint(ad,je));
-        mainActivity.regReceiveMessageListener("RemoveAnnotationJoint", (ma, je) -> this.onReceiveRemoveAnnotationJoint(ad,je));
-        mainActivity.regReceiveMessageListener("UpdateAnnotationRenderInfo", (ma, je) -> this.onReceiveUpdateAnnotationRenderInfo(ad,je));
-        mainActivity.regReceiveMessageListener("UpdateModelBounds", (ma, je) -> this.onReceiveUpdateModelBounds(ad,je));
-        mainActivity.regReceiveMessageListener("SyncPos", (ma, je) -> this.onReceiveSyncPositionData(ad,je));
+        mainActivity.regReceiveMessageListener("SyncAnnotationJoint", (jsonElement) -> this.OnReceiveSyncJoint(ad, jsonElement));
+        mainActivity.regReceiveMessageListener("AddAnnotationToJoint", (je) -> this.onReceiveAddAnnotationToJoint(ad,je));
+        mainActivity.regReceiveMessageListener("RemoveAnnotationFromJoint", (je) -> this.onReceiveRemoveAnnotationFromJoint(ad,je));
+        mainActivity.regReceiveMessageListener("AddAnnotationJoint", (je) -> this.onReceiveAddAnnotationJoint(ad,je));
+        mainActivity.regReceiveMessageListener("RemoveAnnotationJoint", (je) -> this.onReceiveRemoveAnnotationJoint(ad,je));
+        mainActivity.regReceiveMessageListener("UpdateAnnotationRenderInfo", (je) -> this.onReceiveUpdateAnnotationRenderInfo(ad,je));
+        mainActivity.regReceiveMessageListener("UpdateModelBounds", (je) -> this.onReceiveUpdateModelBounds(ad,je));
+        mainActivity.regReceiveMessageListener("SyncPos", (je) -> this.onReceiveSyncPositionData(ad,je));
     }
 
     private static final String LOG_TAG = "DatasetSync";

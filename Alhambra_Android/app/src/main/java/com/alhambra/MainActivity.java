@@ -24,6 +24,7 @@ import com.alhambra.interactions.MinimapInteraction;
 import com.alhambra.interactions.SearchInteraction;
 import com.alhambra.interactions.SelectionInteraction;
 import com.alhambra.network.JSONUtils;
+import com.alhambra.network.NetworkJsonParser;
 import com.alhambra.network.PackedJSONMessages;
 import com.alhambra.network.receivingmsg.AddAnnotationMessage;
 import com.alhambra.network.receivingmsg.AnnotationMessage;
@@ -93,7 +94,8 @@ public class MainActivity
     /** The overview tab*/
     private OverviewFragment m_overviewFragment = null;
 
-    private HashMap<String, IReceiveMessageListener> m_receiveMessageListener = new HashMap<>();
+    //private HashMap<String, IReceiveMessageListener> m_receiveMessageListener = new HashMap<>();
+    private NetworkJsonParser networkJsonParser = null;
 
     private ArrayList<IInteraction> interactions = new ArrayList<>();
 
@@ -135,12 +137,7 @@ public class MainActivity
     }
 
     public void regReceiveMessageListener(String actionName, IReceiveMessageListener l){
-        if(m_receiveMessageListener.containsKey(actionName)){
-            Log.w(TAG,"Already exists message listener, replace it: "+actionName);
-        }
-        if(l!=null && actionName!=null) {
-            m_receiveMessageListener.put(actionName,l);
-        }
+        networkJsonParser.regReceiveMessageListener(actionName,l);
 
     }
     /** Read the configuration file "config.json"*/
@@ -192,6 +189,54 @@ public class MainActivity
         }
     }
 
+    public void onReceiveSelection(JsonElement jsonElement) {
+        final SelectionMessage selection = JSONUtils.gson.fromJson(jsonElement,SelectionMessage.class);
+        MainActivity.this.runOnUiThread(() ->
+        {
+            //Get the relevant IDs (and discard the default ones)
+            ArrayList<Integer> indexes = new ArrayList<>();
+            for(SelectionMessage.PairLayerID id: selection.getIDs())
+            {
+                int index = m_Annotation_dataset.getIndexFromID(id.layer, id.id);
+                if(index != -1)
+                    indexes.add(index);
+            }
+            int[] indexArr = new int[indexes.size()];
+            for(int i = 0; i < indexes.size(); i++)
+                indexArr[i] = indexes.get(i);
+
+            //show shallowest layer first
+            int mainEntryIndex = -1;
+            if(indexArr.length > 0)
+                mainEntryIndex = indexArr[0];
+
+            //Set the current selection and jump to the preview fragment on the tablet to highlight that the action is made
+            m_Annotation_dataset.setCurrentSelection(indexArr);
+            if(mainEntryIndex != -1)
+                m_Annotation_dataset.setMainEntryIndex(mainEntryIndex);
+            m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
+        });
+    }
+
+    public void onReceiveAnnotation(JsonElement jsonElement) {
+        final AnnotationMessage annotation = JSONUtils.gson.fromJson(jsonElement,AnnotationMessage.class);
+        annotation.postSerialize();
+        MainActivity.this.runOnUiThread(() -> {
+            m_tabLayout.getTabAt(ANNOTATION_FRAGMENT_TAB).view.setVisibility(View.VISIBLE);
+            m_viewPager.setCurrentItem(ANNOTATION_FRAGMENT_TAB);
+            m_annotationFragment.startNewAnnotation(annotation.getWidth(), annotation.getHeight(), annotation.getBitmap(), annotation.getCameraPos(), annotation.getCameraRot());
+            m_viewPager.setPagingEnabled(true);
+        });
+    }
+
+    public void onReceiveAddAnnotation(JsonElement jsonElement){
+        final AddAnnotationMessage addAnnotation = JSONUtils.gson.fromJson(jsonElement,AddAnnotationMessage.class);
+        addAnnotation.postSerialize();
+        MainActivity.this.runOnUiThread(() -> {
+            m_Annotation_dataset.addServerAnnotation(addAnnotation);
+        });
+    }
+
     /** Initialize the network communication*/
     private void initNetwork()
     {
@@ -199,6 +244,11 @@ public class MainActivity
 
         //Instantiate the client network interface
         m_socket = new SocketManager(m_config.getServerIP(), m_config.getServerPort());
+        networkJsonParser = new NetworkJsonParser();
+        networkJsonParser.init(m_socket);
+        networkJsonParser.regReceiveMessageListener("selection", this::onReceiveSelection);
+        networkJsonParser.regReceiveMessageListener("annotation", this::onReceiveAnnotation);
+        networkJsonParser.regReceiveMessageListener("addAnnotation", this::onReceiveAddAnnotation);
         m_socket.addListener(new SocketManager.ISocketManagerListener() {
             @Override
             public void onDisconnection(SocketManager socket)
@@ -210,96 +260,6 @@ public class MainActivity
             @Override
             public void onRead(SocketManager socket, String jsonMsg)
             {
-                if(jsonMsg.length()>1000) {
-                    Log.i("Network",jsonMsg.substring(0,1000)+"> Truncated, Total "+jsonMsg.length());
-                }else{
-                    Log.i("Network",jsonMsg);
-                }
-
-                try
-                {
-                    final JSONObject reader = new JSONObject(jsonMsg);
-
-                    //Determine the action to do
-                    String action = reader.getString("action");
-                    Log.i(TAG,"receive action <"+action+">");
-                    //Selection case
-                    if (action.equals(PackedJSONMessages.ACTION_NAME)) {
-                        JsonElement jsonElement = JsonParser.parseString(jsonMsg);
-                        JsonObject asJsonObject = jsonElement.getAsJsonObject();
-                        PackedJSONMessages messages = JSONUtils.gson.fromJson(asJsonObject.get("data"),PackedJSONMessages.class);
-                        for(String message:messages.actions) {
-                            onRead(socket,message);
-                        }
-                    }
-                    else if(action.equals("selection"))
-                    {
-                        final SelectionMessage selection = new SelectionMessage(reader.getJSONObject("data"));
-                        MainActivity.this.runOnUiThread(() ->
-                        {
-                            //Get the relevant IDs (and discard the default ones)
-                            ArrayList<Integer> indexes = new ArrayList<>();
-                            for(SelectionMessage.PairLayerID id: selection.getIDs())
-                            {
-                                int index = m_Annotation_dataset.getIndexFromID(id.layer, id.id);
-                                if(index != -1)
-                                    indexes.add(index);
-                            }
-                            int[] indexArr = new int[indexes.size()];
-                            for(int i = 0; i < indexes.size(); i++)
-                                indexArr[i] = indexes.get(i);
-
-                            //show shallowest layer first
-                            int mainEntryIndex = -1;
-                            if(indexArr.length > 0)
-                                mainEntryIndex = indexArr[0];
-
-                            //Set the current selection and jump to the preview fragment on the tablet to highlight that the action is made
-                            m_Annotation_dataset.setCurrentSelection(indexArr);
-                            if(mainEntryIndex != -1)
-                                m_Annotation_dataset.setMainEntryIndex(mainEntryIndex);
-                            m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
-                        });
-                    }
-
-                    //Start an annotation
-                    else if(action.equals("annotation"))
-                    {
-                        final AnnotationMessage annotation = new AnnotationMessage(reader.getJSONObject("data"));
-                        MainActivity.this.runOnUiThread(() -> {
-                            m_tabLayout.getTabAt(ANNOTATION_FRAGMENT_TAB).view.setVisibility(View.VISIBLE);
-                            m_viewPager.setCurrentItem(ANNOTATION_FRAGMENT_TAB);
-                            m_annotationFragment.startNewAnnotation(annotation.getWidth(), annotation.getHeight(), annotation.getBitmap(), annotation.getCameraPos(), annotation.getCameraRot());
-                            m_viewPager.setPagingEnabled(true);
-                        });
-                    }
-
-                    else if(action.equals("addAnnotation"))
-                    {
-                        final AddAnnotationMessage addAnnotation = new AddAnnotationMessage(reader.getJSONObject("data"));
-                        MainActivity.this.runOnUiThread(() -> {
-                            m_Annotation_dataset.addServerAnnotation(addAnnotation);
-                        });
-                    }
-                    else if(m_receiveMessageListener.containsKey(action)) {
-                        IReceiveMessageListener iReceiveMessageListener = m_receiveMessageListener.get(action);
-                        if (iReceiveMessageListener != null) {
-                            JsonElement jsonElement = JsonParser.parseString(jsonMsg);
-                            JsonObject asJsonObject = jsonElement.getAsJsonObject();
-                            MainActivity.this.runOnUiThread(() -> {
-                                iReceiveMessageListener.OnReceiveMessage(MainActivity.this,asJsonObject.get("data"));
-                                    });
-
-                        }
-                    }else{
-                        Log.w(TAG,"Unknown socket information: "+jsonMsg);
-                    }
-                }
-                catch(JSONException e)
-                {
-                    Log.e(TAG, "Issue with the JSON object received through the network: " + e.toString());
-                    return;
-                }
             }
 
             @Override
