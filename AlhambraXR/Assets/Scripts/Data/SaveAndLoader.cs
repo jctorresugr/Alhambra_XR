@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 
 public class SaveAndLoader : MonoBehaviour
@@ -17,6 +19,12 @@ public class SaveAndLoader : MonoBehaviour
     //old loading method, if this field is setted, then we use old method to load data.
     public string oldPath = "Database/";
     public bool debugSaveAsPng = true;
+    public bool useAsset = true;
+    public bool resortRGBA = false;
+
+    //????
+    //if this is assigned, we will not load from Resources
+    public Texture2D preAssignedIndexTexture = null;
 
     public void Save()
     {
@@ -63,7 +71,7 @@ public class SaveAndLoader : MonoBehaviour
         {
             SaveImagePNG(path, data, w, h);
         }
-        File.WriteAllBytes(path + ".bin", data);
+        File.WriteAllBytes(path + ".bytes", data);
     }
 
     protected void SaveImagePNG(string path, byte[] data, int w, int h)
@@ -77,12 +85,12 @@ public class SaveAndLoader : MonoBehaviour
 
     protected byte[] LoadImage(string path)
     {
-        return File.ReadAllBytes(path+".png");
+        return ReadAllBytes(path+".png");
     }
 
     protected byte[] LoadImageBin(string path)
     {
-        return File.ReadAllBytes(path + ".bin");
+        return ReadAllBytes(path + ".bytes");
     }
 
     public void Load()
@@ -108,12 +116,12 @@ public class SaveAndLoader : MonoBehaviour
         }
         else
         {
-            if(!File.Exists(jsonPath))
+            if(!Exists(jsonPath))
             {
                 Debug.LogWarning("Cannot find file <" + jsonPath+">, ignore");
                 return;
             }
-            string s = File.ReadAllText(jsonPath);
+            string s = ReadAllText(jsonPath);
             Debug.Log("Load at " + jsonPath);
             JsonUtility.FromJsonOverwrite(s, data);
 
@@ -123,38 +131,63 @@ public class SaveAndLoader : MonoBehaviour
                 annot.info.SnapshotRGBA = LoadImageBin(imagePath + AnnotationIDSuffix(annot.ID));
             }
             data.PostDeserialize();
-            if(File.Exists(imagePath + "index.png"))
+            if(preAssignedIndexTexture!=null)
             {
-                byte[] indexImageBytes = LoadImage(imagePath + "index");
-                Texture2D texture2D = new Texture2D(2, 2, TextureFormat.RGBA32,false);
-                ImageConversion.LoadImage(texture2D, indexImageBytes, false);
-                //byte[] indexBinBytes = LoadImageBin(imagePath + "index");
-                //texture2D.SetPixelData(indexBinBytes, 0, 0);
+                data.IndexTexture = preAssignedIndexTexture;
+            }
+            else if(Exists(imagePath + "index.png"))
+            {
+                Texture2D texture2D;
+                if (!useAsset)
+                {
+                    byte[] indexImageBytes = LoadImage(imagePath + "index");
+                    texture2D = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                    ImageConversion.LoadImage(texture2D, indexImageBytes, false);
 
+                    
+                }
+                else
+                {
+                    texture2D = Resources.Load<Texture2D>(imagePath + "index");
+                }
                 texture2D.filterMode = FilterMode.Point;
                 texture2D.minimumMipmapLevel = 0;
                 texture2D.requestedMipmapLevel = 0;
+                if(resortRGBA)
+                {
+                    //BARG => RGBA, Not clear why it does not read correctly :(
+                    //On my computer (in my unity, even )
+                    byte[] vs = texture2D.GetPixelData<byte>(0).ToArray();
+                    Parallel.For(
+                        0, vs.Length / 4,
+                        (i) =>
+                        {
+                            int ind = i * 4;
+                            byte b = vs[ind];
+                            byte a = vs[ind + 1];
+                            byte r = vs[ind + 2];
+                            byte g = vs[ind + 3];
+                            vs[ind] = r;
+                            vs[ind + 1] = g;
+                            vs[ind + 2] = b;
+                            vs[ind + 3] = a;
+                        });
+                    texture2D.SetPixelData(vs, 0);
+                    texture2D.Apply();
+                }
+                else
+                {
+                    //byte[] vs = texture2D.GetPixelData<byte>(0).ToArray();
+                    /*
+                    
+                    Parallel.For(
+                        0, vs.Length / 4,
+                        (i) => { });
+                    texture2D.SetPixelData(vs, 0);*/
+                    //texture2D.Apply();
+                    
+                }
                 data.IndexTexture = texture2D;
-
-                //BARG => RGBA, Not clear why it does not read correctly :(
-                byte[] vs = texture2D.GetPixelData<byte>(0).ToArray();
-                Parallel.For(
-                    0, vs.Length/4,
-                    (i)=>
-                    {
-                        int ind = i * 4;
-                        byte b = vs[ind];
-                        byte a = vs[ind+1];
-                        byte r = vs[ind+2];
-                        byte g = vs[ind+3];
-                        vs[ind] = r;
-                        vs[ind+1] = g;
-                        vs[ind+2] = b;
-                        vs[ind+3] = a;
-                    });
-                texture2D.SetPixelData(vs,0);
-
-                texture2D.Apply();
 
             }
             else
@@ -167,8 +200,45 @@ public class SaveAndLoader : MonoBehaviour
 
         
     }
-}
 
+    protected byte[] ReadAllBytes(string path)
+    {
+        if(useAsset)
+        {
+            path = Path.ChangeExtension(path, null);
+            return Resources.Load<TextAsset>(path).bytes;
+        }
+        else
+        {
+            return File.ReadAllBytes(path);
+        }
+    }
+
+    protected string ReadAllText(string path)
+    {
+        if (useAsset)
+        {
+            path = Path.ChangeExtension(path, null);
+            return Resources.Load<TextAsset>(path).text;
+        }
+        else
+        {
+            return File.ReadAllText(path);
+        }
+    }
+    protected bool Exists(string path)
+    {
+        if(useAsset)
+        {
+            return true;
+        }
+        else
+        {
+            return File.Exists(path);
+        }
+    }
+}
+#if UNITY_EDITOR
 [CustomEditor(typeof(SaveAndLoader))]
 
 public class SaveAndLoaderEditor : Editor
@@ -200,3 +270,4 @@ public class SaveAndLoaderEditor : Editor
     }
 
 }
+#endif

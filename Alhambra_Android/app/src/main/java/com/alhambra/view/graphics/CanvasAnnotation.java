@@ -13,7 +13,7 @@ import com.sereno.math.TranslateMatrix;
 
 public class CanvasAnnotation extends CanvasInteractiveElement {
     protected Annotation annotation;
-    private static final float radius=30.0f;
+    private static final float radius=20.0f;
     //private boolean highlight = false;
 
 

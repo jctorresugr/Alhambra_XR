@@ -77,13 +77,15 @@ public class ServerJsonParser : MonoBehaviour,
         }
         else
         {
-            ProcessMessageFunc processMessageFunc = onReceiveMessage[commonMsg.action];
-            if (processMessageFunc == null)
+            if(onReceiveMessage.ContainsKey(commonMsg.action))
             {
-                Debug.LogWarning("Unknown Action " + commonMsg.action);
-                return;
+                ProcessMessageFunc processMessageFunc = onReceiveMessage[commonMsg.action];
+                processMessageFunc.Invoke(c, msg);
+            }else
+            {
+                Debug.LogWarning("Unregistered Action " + commonMsg.action);
             }
-            processMessageFunc.Invoke(c, msg);
+            
         }
     }
 }

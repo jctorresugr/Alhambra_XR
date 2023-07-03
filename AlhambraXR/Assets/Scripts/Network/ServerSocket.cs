@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Text;
 using UnityEngine;
+using System.Collections.Concurrent;
 
 #if WINDOWS_UWP
 using Windows.System.Threading;
@@ -65,8 +66,9 @@ public class ServerSocket: Client.IClientListener
 
     /// <summary>
     /// List of connected clients
+    /// I modify this
     /// </summary>
-    private Dictionary<Socket, Client> m_clients = new Dictionary<Socket, Client>();
+    private ConcurrentDictionary<Socket, Client> m_clients = new ConcurrentDictionary<Socket, Client>();
 
     /// <summary>
     /// The number of time in micro seconds that the reading and writing threads sleep if no data is to be sent/read
@@ -214,9 +216,10 @@ public class ServerSocket: Client.IClientListener
                 Client c = new Client(s);
                 c.AddListener(this);
 
+                
+                m_clients.TryAdd(s, c);
                 lock (this)
                 {
-                    m_clients.Add(s, c);
                     foreach (IServerSocketListener l in m_listeners)
                         l.OnAcceptClient(this, c);
                 }
@@ -280,8 +283,9 @@ public class ServerSocket: Client.IClientListener
 
     public virtual void OnClose(Client c)
     {
-        lock(this)
-            m_clients.Remove(c.Socket);
+        //This causes deadlock if the client exit accidently
+        //lock(this)
+            m_clients.TryRemove(c.Socket,out _);
     }
 
     public virtual void OnRead(Client c, String msg)

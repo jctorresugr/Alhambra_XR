@@ -414,7 +414,7 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
                 previewUI.textView.setText(String.valueOf(dataID));
             }
             onSetMainEntryIndex(d, m_currentSelection); //Redo the background
-            m_quitSelectionBtn.setVisibility(View.GONE); //Hide the quit selection, as there is no selection
+            //m_quitSelectionBtn.setVisibility(View.GONE); //Hide the quit selection, as there is no selection
             return;
         }
         m_quitSelectionBtn.setVisibility(View.VISIBLE); //Show the quit selection button

@@ -3,10 +3,14 @@ package com.alhambra;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 
 import com.alhambra.dataset.SelectionData;
 import com.alhambra.dataset.UserData;
@@ -21,6 +25,7 @@ import com.alhambra.fragment.PreviewFragment;
 import com.alhambra.fragment.ViewPagerAdapter;
 import com.alhambra.interactions.IInteraction;
 import com.alhambra.interactions.MinimapInteraction;
+import com.alhambra.interactions.MoveInteraction;
 import com.alhambra.interactions.SearchInteraction;
 import com.alhambra.interactions.SelectionInteraction;
 import com.alhambra.network.JSONUtils;
@@ -97,6 +102,8 @@ public class MainActivity
     //private HashMap<String, IReceiveMessageListener> m_receiveMessageListener = new HashMap<>();
     private NetworkJsonParser networkJsonParser = null;
 
+    private RelativeLayout globalRelativeLayout = null;
+
     private ArrayList<IInteraction> interactions = new ArrayList<>();
 
     public EditText filterEditor;
@@ -107,6 +114,7 @@ public class MainActivity
 
     private MinimapInteraction minimapInteraction;
     private MinimapInteraction minimapInteractionTiny;
+    private MoveInteraction moveInteraction;
 
     /*--------------------------------------*/
     /*-----Initialization of everything-----*/
@@ -134,6 +142,8 @@ public class MainActivity
         minimapInteractionTiny.selectionData=selectionData;
         minimapInteractionTiny.setMapView(floatView.getMapView());
         this.addInteraction(minimapInteractionTiny);
+        moveInteraction = new MoveInteraction();
+        this.addInteraction(moveInteraction);
     }
 
     public void regReceiveMessageListener(String actionName, IReceiveMessageListener l){
@@ -221,10 +231,12 @@ public class MainActivity
     public void onReceiveAnnotation(JsonElement jsonElement) {
         final AnnotationMessage annotation = JSONUtils.gson.fromJson(jsonElement,AnnotationMessage.class);
         annotation.postSerialize();
+        byte[] pngBytes = annotation.getBitmap();
+        Bitmap bitmap = BitmapFactory.decodeByteArray(pngBytes, 0, pngBytes.length);
         MainActivity.this.runOnUiThread(() -> {
             m_tabLayout.getTabAt(ANNOTATION_FRAGMENT_TAB).view.setVisibility(View.VISIBLE);
             m_viewPager.setCurrentItem(ANNOTATION_FRAGMENT_TAB);
-            m_annotationFragment.startNewAnnotation(annotation.getWidth(), annotation.getHeight(), annotation.getBitmap(), annotation.getCameraPos(), annotation.getCameraRot());
+            m_annotationFragment.startNewAnnotation(annotation.getWidth(), annotation.getHeight(), bitmap, annotation.getCameraPos(), annotation.getCameraRot());
             m_viewPager.setPagingEnabled(true);
         });
     }
@@ -274,6 +286,8 @@ public class MainActivity
     private void initLayout()
     {
         setContentView(R.layout.activity_main);
+
+        globalRelativeLayout = findViewById(R.id.mainActivityGlobalLayout);
 
         filterEditor = (EditText)findViewById(R.id.filterTextEdit);
 
@@ -371,6 +385,12 @@ public class MainActivity
     }
 
     @Override
+    public void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        floatView.hide();
+    }
+
+    @Override
     public void askStartAnnotation(AnnotationFragment frag) {
         m_socket.push(StartAnnotation.generateJSON());
     }
@@ -437,4 +457,17 @@ public class MainActivity
         return m_Annotation_dataset;
     }
 
+    public RelativeLayout getGlobalRelativeLayout() {
+        return globalRelativeLayout;
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        boolean result = moveInteraction.gestureAnalyze.supplyEvent(ev);
+        if(!result){
+            return super.dispatchTouchEvent(ev);
+        }
+        return true;
+
+    }
 }

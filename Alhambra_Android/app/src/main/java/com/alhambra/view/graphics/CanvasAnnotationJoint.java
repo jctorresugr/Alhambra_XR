@@ -22,7 +22,7 @@ import java.util.List;
 public class CanvasAnnotationJoint extends CanvasInteractiveElement {
 
     protected AnnotationJoint annotationJoint;
-    private static final float radius=40.0f;
+    private static final float radius=30.0f;
 
     private static final Paint normalPaint;
     private static final Paint normalBorderPaint;

@@ -14,6 +14,7 @@ import com.sereno.math.Quaternion;
 public class AnnotationMessage
 {
     /** The base64 image data*/
+    //we use png bytes here, not rgba!
     private byte[] m_image;
     private String base64;
 

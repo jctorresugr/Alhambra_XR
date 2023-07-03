@@ -170,6 +170,14 @@ public class DragViewLayout extends RelativeLayout {
         mWindowManager.addView(this, floatLayoutParams);
     }
 
+    public void hide(){
+        if(!hasShown){
+            return;
+        }
+        hasShown=false;
+        mWindowManager.removeView(this);
+    }
+
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
@@ -179,4 +187,6 @@ public class DragViewLayout extends RelativeLayout {
             mHeight = getHeight();
         }
     }
+
+
 }

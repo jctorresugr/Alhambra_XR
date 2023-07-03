@@ -67,16 +67,20 @@ public class JSONMessage
     /// <returns>The "annotation" JSON message to be sent to, e.g., tablet client</returns>
     public static String StartAnnotationToJSON(byte[] pixels, int width, int height, Vector3 cameraPos, Quaternion cameraRot)
     {
+        string base64 = RGBABytesToPngBytes(pixels, width, height);
         return 
              "{" +
              "    \"action\": \"annotation\",\n" +
              "    \"data\":\n" +
              "    {\n" +
-            $"        \"base64\": \"{System.Convert.ToBase64String(pixels)}\",\n" +
+            $"        \"base64\": \"{base64}\",\n" +
             $"        \"width\": {width},\n"   +
             $"        \"height\": {height},\n" +
             $"        \"cameraPos\": [{cameraPos.x}, {cameraPos.y}, {cameraPos.z}],\n" +
-            $"        \"cameraRot\": [{cameraRot.w}, {cameraRot.x}, {cameraRot.y}, {cameraRot.z}]\n" +
+            $"        \"cameraRot\": " +
+            "{"+
+            $" \"x\":{cameraRot.x},\"y\":{cameraRot.y},\"z\":{cameraRot.z},\"w\":{cameraRot.w} " +
+            "}" +
              "    }\n" +
              "}";
     }
@@ -97,14 +101,24 @@ public class JSONMessage
 
     public static string AddAnnotationJSONData(Annotation annot)
     {
+        string base64 = RGBABytesToPngBytes(annot.info.SnapshotRGBA, annot.info.SnapshotWidth, annot.info.SnapshotHeight);
         return "    {\n" +
-           $"        \"snapshotBase64\": \"{System.Convert.ToBase64String(annot.info.SnapshotRGBA)}\",\n" +
+           $"        \"snapshotBase64\": \"{base64}\",\n" +
            $"        \"snapshotWidth\":  {annot.info.SnapshotWidth},\n" +
            $"        \"snapshotHeight\": {annot.info.SnapshotHeight},\n" +
            $"        \"annotationColor\": [{annot.info.Color.r}, {annot.info.Color.g}, {annot.info.Color.b}, {annot.info.Color.a}],\n" +
            $"        \"description\": {QuoteString(annot.info.Description)}," +
            $"        \"renderInfo\": {JsonUtility.ToJson(annot.renderInfo)}" +
             "    }\n";
+    }
+
+    protected static string RGBABytesToPngBytes(byte[] rgba, int w, int h)
+    {
+        return System.Convert.ToBase64String(
+            ImageConversion.EncodeArrayToPNG(
+            rgba,
+            UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_SRGB,
+            (uint)w, (uint)h));
     }
 
     //test code

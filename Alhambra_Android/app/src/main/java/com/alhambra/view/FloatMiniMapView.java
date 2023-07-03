@@ -44,13 +44,6 @@ public class FloatMiniMapView extends DragViewLayout {
         LayoutParams params2 = new LayoutParams(500, 500);
         addView(m_mapView,params2);
         m_mapView.setClickable(true);
-        /*
-        m_mapView.setOnClickListener(
-                l->{
-                    Toast.makeText(this.getContext(),"Clicked!",Toast.LENGTH_SHORT).show();
-                    pager.setCurrentItem(2);
-                }
-        );*/
     }
 
     public void setData(AnnotationDataset annotationDataset, UserData userData){

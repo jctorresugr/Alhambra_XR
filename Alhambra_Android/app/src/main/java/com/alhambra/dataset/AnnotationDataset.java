@@ -2,6 +2,7 @@ package com.alhambra.dataset;
 
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
@@ -426,10 +427,12 @@ public class AnnotationDataset
         if(layer == 4)
             return false;
 
-        int    width  = msg.getSnapshotWidth();
-        int    height = msg.getSnapshotHeight();
+        //int    width  = msg.getSnapshotWidth();
+        //int    height = msg.getSnapshotHeight();
         byte[] argbImg = msg.getSnapshotBitmap();
-
+        Bitmap bitmap = BitmapFactory.decodeByteArray(argbImg, 0, argbImg.length);
+        BitmapDrawable drawable = new BitmapDrawable(bitmap);
+        /*
         if(width*height*4 > msg.getSnapshotBitmap().length)
             return false;
 
@@ -445,6 +448,8 @@ public class AnnotationDataset
                                          (argbImg[4*srcIdx+1] << 8)  +
                                          (argbImg[4*srcIdx+2]);
             }
+        */
+
         int curIndex = m_data.size()+1;
         AnnotationID annotationID = new AnnotationID(layer,id);
         AnnotationInfo annotationInfo;
@@ -452,11 +457,11 @@ public class AnnotationDataset
         Annotation annotation = this.addAnnotation(curIndex,annotationID);
         if(annotation.info!=null && annotation.info.getIndex()!=curIndex){
             curIndex = annotation.info.getIndex();
-            annotationInfo = new AnnotationInfo(curIndex, layer, id, msg.getARGB8888Color(), msg.getDescription(),
-                    new BitmapDrawable(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888)));
+            annotationInfo = new AnnotationInfo(curIndex, layer, id, msg.getARGB8888Color(), msg.getDescription(),drawable);
+                    //new BitmapDrawable(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888)));
         }else{
-            annotationInfo = new AnnotationInfo(curIndex, layer, id, msg.getARGB8888Color(), msg.getDescription(),
-                    new BitmapDrawable(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888)));
+            annotationInfo = new AnnotationInfo(curIndex, layer, id, msg.getARGB8888Color(), msg.getDescription(),drawable);
+                    //new BitmapDrawable(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888)));
         }
         annotation.info=annotationInfo;
         annotation.renderInfo=msg.getRenderInfo();

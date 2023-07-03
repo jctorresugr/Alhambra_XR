@@ -241,12 +241,13 @@ public class AnnotationFragment extends AlhambraFragment
     /** Start a new annotation
      * @param width the width of the background to annotate
      * @param height the height of the background to annotate
-     * @param argbImg the ARGB8888 image to annotate
+     * @param argbImg the image
      * @param cameraPos the camera position at the time of where the argbImg was taken
      * @param cameraRot the camera orientation at the time of where the argbImg was taken*/
-    public boolean startNewAnnotation(int width, int height, byte[] argbImg, float[] cameraPos, Quaternion cameraRot)
+    public boolean startNewAnnotation(int width, int height, Bitmap argbImg, float[] cameraPos, Quaternion cameraRot)
     {
         //Check that the incoming data has the correct size
+        /*
         if(argbImg.length < 4*width*height)
             return false;
 
@@ -261,9 +262,9 @@ public class AnnotationFragment extends AlhambraFragment
                                          (argbImg[4*srcIdx+0] << 16) +
                                          (argbImg[4*srcIdx+1] << 8)  +
                                          (argbImg[4*srcIdx+2]);
-            }
+            }*/
 
-        m_canvas.getModel().setBackground(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888));
+        m_canvas.getModel().setBackground( argbImg);//Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888));
         m_canvas.getModel().clearGeometries();
         m_confirmBtn.setVisibility(View.VISIBLE);
         m_cancelBtn.setVisibility(View.VISIBLE);

@@ -15,6 +15,7 @@ import org.json.JSONObject;
 public class AddAnnotationMessage
 {
     /** The base64 snapshot image data*/
+    //Note: For Optimization, we use png bytes here, otherwise network and OOM issue will annoy the user all the time (and as a developer)
     private String snapshotBase64;
     private byte[] m_image;
 

@@ -22,9 +22,6 @@ public class NetworkJsonParser implements SocketManager.ISocketManagerListener {
     private SocketManager m_socket = null;
     private Handler mainThreadHandler;
 
-    //for seq json message
-
-    //TODO: seperate Network as a single model
     public void init(SocketManager socket){
         mainThreadHandler = new Handler(Looper.getMainLooper());
         m_receiveMessageListener = new HashMap<>();
@@ -55,12 +52,11 @@ public class NetworkJsonParser implements SocketManager.ISocketManagerListener {
             Log.i("Network",jsonMsg);
         }
         //Determine the action to do
-        String action = null;
+        String action;
         JsonElement jsonElement = JsonParser.parseString(jsonMsg);
         JsonObject jsonObject = jsonElement.getAsJsonObject();
-        //final JSONObject reader = new JSONObject(jsonMsg);
 
-        action = jsonObject.get("action").getAsString();//reader.getString("action");
+        action = jsonObject.get("action").getAsString();
         JsonElement data = jsonObject.get("data");
         Log.i(LOG_TAG,"receive action <"+action+">");
         if (action.equals(PackedJSONMessages.ACTION_NAME)) {

@@ -6,12 +6,16 @@ using UnityEngine;
 public class PositionDataSync : SocketDataBasic
 {
     public Main main;
+    public Camera arCamera;
+    public Transform cameraContainer;
     public DataManager data;
     public ReferenceTransform referenceTransform;
 
     public float teleportOffset = 1.0f;
     public float upOffset = 1.0f;
     public float updateTime = 0.35f;
+
+    public float tabletControllerSensitivity = 0.05f;
 
     private float passTime = 0.0f;
 
@@ -21,6 +25,7 @@ public class PositionDataSync : SocketDataBasic
         FastReg<TransformClass>(OnReceiveSyncPos);
         FastReg<AnnotationID>(OnReceiveTeleportAnnotation);
         FastReg<int>(OnReceiveTeleportAnnotationJoint);
+        FastReg<Vector3>(OnReceiveTabletControllerMove);
     }
 
 
@@ -39,15 +44,17 @@ public class PositionDataSync : SocketDataBasic
 
     public void SendSyncPos()
     {
-        TransformClass transformClass = new TransformClass(main.mainCamera.transform);
-        transformClass.position = referenceTransform.InvMapPosition(transformClass.position);
+        TransformClass transformClass = new TransformClass(arCamera.transform);
+        main.AddTask(() =>
+        transformClass.position = referenceTransform.InvMapPosition(transformClass.position));
         SendClientAction(ProcessMethodName(MethodBase.GetCurrentMethod().Name), transformClass);
     }
 
     public void OnReceiveSyncPos(TransformClass msg)
     {
-        main.mainCamera.transform.position = msg.position;
-        main.mainCamera.transform.rotation = Quaternion.Euler(msg.rotation);
+        main.AddTask(() =>
+           TeleportTo(referenceTransform.MapPosition(msg.position)));
+        //cameraContainer.rotation = Quaternion.Euler(msg.rotation);
     }
 
     public void OnReceiveTeleportAnnotation(AnnotationID id)
@@ -56,16 +63,14 @@ public class PositionDataSync : SocketDataBasic
         if (annotation != null)
         {
             AnnotationRenderInfo renderinfo = annotation.renderInfo;
-            if(renderinfo!=null)
+            if (renderinfo != null)
             {
                 main.AddTask(() =>
                 {
                     Vector3 worldPos = referenceTransform.MapPosition(renderinfo.averagePosition);
-                    main.mainCamera.transform.position =
-                        worldPos + renderinfo.Normal * teleportOffset + Vector3.up * upOffset;
-                    main.mainCamera.transform.LookAt(worldPos);
-                });
-                
+                    TeleportTo(renderinfo.Normal * teleportOffset + Vector3.up * upOffset);
+                }
+                );
             }
             
         }
@@ -77,10 +82,29 @@ public class PositionDataSync : SocketDataBasic
         if(joint!=null)
         {
             main.AddTask(() =>
-            {
-                main.mainCamera.transform.position = referenceTransform.MapPosition(joint.position) + Vector3.up * upOffset;
-            });
-                
+                TeleportTo(referenceTransform.MapPosition(joint.position) + Vector3.up * upOffset)
+                );
         }
+    }
+
+    public void OnReceiveTabletControllerMove(Vector3 tabletOffset)
+    {
+        main.AddTask(() =>
+        TeleportTo(
+            (
+            tabletOffset.x * arCamera.transform.forward +
+            tabletOffset.y * arCamera.transform.up +
+            tabletOffset.z * arCamera.transform.right
+            )
+            * tabletControllerSensitivity*Time.deltaTime + arCamera.transform.position)
+
+        );
+
+    }
+
+    protected void TeleportTo(Vector3 pos)
+    {
+        Transform t = cameraContainer.transform;
+        t.position = pos - arCamera.transform.localPosition; //relative position
     }
 }
