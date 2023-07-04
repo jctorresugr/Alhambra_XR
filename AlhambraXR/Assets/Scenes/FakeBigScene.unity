@@ -434,6 +434,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1503428716}
+  - {fileID: 963194228}
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -592,7 +593,7 @@ MonoBehaviour:
   oldPath: 
   debugSaveAsPng: 1
   useAsset: 1
-  resortRGBA: 1
+  resortRGBA: 0
   preAssignedIndexTexture: {fileID: 2800000, guid: 3bc66f837f10a544e833583bfa2a9e5f, type: 3}
 --- !u!1 &264426280
 GameObject:
@@ -1281,7 +1282,6 @@ GameObject:
   - component: {fileID: 417668010}
   - component: {fileID: 417668014}
   - component: {fileID: 417668013}
-  - component: {fileID: 417668012}
   - component: {fileID: 417668011}
   m_Layer: 0
   m_Name: CubeAABB
@@ -1318,19 +1318,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   referenceTransform: {fileID: 293561427}
   render: {fileID: 1153888389}
---- !u!65 &417668012
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 417668009}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &417668013
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1634,7 +1621,6 @@ GameObject:
   - component: {fileID: 512230519}
   - component: {fileID: 512230523}
   - component: {fileID: 512230522}
-  - component: {fileID: 512230521}
   - component: {fileID: 512230520}
   m_Layer: 0
   m_Name: CubeOBB
@@ -1671,19 +1657,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   referenceTransform: {fileID: 293561427}
   render: {fileID: 1153888389}
---- !u!65 &512230521
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 512230518}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &512230522
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2722,8 +2695,8 @@ Transform:
   m_Children:
   - {fileID: 1448527940}
   - {fileID: 600857966}
-  m_Father: {fileID: 1503428716}
-  m_RootOrder: 0
+  m_Father: {fileID: 147764209}
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 67.497, z: 0}
 --- !u!114 &963194229
 MonoBehaviour:
@@ -4073,8 +4046,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children:
-  - {fileID: 963194228}
+  m_Children: []
   m_Father: {fileID: 147764209}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -4845,7 +4817,7 @@ MonoBehaviour:
   server: {fileID: 1812294293}
   main: {fileID: 293561423}
   arCamera: {fileID: 963194227}
-  cameraContainer: {fileID: 1503428716}
+  cameraContainer: {fileID: 147764209}
   data: {fileID: 756731257}
   referenceTransform: {fileID: 293561427}
   teleportOffset: 1
@@ -5406,7 +5378,6 @@ GameObject:
   - component: {fileID: 2034321874}
   - component: {fileID: 2034321878}
   - component: {fileID: 2034321877}
-  - component: {fileID: 2034321876}
   - component: {fileID: 2034321875}
   m_Layer: 0
   m_Name: Sphere
@@ -5443,19 +5414,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   referenceTransform: {fileID: 293561427}
   render: {fileID: 1153888389}
---- !u!135 &2034321876
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2034321873}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &2034321877
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -5658,7 +5616,7 @@ MeshCollider:
   m_Enabled: 1
   serializedVersion: 4
   m_Convex: 0
-  m_CookingOptions: 30
+  m_CookingOptions: 0
   m_Mesh: {fileID: 3665072138398725983, guid: f22141cdbcf7e4e4aae8979c0844d8b9, type: 3}
 --- !u!23 &2562838717224224085
 MeshRenderer:

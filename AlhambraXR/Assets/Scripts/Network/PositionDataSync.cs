@@ -46,8 +46,11 @@ public class PositionDataSync : SocketDataBasic
     {
         TransformClass transformClass = new TransformClass(arCamera.transform);
         main.AddTask(() =>
-        transformClass.position = referenceTransform.InvMapPosition(transformClass.position));
-        SendClientAction(ProcessMethodName(MethodBase.GetCurrentMethod().Name), transformClass);
+        {
+            transformClass.position = referenceTransform.InvMapPosition(transformClass.position);
+            SendClientAction("SyncPos", transformClass);
+        }
+        );
     }
 
     public void OnReceiveSyncPos(TransformClass msg)

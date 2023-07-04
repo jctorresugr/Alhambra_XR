@@ -407,15 +407,20 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                 {
                     Debug.Log("Issue with mesh colliders... Return.");
                     return null;
+                    //debug code:
+                    //return new Color(0.5f, 0.5f, 0.5f);
                 }
 
                 //Get the position of the hit
                 Vector2 point = hit.textureCoord;
-                //Debug.Log("u " + point.x + " v " + point.y);
                 //GameObject.Find("Origin").transform.position = hit.point;
 
                 //Get the corresponding Layer information using the Image that encodes up to 4 layers
-                Color c = indexTexture.GetPixel((int)(point.x * indexTexture.width), (int)(point.y * indexTexture.height));
+                int indexX = (int)(point.x * indexTexture.width);
+                int indexY = (int)(point.y * indexTexture.height);
+                Color c = indexTexture.GetPixel(indexX,indexY);
+                Debug.Log($"u {point.x.ToString("F4")}| v {point.y.ToString("F4")}| index {indexX},{indexY} | C {c} | Ray {ray.origin.ToString("F4")} > {ray.direction.ToString("F4")} | Layer {1<<gameObject.layer} | Distance {hit.distance}");
+                Debug.Log("Hit Index value: " + c);
                 return c;
             }
         }

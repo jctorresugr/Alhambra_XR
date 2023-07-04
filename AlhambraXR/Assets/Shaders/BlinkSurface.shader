@@ -62,22 +62,19 @@ Shader "Custom/BlinkSurface"
             fixed4 index = tex2D(_IndexTex, IN.uv_MainTex);
             fixed indexArray[4] = { index.r, index.g, index.b, index.a };
             float sinTime = sin(2*_Time[1]);
-            if (_LayerRight== LIGHT_ALL_INDEX && indexArray[3]>0) 
-            { 
-                float counter = 0;
-                if (indexArray[0] != 0)
-                    counter = 1;
-                else if (indexArray[1] != 0)
-                    counter = 2;
-                else if (indexArray[2] != 0)
-                    counter = 3;
-                if (counter > 0)
-                    o.Albedo = c.rgb + 0.6 * (sin(_Time[counter]) * sin(_Time[counter])) * _Color;
+            if (_LayerRight == LIGHT_ALL_INDEX && indexArray[3] > 0)
+            {
+                o.Albedo = c.rgb + 0.6 * (sin(_Time[0]) * sin(_Time[0])) * _Color;
             }
             else if      (_LayerRight < 4 && ((indexArray[_LayerRight]) * 255 == _IDRight)) { o.Albedo = c.rgb + 0.6 * (sinTime * sinTime) * _Color; }
             else if (_LayerLeft  < 4 && ((indexArray[_LayerLeft]) * 255  == _IDLeft))  { o.Albedo = c.rgb + 0.6 * (sinTime * sinTime) * _Color; }
 
-            //if ((indexArray[0]) * 255 > 0) { o.Albedo = c.rgb + 0.6 * (_SinTime[3] * _SinTime[3]) * _Color; }  // Debuging 
+            //if ((indexArray[3]) * 255 > 0) { o.Albedo = float3(0.0f, 0.0f, 0.0f); }  // Debuging 
+            /*
+            if ((indexArray[3]) * 255 > 0)
+                o.Albedo = fixed3(index.r, index.g, index.b)*20.0f;
+            else
+                o.Albedo = fixed3(1.0f, 1.0f, 1.0f);*/
 
             // Metallic and smoothness come from slider variables
             o.Metallic   = _Metallic;

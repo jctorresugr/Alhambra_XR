@@ -933,6 +933,8 @@ public class Main : MonoBehaviour,
 
     void PickPano.IPickPanoListener.OnHover(PickPano pano, Color c)
     {
+        if(c!=Color.clear)
+            m_server.SendASCIIStringToClients(JSONMessage.SelectionToJSON(c));
     }
 
     public void OnSetTexture(PickPano pano, Texture2D newIndexTexture)

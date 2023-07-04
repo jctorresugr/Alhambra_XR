@@ -134,6 +134,16 @@ public class SaveAndLoader : MonoBehaviour
             if(preAssignedIndexTexture!=null)
             {
                 data.IndexTexture = preAssignedIndexTexture;
+                /*
+                byte[] vs = preAssignedIndexTexture.GetPixelData<byte>(0).ToArray();
+                for(int i=0;i<vs.Length;i++)
+                {
+                    if(vs[i]>0)
+                    {
+                        //
+                    }
+                }*/
+                Debug.Log("Load predefined");
             }
             else if(Exists(imagePath + "index.png"))
             {
