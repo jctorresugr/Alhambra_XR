@@ -1,16 +1,18 @@
 package com.alhambra.view.base;
 
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import com.sereno.color.Color;
 
 import com.alhambra.ListenerSubscriber;
 import com.alhambra.view.base.CanvasBaseElement;
+import com.sereno.color.HSVColor;
 
 public abstract class CanvasInteractiveElement extends CanvasBaseElement {
+    //interaction part
     public interface OnClickCanvasElementListener{
         void onClick(CanvasInteractiveElement e);
     }
@@ -51,14 +53,18 @@ public abstract class CanvasInteractiveElement extends CanvasBaseElement {
 
     protected static Paint newPaint(int r,int g,int b,int a, float stroke, Paint.Style style) {
         Paint p = new Paint();
-        p.setColor(Color.argb(a,r,g,b));
+        p.setColor(android.graphics.Color.argb(a,r,g,b));
         p.setStrokeWidth(stroke);
         p.setStyle(style);
         return p;
     }
 
-    protected void translateAndRotate(Canvas canvas,float dx,float dy, float angle){
-        canvas.translate(dx,dy);
-        canvas.rotate(angle);
+    protected static Paint newPaint(int color, float stroke, Paint.Style style) {
+        Paint p = new Paint();
+        p.setColor(color);
+        p.setStrokeWidth(stroke);
+        p.setStyle(style);
+        return p;
     }
+
 }

@@ -24,6 +24,8 @@ public class BaseCanvasElementView extends View implements View.OnTouchListener 
     public Matrix matrix;
     public boolean impedeEvents = false;
     public int cleanColor= Color.WHITE;
+    private long lastTime;
+    private long lastInterval;
 
     public void addElement(CanvasBaseElement e){
         e.index = elements.size();
@@ -75,6 +77,14 @@ public class BaseCanvasElementView extends View implements View.OnTouchListener 
         this.invalidate();
     }
 
+    public long getNanoDeltaTime(){
+        return lastInterval;
+    }
+
+    public float getDeltaTime(){
+        return lastInterval*1e-09f;
+    }
+
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -86,6 +96,10 @@ public class BaseCanvasElementView extends View implements View.OnTouchListener 
             e.draw(canvas);
         }
         redraw();
+
+        long time = System.nanoTime();
+        lastInterval = time-lastTime;
+        lastTime=time;
     }
 
     private final Matrix matrixInvCache = new Matrix();

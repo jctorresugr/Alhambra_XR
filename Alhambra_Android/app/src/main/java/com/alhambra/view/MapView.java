@@ -8,11 +8,13 @@ import android.view.View;
 import com.alhambra.ListenerSubscriber;
 import com.alhambra.MainActivity;
 import com.alhambra.dataset.AnnotationDataset;
+import com.alhambra.dataset.SelectionData;
 import com.alhambra.dataset.UserData;
 import com.alhambra.dataset.data.Annotation;
 import com.alhambra.dataset.data.AnnotationID;
 import com.alhambra.dataset.data.AnnotationJoint;
 import com.alhambra.view.base.BaseCanvasElementView;
+import com.alhambra.view.base.CanvasImageElement;
 import com.alhambra.view.graphics.CanvasAnnotation;
 import com.alhambra.view.graphics.CanvasAnnotationJoint;
 import com.alhambra.view.graphics.CanvasUser;
@@ -20,28 +22,38 @@ import com.sereno.math.BBox;
 import com.sereno.math.TranslateMatrix;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 public class MapView extends BaseCanvasElementView
         implements
         AnnotationDataset.IDatasetListener,
-        View.OnLayoutChangeListener {
+        View.OnLayoutChangeListener, SelectionData.ISelectionDataChange {
+
 
     public interface OnClickSymbols{
         void onClickAnnotation(Annotation annotation);
         void onClickAnnotationJoint(AnnotationJoint annotationJoint);
     }
+    //data
     private AnnotationDataset m_dataset;
-    private HashMap<AnnotationID,CanvasAnnotation> annotationElements = new HashMap<>();
-    private HashMap<Integer, CanvasAnnotationJoint> annotationJointElements = new HashMap<>();
     private UserData userData;
-    private CanvasUser canvasUser;
-    public boolean fixedBounds =false;
+    private SelectionData selectionData;
 
+    //canvas element
+    private CanvasUser canvasUser;
+    private CanvasImageElement canvasBackground;
+    private final HashMap<AnnotationID,CanvasAnnotation> annotationElements = new HashMap<>();
+    private final HashMap<Integer, CanvasAnnotationJoint> annotationJointElements = new HashMap<>();
+
+    //settings and listeners
+    public boolean fixedBounds =false;
     public TranslateMatrix translateInfo; //TODO: getter setter for interaction
     public ListenerSubscriber<OnClickSymbols> onClickSymbolsListeners = new ListenerSubscriber<>();
 
     public void init(){
         translateInfo = new TranslateMatrix();
+        canvasBackground = new CanvasImageElement();
         this.addOnLayoutChangeListener(this);
     }
     public AnnotationDataset getDataset() {
@@ -62,6 +74,14 @@ public class MapView extends BaseCanvasElementView
         recalculateBounds(m_dataset.getModelBounds());
         m_dataset.addListener(this);
         updateDataset();
+    }
+
+    public void setSelectionData(SelectionData selectionData){
+        if(this.selectionData!=null){
+            this.selectionData.subscriber.removeListener(this);
+        }
+        this.selectionData = selectionData;
+        selectionData.subscriber.addListener(this);
     }
 
     public UserData getUserData() {
@@ -102,6 +122,8 @@ public class MapView extends BaseCanvasElementView
     }
 
     public void updateDataset(){
+        this.addElement(canvasBackground);
+
         for (Annotation annotation : m_dataset.getAnnotationList()) {
             updateElement(annotation);
         }
@@ -109,8 +131,12 @@ public class MapView extends BaseCanvasElementView
             updateElement(annotationJoint);
         }
 
-        if(canvasUser!=null)
+        if(canvasUser!=null){
+            canvasUser.setTranslateMatrix(translateInfo);
             this.addElement(canvasUser);
+        }
+
+
     }
 
     public CanvasAnnotation addElement(Annotation annotation) {
@@ -181,6 +207,7 @@ public class MapView extends BaseCanvasElementView
         if(canvasAnnotationJoint==null){
             canvasAnnotationJoint = new CanvasAnnotationJoint();
             this.addElement(canvasAnnotationJoint);
+            annotationJointElements.put(annotationJoint.getId(),canvasAnnotationJoint);
             canvasAnnotationJoint.setAnnotationJoint(annotationJoint,translateInfo);
             canvasAnnotationJoint.onClickListeners.addListener(
                     l->onClickSymbolsListeners.invoke(i->i.onClickAnnotationJoint(((CanvasAnnotationJoint)l).getAnnotationJoint()))
@@ -193,12 +220,84 @@ public class MapView extends BaseCanvasElementView
 
     @Override
     public void onSetMainEntryIndex(AnnotationDataset annotationDataset, int index) {
-
+        updateSelectionVisualEffect();
     }
 
     @Override
     public void onSetSelection(AnnotationDataset annotationDataset, int[] selections) {
+        updateSelectionVisualEffect();
+    }
 
+    public void updateSelectionVisualEffect(){
+        updateSelectionVisualEffect(this.m_dataset,this.selectionData);
+    }
+    public void updateSelectionVisualEffect(AnnotationDataset annotationDataset, SelectionData selectionData){
+        if(selectionData.isEmptyFilter() && annotationDataset.isEmptySelection()){
+            setAnnotationJointsHide(false);
+            setAnnotationsHide(false);
+        } else {
+            int[] currentSelection = annotationDataset.getCurrentSelection();
+            //annot
+            if(annotationDataset.isEmptySelection()){
+                setAnnotationsHide(false);
+            }else{
+                setAnnotationsHide(true);
+                for(int index: currentSelection) {
+                    setAnnotationHide(index,false);
+                }
+            }
+            setAnnotationHide(annotationDataset.getMainEntryIndex(),false);
+            //joint
+            Set<Integer> selectedGroups = selectionData.getSelectedGroups();
+            if(selectedGroups.size()==0){
+                if(selectionData.isEmptyKeyWords()){
+                    setAnnotationJointsHide(false);
+                }else{
+                    setAnnotationJointsHide(true);
+                }
+
+            }else{
+                setAnnotationJointsHide(true);
+                for (int index : selectedGroups) {
+                    CanvasAnnotationJoint caj = annotationJointElements.get(index);
+                    if(caj!=null){
+                        caj.hide=false;
+                    }
+                }
+            }
+            for(CanvasAnnotationJoint caj: annotationJointElements.values()){
+                caj.showStroke=false;
+            }
+            for (int index : selectedGroups) {
+                CanvasAnnotationJoint caj = annotationJointElements.get(index);
+                if(caj!=null){
+                    caj.showStroke=true;
+                }
+            }
+
+        }
+    }
+
+    protected void setAnnotationJointsHide(boolean state){
+        for(CanvasAnnotationJoint caj: annotationJointElements.values()){
+            caj.hide=state;
+        }
+    }
+
+    protected void setAnnotationHide(int index, boolean state){
+        Annotation annotation = m_dataset.getAnnotation(index);
+        if (annotation != null) {
+            CanvasAnnotation canvasAnnotation = annotationElements.get(annotation.id);
+            if (canvasAnnotation != null) {
+                canvasAnnotation.hide = false;
+            }
+        }
+    }
+
+    protected void setAnnotationsHide(boolean state){
+        for (CanvasAnnotation ca : annotationElements.values()) {
+            ca.hide=state;
+        }
     }
 
     @Override
@@ -236,16 +335,44 @@ public class MapView extends BaseCanvasElementView
         refreshBoundsInfo();
     }
 
+    private final float[] tempPoint = new float[2];
+
+    protected float[] point(float x, float y)
+    {
+        tempPoint[0]=x;
+        tempPoint[1]=y;
+        return tempPoint;
+    }
     protected void recalculateBounds(BBox bounds){
         if(bounds==null || bounds.min==null){
             return;
         }
-        final float paddingRatio=0.1f;
+        final float paddingRatio=0.03f;
         final float paddingLeftRatio=1.0f-paddingRatio;
         float x0 = bounds.min.x;
         float x1 = bounds.max.x;
         float z0 = bounds.min.z;
         float z1 = bounds.max.z;
+
+        //map points
+        matrix.mapPoints(point(x0,z0));
+        x0 = tempPoint[0];
+        z0 = tempPoint[1];
+
+        matrix.mapPoints(point(x1,z1));
+        x1 = tempPoint[0];
+        z1 = tempPoint[1];
+
+        if(x0>x1) {
+            float t=x0;
+            x0=x1;
+            x1=t;
+        }
+        if(z0>z1) {
+            float t=z0;
+            z0=z1;
+            z1=t;
+        }
 
         float w = getWidth()*paddingLeftRatio;
         float h = getHeight()*paddingLeftRatio;
@@ -253,8 +380,8 @@ public class MapView extends BaseCanvasElementView
         translateInfo.scaleX = w/Math.max(x1-x0,1e-5f);
         translateInfo.scaleY = h/Math.max(z1-z0,1e-5f);
         translateInfo.scaleX = translateInfo.scaleY = Math.min(translateInfo.scaleX,translateInfo.scaleY);
-        translateInfo.translateX = -x0*translateInfo.scaleX+paddingRatio*0.5f*w;
-        translateInfo.translateY = -z0*translateInfo.scaleY+paddingRatio*0.5f*h;
+        translateInfo.translateX = -bounds.min.x*translateInfo.scaleX+paddingRatio*0.5f*w;
+        translateInfo.translateY = -bounds.min.z*translateInfo.scaleY+paddingRatio*0.5f*h;
         /*
         Log.i("TranslateInfo","screen size: "+w+" "+h);
         Log.i("TranslateInfo","scale "+translateInfo.scaleX+" "+translateInfo.scaleY+
@@ -282,5 +409,26 @@ public class MapView extends BaseCanvasElementView
 
     public CanvasAnnotationJoint getAnnotationJointElement(int jointID) {
         return annotationJointElements.get(jointID);
+    }
+
+
+    @Override
+    public void onGroupSelectionAdd(int newIndex, HashSet<Integer> groups) {
+        updateSelectionVisualEffect();
+    }
+
+    @Override
+    public void onGroupSelectionRemove(int newIndex, HashSet<Integer> groups) {
+        updateSelectionVisualEffect();
+    }
+
+    @Override
+    public void onGroupClear() {
+        updateSelectionVisualEffect();
+    }
+
+    @Override
+    public void onKeywordChange(String text) {
+        updateSelectionVisualEffect();
     }
 }

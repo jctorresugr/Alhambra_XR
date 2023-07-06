@@ -4823,7 +4823,7 @@ MonoBehaviour:
   teleportOffset: 1
   upOffset: 1
   updateTime: 0.25
-  tabletControllerSensitivity: 0.005
+  tabletControllerSensitivity: 0.02
 --- !u!114 &1812294293
 MonoBehaviour:
   m_ObjectHideFlags: 0

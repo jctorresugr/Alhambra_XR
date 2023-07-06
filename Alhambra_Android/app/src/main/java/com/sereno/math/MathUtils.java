@@ -11,4 +11,8 @@ public class MathUtils {
     public static float distance(float x0,float y0, float x1,float y1) {
         return (float) Math.sqrt(distanceSqr(x0,y0,x1,y1));
     }
+
+    public static float interpolate(float x0,float x1,float t){
+        return x0+(x1-x0)*t;
+    }
 }

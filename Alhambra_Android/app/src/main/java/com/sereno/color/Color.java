@@ -39,6 +39,20 @@ public class Color
                ((int)(255*b));
     }
 
+    public static int toARGB8888(int r,int g,int b,int a){
+        return (a << 24) |
+                (r << 16) |
+                (g << 8)  |
+                (b);
+    }
+
+    public static int toARGB8888(float r,float g,float b,float a){
+        return ((int)(255*a) << 24) |
+                ((int)(255*r) << 16) |
+                ((int)(255*g) << 8)  |
+                ((int)(255*b));
+    }
+
     @Override
     public Object clone()
     {

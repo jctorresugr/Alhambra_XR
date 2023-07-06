@@ -643,6 +643,11 @@ public class AnnotationDataset
         return m_currentSelection;
     }
 
+    public boolean isEmptySelection(){
+        return m_currentSelection==null || m_currentSelection.length==0;
+    }
+
+
     public ArrayList<AnnotationID> index2AnnotationID(int[] selections) {
         ArrayList<AnnotationID> a = new ArrayList<>();
         for (int i :

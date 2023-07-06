@@ -312,6 +312,7 @@ public class MainActivity
         m_overviewFragment.addListener((OverviewFragment.OverviewFragmentListener) this);
         m_overviewFragment.setAnnotationDataset(m_Annotation_dataset);
         m_overviewFragment.setUserData(userData);
+        m_overviewFragment.setSelectionData(selectionData);
         adapter.addFragment(m_overviewFragment, "Overview");
 
 
@@ -327,7 +328,7 @@ public class MainActivity
 
 
         floatView = new FloatMiniMapView(MainActivity.this);
-        floatView.setData(m_Annotation_dataset,userData);
+        floatView.setData(m_Annotation_dataset,userData,selectionData);
         floatView.pager=m_viewPager;
     }
 

@@ -5,7 +5,9 @@ import com.alhambra.Utils;
 import com.alhambra.dataset.data.Annotation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 public class SelectionData {
     public interface ISelectionDataChange{
@@ -37,12 +39,24 @@ public class SelectionData {
         subscriber.invoke(l->l.onKeywordChange(keywords));
     }
 
+    public boolean isEmptyFilter(){
+        return isEmptyKeyWords() && selectedGroups.size()==0;
+    }
+
+    public boolean isEmptyKeyWords(){
+        return keywords==null || keywords.trim().length()==0;
+    }
+
+    public Set<Integer> getSelectedGroups(){
+        return Collections.unmodifiableSet(selectedGroups);
+    }
+
     public boolean containSelectedGroup(int index){
         return selectedGroups.contains(index);
     }
 
     public ArrayList<Annotation> filter(AnnotationDataset annotationDataset){
-        if(selectedGroups.size()==0 && (keywords==null || keywords.equals(""))) {
+        if(isEmptyFilter()) {
             return new ArrayList<>();
         }
         ArrayList<Annotation> filtered = new ArrayList<>();
@@ -52,7 +66,7 @@ public class SelectionData {
         }else{
             basic = new ArrayList<>(annotationDataset.getAnnotationList());
         }
-        if(keywords==null || keywords.equals("")){
+        if(isEmptyKeyWords()){
             return basic;
         }else
         {

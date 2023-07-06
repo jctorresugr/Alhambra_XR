@@ -7,14 +7,18 @@ import android.view.View;
 
 import com.alhambra.ListenerSubscriber;
 import com.alhambra.view.base.BaseCanvasElementView;
+import com.sereno.math.TranslateMatrix;
 
 public abstract class CanvasBaseElement {
 
-
+    // basic position
     protected float x,y;
-    protected Paint paint;
+    // index in the CanvasElementView
     int index;
+    // parent
     protected BaseCanvasElementView parent;
+    protected TranslateMatrix translateMatrix;
+    // when the interaction is in the range, this will be true.
     private boolean isFocused;
 
     public ListenerSubscriber<View.OnTouchListener> subscribeTouchEvent = new ListenerSubscriber<>();
@@ -28,15 +32,19 @@ public abstract class CanvasBaseElement {
         this.y=y;
     }
 
-    public void setPaint(Paint paint) {
-        if(paint!=this.paint){
-            this.paint=paint;
+    public void setTranslatePos(float x,float y){
+        if(translateMatrix!=null){
+            setPos(translateMatrix.transformPointX(x), translateMatrix.transformPointY(y));
+        }else{
+            setPos(x,y);
         }
     }
 
     public void onTouch(View v,MotionEvent e){};
 
+    //invoke every frame
     public void update(){};
+    //invoke when draw (every frame)
     public abstract void draw(Canvas canvas);
 
     public void triggerClick(View v,MotionEvent e){
@@ -58,6 +66,7 @@ public abstract class CanvasBaseElement {
 
     }
 
+    // judge if the click is inside the range of the element
     public abstract boolean isInRange(float x0, float y0);
 
     public float getX() {
@@ -68,8 +77,12 @@ public abstract class CanvasBaseElement {
         return y;
     }
 
-    public Paint getPaint() {
-        return paint;
+    public TranslateMatrix getTranslateMatrix() {
+        return translateMatrix;
+    }
+
+    public void setTranslateMatrix(TranslateMatrix translateMatrix) {
+        this.translateMatrix = translateMatrix;
     }
 
     public BaseCanvasElementView getParent() {

@@ -71,7 +71,7 @@ public class PositionDataSync : SocketDataBasic
                 main.AddTask(() =>
                 {
                     Vector3 worldPos = referenceTransform.MapPosition(renderinfo.averagePosition);
-                    TeleportTo(renderinfo.Normal * teleportOffset + Vector3.up * upOffset);
+                    TeleportTo(worldPos + renderinfo.Normal * teleportOffset + Vector3.up * upOffset);
                 }
                 );
             }

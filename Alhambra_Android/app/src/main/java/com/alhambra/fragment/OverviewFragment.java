@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment;
 
 import com.alhambra.R;
 import com.alhambra.dataset.AnnotationDataset;
+import com.alhambra.dataset.SelectionData;
 import com.alhambra.dataset.UserData;
 import com.alhambra.view.MapView;
 
@@ -24,6 +25,7 @@ public class OverviewFragment extends AlhambraFragment {
     private MapView m_mapView;
     private AnnotationDataset annotationDataset;
     private UserData userData;
+    private SelectionData selectionData;
     public OverviewFragment() {
         super();
     }
@@ -60,6 +62,7 @@ public class OverviewFragment extends AlhambraFragment {
         m_stopShowAllBtn = v.findViewById(R.id.stopShowAllBtn);
         m_mapView = v.findViewById(R.id.annotationMapView2);
         m_mapView.setUserData(userData);
+        m_mapView.setSelectionData(selectionData);
         m_mapView.setDataset(annotationDataset);
         m_mapView.impedeEvents=true;
         m_showAllBtn.setOnClickListener(view -> {
@@ -92,6 +95,13 @@ public class OverviewFragment extends AlhambraFragment {
         this.annotationDataset = annotationDataset;
         if(m_mapView!=null){
             m_mapView.setDataset(annotationDataset);
+        }
+    }
+
+    public void setSelectionData(SelectionData selectionData) {
+        this.selectionData=selectionData;
+        if(m_mapView!=null){
+            m_mapView.setSelectionData(selectionData);
         }
     }
 

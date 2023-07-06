@@ -2,11 +2,12 @@ package com.alhambra.view.graphics;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.view.MotionEvent;
 
-import com.alhambra.MainActivity;
 import com.alhambra.dataset.data.Annotation;
 import com.alhambra.view.base.CanvasInteractiveElement;
+import com.alhambra.view.base.DynamicFloat;
+import com.alhambra.view.base.DynamicHSVColor;
+import com.sereno.color.HSVColor;
 import com.sereno.math.BBox;
 import com.sereno.math.MathUtils;
 import com.sereno.math.TranslateMatrix;
@@ -14,23 +15,25 @@ import com.sereno.math.TranslateMatrix;
 public class CanvasAnnotation extends CanvasInteractiveElement {
     protected Annotation annotation;
     private static final float radius=20.0f;
-    //private boolean highlight = false;
-
-
+    private static final float radiusDown=60.0f;
+    private static final float radiusHide=15.0f;
+    public boolean hide=false;
     //styles
-    private static final Paint normalPaint;
-    private static final Paint normalBorderPaint;
-    private static final Paint mouseDownPaint;
-    private static final Paint mouseDownBorderPaint;
+    private static final HSVColor fillColor = HSVColor.createFromRGB(20,80,255,100);
+    private static final HSVColor borderColor = HSVColor.createFromRGB(10,80,155,100);
 
-    static{
-        normalPaint =           newPaint(20,80,255,100,2.0f,Paint.Style.FILL);
-        normalBorderPaint =     newPaint(10,60,155,255,10.0f,Paint.Style.STROKE);
-        mouseDownPaint =        newPaint(120,180,255,255,2.0f,Paint.Style.FILL);
-        mouseDownBorderPaint =  newPaint(110,120,205,255,10.0f,Paint.Style.STROKE);
-    }
+    private static final HSVColor fillHideColor = HSVColor.createFromRGB(20,80,255,20);
+    private static final HSVColor borderHideColor = HSVColor.createFromRGB(10,80,155,20);
+
+    private static final HSVColor fillDownColor = HSVColor.createFromRGB(255,40,155,100);
+    private static final HSVColor borderDownColor = HSVColor.createFromRGB(75,20,55,100);
 
 
+    protected DynamicHSVColor fillDynColor = new DynamicHSVColor(fillColor);
+    protected DynamicHSVColor borderDynColor = new DynamicHSVColor(borderColor);
+    protected DynamicFloat radiusDyn = new DynamicFloat(radius);
+    protected Paint fillPaint = newPaint(fillDynColor.curColor.toARGB(),2.0f,Paint.Style.FILL);
+    protected Paint borderPaint = newPaint(borderDynColor.curColor.toARGB(),10.0f,Paint.Style.STROKE);
 
 
     public void setAnnotation(Annotation annotation) {
@@ -44,20 +47,41 @@ public class CanvasAnnotation extends CanvasInteractiveElement {
         BBox bounds = annotation.renderInfo.getBounds();
         float x = (bounds.min.x+bounds.max.x)*0.5f;
         float y = (bounds.min.z+bounds.max.z)*0.5f;
-        setPos(translateMatrix.transformPointX(x), translateMatrix.transformPointY(y));
+        setTranslateMatrix(translateMatrix);
+        setTranslatePos(x,y);
     }
 
     @Override
     public void draw(Canvas canvas) {
-        if(this.isMouseDown()){
-            canvas.drawCircle(x,y,radius,mouseDownPaint);
-            canvas.drawCircle(x,y,radius,mouseDownBorderPaint);
-        }else{
-            canvas.drawCircle(x,y,radius,normalPaint);
-            canvas.drawCircle(x,y,radius,normalBorderPaint);
-        }
 
-        //Log.i("Draw","At: "+x+" \t|\t "+y);
+        canvas.drawCircle(x,y,radiusDyn.currentValue,fillPaint);
+        canvas.drawCircle(x,y,radiusDyn.currentValue,borderPaint);
+    }
+
+    @Override
+    public void update() {
+        super.update();
+        if(this.isMouseDown()){
+            fillDynColor.targetColor = fillDownColor;
+            borderDynColor.targetColor = borderDownColor;
+            radiusDyn.targetValue = radiusDown;
+        }else{
+            if(hide){
+                fillDynColor.targetColor = fillHideColor;
+                borderDynColor.targetColor = borderHideColor;
+                radiusDyn.targetValue = radiusHide;
+            }else{
+                fillDynColor.targetColor = fillColor;
+                borderDynColor.targetColor = borderColor;
+                radiusDyn.targetValue = radius;
+            }
+        }
+        float t=parent.getDeltaTime();
+        radiusDyn.update(t);
+        fillDynColor.update(t);
+        borderDynColor.update(t);
+        fillPaint.setColor(fillDynColor.curColor.toARGB());
+        borderPaint.setColor(borderDynColor.curColor.toARGB());
     }
 
     @Override

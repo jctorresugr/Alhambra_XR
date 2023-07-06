@@ -11,6 +11,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.alhambra.R;
 import com.alhambra.dataset.AnnotationDataset;
+import com.alhambra.dataset.SelectionData;
 import com.alhambra.dataset.UserData;
 import com.alhambra.interactions.MinimapInteraction;
 import com.alhambra.view.base.DragViewLayout;
@@ -40,15 +41,15 @@ public class FloatMiniMapView extends DragViewLayout {
         m_mapView = new MapView(context);
         m_mapView.fixedBounds=true;
         m_mapView.matrix.setScale(0.6f,0.6f);
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        LayoutParams params2 = new LayoutParams(500, 500);
+        LayoutParams params2 = new LayoutParams(550, 550);
         addView(m_mapView,params2);
         m_mapView.setClickable(true);
     }
 
-    public void setData(AnnotationDataset annotationDataset, UserData userData){
+    public void setData(AnnotationDataset annotationDataset, UserData userData, SelectionData selectionData){
         m_mapView.setDataset(annotationDataset);
         m_mapView.setUserData(userData);
+        m_mapView.setSelectionData(selectionData);
     }
 
     public MapView getMapView() {
