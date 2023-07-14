@@ -103,7 +103,13 @@ public class MapView extends BaseCanvasElementView
         this.elements.clear();
         annotationElements.clear();
         annotationJointElements.clear();
+
+        this.addElement(canvasBackground);
         updateDataset();
+        if(canvasUser!=null){
+            canvasUser.setTranslateMatrix(translateInfo);
+            this.addElement(canvasUser);
+        }
     }
 
     public MapView(Context context) {
@@ -122,18 +128,12 @@ public class MapView extends BaseCanvasElementView
     }
 
     public void updateDataset(){
-        this.addElement(canvasBackground);
 
-        for (Annotation annotation : m_dataset.getAnnotationList()) {
-            updateElement(annotation);
-        }
         for(AnnotationJoint annotationJoint: m_dataset.getAnnotationJoint()){
             updateElement(annotationJoint);
         }
-
-        if(canvasUser!=null){
-            canvasUser.setTranslateMatrix(translateInfo);
-            this.addElement(canvasUser);
+        for (Annotation annotation : m_dataset.getAnnotationList()) {
+            updateElement(annotation);
         }
 
 
@@ -246,7 +246,6 @@ public class MapView extends BaseCanvasElementView
                     setAnnotationHide(index,false);
                 }
             }
-            setAnnotationHide(annotationDataset.getMainEntryIndex(),false);
             //joint
             Set<Integer> selectedGroups = selectionData.getSelectedGroups();
             if(selectedGroups.size()==0){
@@ -276,7 +275,12 @@ public class MapView extends BaseCanvasElementView
             }
 
         }
+
+        setAnnotationsMainSelected(false);
+        setAnnotationMainSelected(annotationDataset.getMainEntryIndex(),true);
+        setAnnotationHide(annotationDataset.getMainEntryIndex(),false);
     }
+
 
     protected void setAnnotationJointsHide(boolean state){
         for(CanvasAnnotationJoint caj: annotationJointElements.values()){
@@ -284,12 +288,29 @@ public class MapView extends BaseCanvasElementView
         }
     }
 
+    protected void setAnnotationsMainSelected(boolean state){
+        for(CanvasAnnotation ca: annotationElements.values()){
+            ca.isMainSelected=state;
+        }
+    }
+
+    protected void setAnnotationMainSelected(int index, boolean state){
+        Annotation annotation = m_dataset.getAnnotation(index);
+        if (annotation != null) {
+            CanvasAnnotation canvasAnnotation = annotationElements.get(annotation.id);
+            if (canvasAnnotation != null) {
+                canvasAnnotation.isMainSelected=state;
+            }
+        }
+    }
+
+
     protected void setAnnotationHide(int index, boolean state){
         Annotation annotation = m_dataset.getAnnotation(index);
         if (annotation != null) {
             CanvasAnnotation canvasAnnotation = annotationElements.get(annotation.id);
             if (canvasAnnotation != null) {
-                canvasAnnotation.hide = false;
+                canvasAnnotation.hide = state;
             }
         }
     }
@@ -336,6 +357,12 @@ public class MapView extends BaseCanvasElementView
     }
 
     private final float[] tempPoint = new float[2];
+    private int lastWidth = 0;
+    private int lastHeight = 0;
+
+    private boolean requireUpdateBounds(){
+        return !(getWidth()==lastWidth && getHeight()==lastHeight || fixedBounds);
+    }
 
     protected float[] point(float x, float y)
     {
@@ -347,6 +374,8 @@ public class MapView extends BaseCanvasElementView
         if(bounds==null || bounds.min==null){
             return;
         }
+        lastWidth = getWidth();
+        lastHeight = getHeight();
         final float paddingRatio=0.03f;
         final float paddingLeftRatio=1.0f-paddingRatio;
         float x0 = bounds.min.x;
@@ -396,7 +425,7 @@ public class MapView extends BaseCanvasElementView
 
     @Override
     public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-        if(fixedBounds){
+        if(!requireUpdateBounds()){
             return;
         }
         refreshBoundsInfo();

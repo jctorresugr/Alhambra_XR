@@ -64,7 +64,8 @@ public class MainActivity
             AlhambraFragment.IFragmentListener,
             PreviewFragment.IPreviewFragmentListener,
             AnnotationFragment.IAnnotationFragmentListener,
-            OverviewFragment.OverviewFragmentListener
+            OverviewFragment.OverviewFragmentListener,
+        TabLayout.OnTabSelectedListener
 {
     /** The TAG to use for logging information*/
     public static final String TAG = "Alhambra";
@@ -107,6 +108,8 @@ public class MainActivity
     private ArrayList<IInteraction> interactions = new ArrayList<>();
 
     public EditText filterEditor;
+
+    public FloatMiniMapView floatView;
 
     public SelectionData selectionData = new SelectionData();
 
@@ -281,7 +284,6 @@ public class MainActivity
         });
     }
 
-    FloatMiniMapView floatView;
     /** Initialize the layout and all its widgets.*/
     private void initLayout()
     {
@@ -293,6 +295,7 @@ public class MainActivity
 
         m_viewPager = (PageViewer)findViewById(R.id.viewpager);
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
+
 
         //Add "Datasets" tab
         m_previewFragment = new PreviewFragment();
@@ -320,6 +323,8 @@ public class MainActivity
         m_viewPager.setAdapter(adapter);
         m_tabLayout = (TabLayout)findViewById(R.id.tabs);
         m_tabLayout.setupWithViewPager(m_viewPager);
+        m_tabLayout.addOnTabSelectedListener(this);
+
 
         //disableAnnotationTab();
 
@@ -469,6 +474,32 @@ public class MainActivity
             return super.dispatchTouchEvent(ev);
         }
         return true;
+
+    }
+
+    @Override
+    public void onTabSelected(TabLayout.Tab tab) {
+
+        switch (tab.getPosition()){
+            case 2:
+                floatView.setToSmallView();
+            case 0:
+                floatView.show();
+                break;
+            case 1:
+                floatView.hide();
+                break;
+        }
+
+    }
+
+    @Override
+    public void onTabUnselected(TabLayout.Tab tab) {
+
+    }
+
+    @Override
+    public void onTabReselected(TabLayout.Tab tab) {
 
     }
 }

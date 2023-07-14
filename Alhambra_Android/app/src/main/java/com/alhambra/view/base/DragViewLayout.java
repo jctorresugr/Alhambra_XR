@@ -7,6 +7,7 @@ import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 
@@ -16,10 +17,10 @@ public class DragViewLayout extends RelativeLayout {
     int mLastX, mLastY;
 
     //屏幕高宽
-    int mScreenWidth, mScreenHeight;
+    protected int mScreenWidth, mScreenHeight;
 
     //view高宽
-    int mWidth, mHeight;
+    protected int mWidth, mHeight;
 
     /**
      * 是否在拖拽过程中
@@ -30,18 +31,19 @@ public class DragViewLayout extends RelativeLayout {
      * 系统最小滑动距离
      * @param context
      */
-    int mTouchSlop = 0;
+    int mTouchSlop = 100;
 
     private boolean hasShown=false;
 
-    WindowManager.LayoutParams floatLayoutParams;
-    WindowManager mWindowManager;
+    protected WindowManager.LayoutParams floatLayoutParams;
+    protected WindowManager mWindowManager;
 
     //手指触摸位置
     private float xInScreen;
     private float yInScreen;
     private float xInView;
-    public float yInView;
+    private float yInView;
+    public boolean enableAttachEdge=true;
 
 
     public DragViewLayout(Context context) {
@@ -93,7 +95,7 @@ public class DragViewLayout extends RelativeLayout {
             case MotionEvent.ACTION_UP:
                 if (isDrag) {
                     //执行贴边
-                    startAnim();
+                    startEdgeAttach();
                     isDrag = false;
                 }
                 break;
@@ -105,6 +107,9 @@ public class DragViewLayout extends RelativeLayout {
 
     //更新悬浮球位置
     private void updateFloatPosition(boolean isUp) {
+        if(!isDrag){
+            return;
+        }
         int x = (int) (xInScreen - xInView);
         int y = (int) (yInScreen - yInView);
         if(isUp) {
@@ -132,20 +137,20 @@ public class DragViewLayout extends RelativeLayout {
 
 
     //执行贴边动画
-    private void startAnim(){
+    protected void startEdgeAttach(){
+        if(!enableAttachEdge){
+            return;
+        }
         ValueAnimator valueAnimator;
-        if (floatLayoutParams.x < mScreenWidth / 2) {
+        if (floatLayoutParams.x+mWidth/2 < mScreenWidth / 2) {
             valueAnimator = ValueAnimator.ofInt(floatLayoutParams.x, 0);
         } else {
             valueAnimator = ValueAnimator.ofInt(floatLayoutParams.x, mScreenWidth - mWidth);
         }
         valueAnimator.setDuration(200);
-        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                floatLayoutParams.x = (int)animation.getAnimatedValue();
-                mWindowManager.updateViewLayout(DragViewLayout.this, floatLayoutParams);
-            }
+        valueAnimator.addUpdateListener(animation -> {
+            floatLayoutParams.x = (int)animation.getAnimatedValue();
+            mWindowManager.updateViewLayout(DragViewLayout.this, floatLayoutParams);
         });
         valueAnimator.start();
     }
@@ -165,8 +170,8 @@ public class DragViewLayout extends RelativeLayout {
                         WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.RGBA_8888);
         floatLayoutParams.gravity = Gravity.LEFT | Gravity.TOP;
-        floatLayoutParams.x = 0;
-        floatLayoutParams.y = (int)(mScreenHeight * 0.4);
+        floatLayoutParams.x = mScreenWidth-mWidth;
+        floatLayoutParams.y = (int)(mScreenHeight * 0.3);
         mWindowManager.addView(this, floatLayoutParams);
     }
 
@@ -181,12 +186,23 @@ public class DragViewLayout extends RelativeLayout {
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
-        if (mWidth == 0) {
-            //获取悬浮球高宽
-            mWidth = getWidth();
-            mHeight = getHeight();
-        }
+        updateSize();
     }
 
+    private void updateSize(){
+        mWidth = getWidth();
+        mHeight = getHeight();
+    }
 
+    public void setSize(int width, int height){
+        mWidth=width;
+        mHeight =height;
+        ViewGroup.LayoutParams layoutParams = this.getLayoutParams();
+        layoutParams.height = height;
+        layoutParams.width = width;
+    }
+
+    public void setTouchSlop(int mTouchSlop) {
+        this.mTouchSlop = mTouchSlop;
+    }
 }

@@ -116,15 +116,17 @@ public class BaseCanvasElementView extends View implements View.OnTouchListener 
         x=pointsCache[0];
         y=pointsCache[1];
         e.setLocation(x,y);
-        Log.i("BaseCanvasView","Click "+x+" \t"+y+" "+e.getAction());
+        //Log.i("BaseCanvasView","Click "+x+" \t"+y+" "+e.getAction());
+        boolean impeded = false;
         for(CanvasBaseElement element: elements){
             if(element.isInRange(x,y)){
                 element.triggerClick(v,e);
+                impeded=true;
             }else{
                 element.triggerLoseFocus(e);
             }
         }
-        return impedeEvents;
+        return impedeEvents || impeded;
     }
 
 

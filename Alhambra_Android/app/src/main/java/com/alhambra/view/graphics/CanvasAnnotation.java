@@ -16,8 +16,10 @@ public class CanvasAnnotation extends CanvasInteractiveElement {
     protected Annotation annotation;
     private static final float radius=20.0f;
     private static final float radiusDown=60.0f;
+    private static final float radiusSelected=45.0f;
     private static final float radiusHide=15.0f;
     public boolean hide=false;
+    public boolean isMainSelected = false;
     //styles
     private static final HSVColor fillColor = HSVColor.createFromRGB(20,80,255,100);
     private static final HSVColor borderColor = HSVColor.createFromRGB(10,80,155,100);
@@ -25,8 +27,8 @@ public class CanvasAnnotation extends CanvasInteractiveElement {
     private static final HSVColor fillHideColor = HSVColor.createFromRGB(20,80,255,20);
     private static final HSVColor borderHideColor = HSVColor.createFromRGB(10,80,155,20);
 
-    private static final HSVColor fillDownColor = HSVColor.createFromRGB(255,40,155,100);
-    private static final HSVColor borderDownColor = HSVColor.createFromRGB(75,20,55,100);
+    private static final HSVColor fillDownColor = HSVColor.createFromRGB(58,61,227,100);
+    private static final HSVColor borderDownColor = HSVColor.createFromRGB(0,0,166,100);//166
 
 
     protected DynamicHSVColor fillDynColor = new DynamicHSVColor(fillColor);
@@ -61,10 +63,15 @@ public class CanvasAnnotation extends CanvasInteractiveElement {
     @Override
     public void update() {
         super.update();
-        if(this.isMouseDown()){
+        if(this.isMouseDown()|| isMainSelected){
             fillDynColor.targetColor = fillDownColor;
             borderDynColor.targetColor = borderDownColor;
-            radiusDyn.targetValue = radiusDown;
+            if(isMainSelected){
+                radiusDyn.targetValue = radiusSelected;
+            }else{
+                radiusDyn.targetValue = radiusDown;
+            }
+
         }else{
             if(hide){
                 fillDynColor.targetColor = fillHideColor;

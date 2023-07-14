@@ -40,4 +40,9 @@ public class ViewPagerAdapter extends FragmentPagerAdapter
     {
         return m_fragmentTitleList.get(position);
     }
+
+    @Override
+    public long getItemId(int position) {
+        return super.getItemId(position);
+    }
 }

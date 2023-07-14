@@ -217,9 +217,11 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
         //Configure the preview image
         previewUI.imageView.setImageDrawable(dataInfo.getImage());
 
+
         annotationPreviewUIMapping.put(annotationID,previewUI);
         //Put that in the tree view and set all the interactive listeners
         Tree<View> idTree = new Tree<>(preview);
+        preview.setClickable(true);
         preview.setOnClickListener(view -> m_Annotation_dataset.setMainEntryIndex(idx));
         treeModel.addChild(idTree, -1);
         m_datasetEntries.put(idx, idTree);

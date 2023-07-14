@@ -24,6 +24,9 @@ public class GestureAnalyze implements View.OnTouchListener {
     public interface OnDoubleGestureDetect{
         void doubleDown(FingerState f0,FingerState f1);
         void doubleParallelMove(FingerState f0,FingerState f1);
+        void multipleDown(int downCount, ArrayList<FingerState> downStates, ArrayList<FingerState> moveStates);
+        void multipleMove(int moveCount, ArrayList<FingerState> moveStates);
+        void multipleUp(FingerState f0, int leftFingers);
     }
 
     public final ListenerSubscriber<OnDoubleGestureDetect> subscriber = new ListenerSubscriber<>();
@@ -51,13 +54,9 @@ public class GestureAnalyze implements View.OnTouchListener {
         float x,y;
         long time;
         public MotionState(MotionEvent e,int pointerIndex){
-            //try {
-                x = e.getX(pointerIndex);
-                y = e.getY(pointerIndex);
-                time = e.getEventTime();
-            //}catch (IllegalArgumentException ignored){
-                //???
-            //}
+            x = e.getX(pointerIndex);
+            y = e.getY(pointerIndex);
+            time = e.getEventTime();
         }
 
         public static MotionState getMotionState(MotionEvent e,int pointerIndex) {
@@ -114,6 +113,7 @@ public class GestureAnalyze implements View.OnTouchListener {
                             result = true;
                         }
                     }
+                    subscriber.invoke(l->l.multipleDown(moveStates.size()+downStates.size(),moveStates,downStates));
                     break;
                 case MotionEvent.ACTION_MOVE:
                     for (int i = 0; i < pointerCount; i++) {
@@ -152,6 +152,7 @@ public class GestureAnalyze implements View.OnTouchListener {
                             result = true;
                         }
                     }
+                    subscriber.invoke(l->l.multipleMove(moveStates.size(),moveStates));
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_POINTER_UP:
@@ -161,8 +162,8 @@ public class GestureAnalyze implements View.OnTouchListener {
                         upState.up = MotionState.getMotionState(e);
                         Log.i("GestureA", "Up   \t" + upState.up);
                         states.remove(upState.index);
+                        subscriber.invoke(l->l.multipleUp(upState,states.size()));
                     }
-
                     break;
             }
             int newState = e.getActionMasked();

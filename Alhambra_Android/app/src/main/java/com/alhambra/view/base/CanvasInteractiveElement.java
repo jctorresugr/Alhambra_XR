@@ -51,20 +51,7 @@ public abstract class CanvasInteractiveElement extends CanvasBaseElement {
         setMouseDown(false);
     }
 
-    protected static Paint newPaint(int r,int g,int b,int a, float stroke, Paint.Style style) {
-        Paint p = new Paint();
-        p.setColor(android.graphics.Color.argb(a,r,g,b));
-        p.setStrokeWidth(stroke);
-        p.setStyle(style);
-        return p;
-    }
 
-    protected static Paint newPaint(int color, float stroke, Paint.Style style) {
-        Paint p = new Paint();
-        p.setColor(color);
-        p.setStrokeWidth(stroke);
-        p.setStyle(style);
-        return p;
-    }
+
 
 }
