@@ -248,6 +248,15 @@ public class Graph<N,E>
         }
     }
 
+    public void ForeachNodeExcept(GraphNode<N> exceptNode, Action<GraphNode<N>> action)
+    {
+        foreach (GraphNode<N> node in nodes)
+        {
+            if (IsValidNode(node)&& node!=exceptNode)
+                action(node);
+        }
+    }
+
     public void ForeachNode(Action<GraphNode<N>> action)
     {
         foreach(GraphNode<N> node in nodes)
@@ -377,7 +386,11 @@ public class Graph<N,E>
         {
             return null;
         }
-        foreach(int edgeIndex in node1.edgesIndex)
+        if(node1.edgesIndex==null|| node2.edgesIndex == null)
+        {
+            return null;
+        }
+        foreach (int edgeIndex in node1.edgesIndex)
         {
             GraphEdge<E> edge = edges[edgeIndex];
             if(edge.GetAnotherNodeIndex(node1.index)==node2.index)
@@ -386,6 +399,11 @@ public class Graph<N,E>
             }
         }
         return null;
+    }
+
+    public GraphEdge<E> GetEdge(int n1, int n2)
+    {
+        return GetEdge(GetNode(n1),GetNode(n2));
     }
 
 }

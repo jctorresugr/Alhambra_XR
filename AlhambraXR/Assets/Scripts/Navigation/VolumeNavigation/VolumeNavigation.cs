@@ -38,6 +38,8 @@ public class VolumeNavigation : MonoBehaviour
 
     public struct AnnotationNodeData
     {
+        public int index; //useless, only for computation temporary storage
+        public bool resultSet; //useless, only for computation temporary storage
         public AnnotationID id;
         public Vector3 centerPos;
         public XYZCoordinate coord;
@@ -49,6 +51,8 @@ public class VolumeNavigation : MonoBehaviour
             this.centerPos = centerPos;
             this.depth = -1;
             this.coord = new XYZCoordinate();
+            this.index = -1;
+            this.resultSet = false;
         }
 
         public int depth;
@@ -211,10 +215,227 @@ public class VolumeNavigation : MonoBehaviour
     {
         return Navigate(annotations, userLocalPos, Vector3.zero);
     }
+
+    class DijkstraTempRecord : IComparable<DijkstraTempRecord>
+    {
+        //public List<GraphNode<AnnotationNodeData>> route = new List;
+        public GraphNode<AnnotationNodeData> node;
+        public GraphNode<AnnotationNodeData> preNode=null;
+        public float minDistance = float.MaxValue;
+        public bool optimized = false;
+
+        public int CompareTo(DijkstraTempRecord other)
+        {
+            return this.minDistance.CompareTo(other.minDistance);
+        }
+
+    }
+
+    public NavigationInfo Navigate(List<Annotation> annotations, Vector3 userLocalPos, Vector3 suggestForward)
+    {
+        annotations = annotations.FindAll(a => a.IsValid && a.renderInfo != null && a.renderInfo.IsValid);
+        //=========================
+        //preprocess
+        graph.Clear();
+
+        for (int i = 0; i < annotations.Count; i++)
+        {
+            graph.AddNode(new AnnotationNodeData(annotations[i].ID, GetAnnotationPos(annotations[i])));
+            Debug.Log($"{annotations[i].ID} .bounds => {annotations[i].renderInfo.Bounds}");
+        }
+
+
+        List<GraphNode<AnnotationNodeData>> targetNodes = new List<GraphNode<AnnotationNodeData>>();
+        graph.ForeachNode(n => targetNodes.Add(n));
+
+        //Fetch helpNode
+        if (helpNodeProvider != null)
+        {
+            List<Vector3> helpNodes = helpNodeProvider.GetHelpNodePositions();
+            foreach (Vector3 v in helpNodes)
+            {
+                graph.AddNode(new AnnotationNodeData(AnnotationID.INVALID_ID, v));
+            }
+        }
+
+
+        for (int i = 0; i < graph.NodeCount; i++)
+        {
+            GraphNode<AnnotationNodeData> ai = graph.GetNode(i);
+            for (int j = i + 1; j < graph.NodeCount; j++)
+            {
+                GraphNode<AnnotationNodeData> aj = graph.GetNode(j);
+                if (IsHit(ai.data.centerPos, aj.data.centerPos))
+                {
+                    continue;
+                }
+                graph.AddEdge(i, j, new EdgeDistanceData(Distance(ai, aj)));
+            }
+        }
+
+        //==================================
+        //add user position
+        userLocalPos = referenceTransform.InvMapPosition(userLocalPos);
+
+        GraphNode<AnnotationNodeData> userNode = AddNode(new AnnotationNodeData(AnnotationID.LIGHTALL_ID, userLocalPos));
+        List<GraphNode<AnnotationNodeData>> originalNode = new List<GraphNode<AnnotationNodeData>>();
+        graph.ForeachNode(n => originalNode.Add(n));
+        userNode.data.depth = 0;
+        userNode.data.index = -1;
+
+        //===========================
+        //Begin!
+
+        //> graph node index, record
+        List<DijkstraTempRecord> candidate = new List<DijkstraTempRecord>();
+        List<DijkstraTempRecord> results = new List<DijkstraTempRecord>();
+
+
+        void AddNodeToCandidate(GraphNode<AnnotationNodeData> n)
+        {
+            DijkstraTempRecord rec = new DijkstraTempRecord();
+            rec.node = n;
+            n.data.index = candidate.Count;
+            GraphEdge<EdgeDistanceData> edge = graph.GetEdge(n, userNode);
+            if(edge!=null)
+            {
+                rec.minDistance = edge.data.basicDistance;
+                rec.preNode = userNode;
+            }
+            candidate.Add(rec);
+        }
+
+        DijkstraTempRecord GetRecord(GraphNode<AnnotationNodeData> n)
+        {
+            int ind = n.data.index;
+            if(ind<0)
+            {
+                return null;
+            }
+            if(n.data.resultSet)
+            {
+                return results[ind];
+            }
+            else
+            {
+                return candidate[ind];
+            }
+        }
+
+        graph.ForeachNodeExcept(userNode,AddNodeToCandidate);
+
+        //DijkstraTempRecord userRec = candidate[userNode.index];
+        //userRec.minDistance = 0;
+        //userRec.optimized = true;
+
+
+        float minDistance = float.MaxValue;
+        int curIndex=-1;
+        for(int i=0;i<candidate.Count;i++)
+        {
+            DijkstraTempRecord rec = candidate[i];
+            if (rec.minDistance<minDistance)
+            {
+                minDistance = rec.minDistance;
+                curIndex = i;
+            }
+        }
+        while(candidate.Count>0 && curIndex>=0)
+        {
+            DijkstraTempRecord curRec = candidate[curIndex];
+            curRec.optimized = true;
+            curRec.node.data.index = results.Count;
+            curRec.node.data.resultSet = true;
+            results.Add(curRec);
+            candidate.RemoveBySwap(curIndex);
+            if(candidate.Count==0)
+            {
+                break;
+            }
+            if(curIndex<candidate.Count)
+            {
+                candidate[curIndex].node.data.index = curIndex;
+            }
+            
+
+            graph.ForeachNodeNeighbor(curRec.node,
+                (nn, ne) =>
+                {
+                    DijkstraTempRecord nnRec = GetRecord(nn);
+                    if(nnRec==null)
+                    {
+                        return;
+                    }
+                    float newDistance = curRec.minDistance + ne.data.basicDistance;
+                    if(newDistance<nnRec.minDistance)
+                    {
+                        nnRec.minDistance = newDistance;
+                        nnRec.preNode = curRec.node;
+                       
+                    }
+                });
+            minDistance = float.MaxValue;
+            curIndex = -1;
+            for (int i = 0; i < candidate.Count; i++)
+            {
+                DijkstraTempRecord rec = candidate[i];
+                if (rec.minDistance < minDistance)
+                {
+                    minDistance = rec.minDistance;
+                    curIndex = i;
+                }
+            }
+        }
+
+        Graph<AnnotationNodeData, EdgeDistanceData> treeGraph = new Graph<AnnotationNodeData, EdgeDistanceData>();
+        treeGraph.CopyNodes(graph);
+        foreach(var targetNode in targetNodes)
+        {
+            DijkstraTempRecord targetRec = results[targetNode.data.index];
+            if(targetRec.node.Index!=targetNode.Index)
+            {
+                Debug.LogWarning("Error index: " + targetNode.Index);
+            }
+
+            while(true)
+            {
+                GraphEdge<EdgeDistanceData> edge = treeGraph.GetEdge(targetRec.node.Index, targetRec.preNode.Index);
+                if(edge==null)
+                {
+                    treeGraph.AddEdge(targetRec.node.Index, targetRec.preNode.Index, new EdgeDistanceData());
+                }
+                int preIndex = targetRec.preNode.data.index;
+                if(preIndex<0)
+                {
+                    break;
+                }
+                targetRec = results[preIndex];
+            }
+        }
+
+        foreach (var node in originalNode)
+        {
+            if (!node.data.id.IsValid)
+            {
+                continue;
+            }
+            Annotation annot = data.FindAnnotationID(node.data.id);
+            Vector3 pos = annot.renderInfo.averagePosition;
+            GraphNode<AnnotationNodeData> annotNode = treeGraph.AddNode(new AnnotationNodeData(AnnotationID.INVALID_ID, pos));
+            treeGraph.AddEdge(node.Index, annotNode.Index, new EdgeDistanceData());
+        }
+
+        userNode = treeGraph.GetNode(userNode.Index);
+        NavigationInfo result = new NavigationInfo();
+        result.treeGraph = treeGraph;
+        result.root = userNode;
+
+        return result;
+    }
     /**
      * pass the userTransform and begin to navigate! 
      */
-    public NavigationInfo Navigate(List<Annotation> annotations, Vector3 userLocalPos, Vector3 suggestForward)
+    public NavigationInfo Navigate2(List<Annotation> annotations, Vector3 userLocalPos, Vector3 suggestForward)
     {
         annotations = annotations.FindAll(a => a.IsValid && a.renderInfo != null && a.renderInfo.IsValid);
         //=========================
@@ -258,7 +479,7 @@ public class VolumeNavigation : MonoBehaviour
             {
                 if(n.Degree==0)
                 {
-                    Debug.LogWarning("Cannot find a link for node " + n.index + " \t| id=" + n.data.id);
+                    Debug.LogWarning("Cannot find a link for node " + n.Index + " \t| id=" + n.data.id);
                 }
             });
 
@@ -338,7 +559,7 @@ public class VolumeNavigation : MonoBehaviour
                 EdgePickInfo epi = new EdgePickInfo();
                 epi.isFakeEdge = true;
                 epi.info.fromEdge = edge.index;
-                epi.info.nodeTo = n.index;
+                epi.info.nodeTo = n.Index;
                 epi.info.position = intersectPos;
                 epi.distance = FakeEdgeDistance(n, depth, dis);
                 edgeHeap.Enqueue(epi);
@@ -365,8 +586,8 @@ public class VolumeNavigation : MonoBehaviour
                  (node, edge) =>
                  {
                      EdgePickInfo pi = new EdgePickInfo();
-                     pi.edgeIndex = edge.index;
-                     pi.nodeIndex = edge.GetAnotherNodeIndex(interNode.index);
+                     pi.edgeIndex = edge.Index;
+                     pi.nodeIndex = edge.GetAnotherNodeIndex(interNode.Index);
                      pi.distance = lastCost + EdgeDistance(interNode, node, edge);
                      edgeHeap.Enqueue(pi);
                      //Debug.Log($"Push {edge.fromNode}->{edge.toNode} \t| dis = {pi.distance} \t| d={interNode.data.depth}");
@@ -449,12 +670,12 @@ public class VolumeNavigation : MonoBehaviour
                     AddFakeEdge(edge1);
                     AddFakeEdge(edge2);
 
-                    Debug.Log($"--- Try to Add fake edge {newEdge.fromNode}->{newEdge.toNode} (New node:{newIntersectNode.index}) Insert in {oldEdge.fromNode}=>{oldEdge.toNode}");
-                    Debug.Log($"Add node (proj) {newIntersectNode.index} d={newIntersectNode.data.depth}");
+                    Debug.Log($"--- Try to Add fake edge {newEdge.fromNode}->{newEdge.toNode} (New node:{newIntersectNode.Index}) Insert in {oldEdge.fromNode}=>{oldEdge.toNode}");
+                    Debug.Log($"Add node (proj) {newIntersectNode.Index} d={newIntersectNode.data.depth}");
 
                     Debug.Log($"Remove edge {oldEdge.fromNode}->{oldEdge.toNode}");
-                    Debug.Log($"Add edge {fromNode.index}->{newIntersectNode.index}");
-                    Debug.Log($"Add edge {newIntersectNode.index}->{toNode.index}");
+                    Debug.Log($"Add edge {fromNode.Index}->{newIntersectNode.Index}");
+                    Debug.Log($"Add edge {newIntersectNode.Index}->{toNode.Index}");
                     
                     newNode.data.depth = newIntersectNode.data.depth + 1;
                     resultEdges.Add(newEdge);
@@ -464,7 +685,7 @@ public class VolumeNavigation : MonoBehaviour
                 else
                 {
                     newEdge = graph.GetEdge(minEdge.edgeIndex);
-                    anotherNode = graph.GetNode(newEdge.GetAnotherNodeIndex(newNode.index));
+                    anotherNode = graph.GetNode(newEdge.GetAnotherNodeIndex(newNode.Index));
                     Debug.Log($"--- Try to Add edge {newEdge.fromNode}->{newEdge.toNode}");
                 }
 
@@ -504,7 +725,7 @@ public class VolumeNavigation : MonoBehaviour
                         additionalNode.Add(interNode);
                         interNode.data.depth = lastNodeInner.data.depth;
                         interNode.data.coord = xyzCoordinate;
-                        Debug.Log($"Add node (coord) {interNode.index} d={interNode.data.depth}");
+                        Debug.Log($"Add node (coord) {interNode.Index} d={interNode.data.depth}");
                         AddCandidateEdge(interNode);
 
                         GraphEdge<EdgeDistanceData> interNewEdge = 
@@ -552,7 +773,7 @@ public class VolumeNavigation : MonoBehaviour
             treeGraph.AddEdge(edge.fromNode, edge.toNode, new EdgeDistanceData(edge.data.basicDistance));
         }
 
-        userNode = treeGraph.GetNode(userNode.index);
+        userNode = treeGraph.GetNode(userNode.Index);
         NavigationInfo result = new NavigationInfo();
         result.treeGraph = treeGraph;
         result.root = userNode;
@@ -567,7 +788,7 @@ public class VolumeNavigation : MonoBehaviour
                 if (n.Degree==1 && n.data.id == AnnotationID.INVALID_ID)
                 {
                     removeNodes.Add(n);
-                    Debug.Log("Remove tree node " + n.index);
+                    Debug.Log("Remove tree node " + n.Index);
                 }
             });
             if(removeNodes.Count==0)
@@ -592,7 +813,7 @@ public class VolumeNavigation : MonoBehaviour
             Annotation annot = data.FindAnnotationID(node.data.id);
             Vector3 pos = annot.renderInfo.averagePosition;
             GraphNode<AnnotationNodeData> annotNode = treeGraph.AddNode(new AnnotationNodeData(AnnotationID.INVALID_ID, pos));
-            treeGraph.AddEdge(node.index, annotNode.index, new EdgeDistanceData());
+            treeGraph.AddEdge(node.Index, annotNode.Index, new EdgeDistanceData());
         }
         return result;
     }
