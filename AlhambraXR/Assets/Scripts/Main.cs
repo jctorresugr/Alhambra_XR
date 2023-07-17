@@ -756,6 +756,21 @@ public class Main : MonoBehaviour,
         return triangles;
     }
 
+    public void SetArrow(Annotation annotation)
+    {
+        if(annotation==null)
+        {
+            m_curAnnotation = null;
+            return;
+        }
+        m_curAnnotation = annotation.renderInfo;
+    }
+
+    public bool IsOnlyArrowSet()
+    {
+        return m_curAnnotation != null && SelectionData.CurrentAction == CurrentAction.DEFAULT;
+    }
+
     public void OnSetCurrentAction(SelectionModelData model, CurrentAction action)
     {
         if(action != CurrentAction.IN_HIGHLIGHT)
@@ -933,8 +948,8 @@ public class Main : MonoBehaviour,
 
     void PickPano.IPickPanoListener.OnHover(PickPano pano, Color c)
     {
-        if(c!=Color.clear)
-            m_server.SendASCIIStringToClients(JSONMessage.SelectionToJSON(c));
+        //if(c!=Color.clear)
+        //    m_server.SendASCIIStringToClients(JSONMessage.SelectionToJSON(c));
     }
 
     public void OnSetTexture(PickPano pano, Texture2D newIndexTexture)

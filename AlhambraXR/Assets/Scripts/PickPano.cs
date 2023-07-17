@@ -419,8 +419,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                 int indexX = (int)(point.x * indexTexture.width);
                 int indexY = (int)(point.y * indexTexture.height);
                 Color c = indexTexture.GetPixel(indexX,indexY);
-                Debug.Log($"u {point.x.ToString("F4")}| v {point.y.ToString("F4")}| index {indexX},{indexY} | C {c} | Ray {ray.origin.ToString("F4")} > {ray.direction.ToString("F4")} | Layer {1<<gameObject.layer} | Distance {hit.distance}");
-                Debug.Log("Hit Index value: " + c);
+                //Debug.Log($"u {point.x.ToString("F4")}| v {point.y.ToString("F4")}| index {indexX},{indexY} | C {c} | Ray {ray.origin.ToString("F4")} > {ray.direction.ToString("F4")} | Layer {1<<gameObject.layer} | Distance {hit.distance}");
+                //Debug.Log("Hit Index value: " + c);
                 return c;
             }
         }

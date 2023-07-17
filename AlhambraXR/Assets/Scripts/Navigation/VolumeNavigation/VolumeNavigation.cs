@@ -7,7 +7,7 @@ using System.Linq;
 public class VolumeNavigation : MonoBehaviour
 {
     [Header("Data source")]
-    public VolumeAnalyze volumeAnalyze;
+    //public VolumeAnalyze volumeAnalyze;
     public DataManager data;
     public ReferenceTransform referenceTransform;
     public IHelpNodeProvider helpNodeProvider;
@@ -69,7 +69,7 @@ public class VolumeNavigation : MonoBehaviour
     public void Init()
     {
         graph = new Graph<AnnotationNodeData, EdgeDistanceData>();
-        volumeAnalyze.Preprocess();
+        //volumeAnalyze.Preprocess();
     }
 
     protected Vector3 GetAnnotationPos(Annotation annot)
@@ -345,8 +345,21 @@ public class VolumeNavigation : MonoBehaviour
             }
         }
 
+        float lastCost = 0.0f;
+
         void AddCandidateEdge(GraphNode<AnnotationNodeData> interNode)
         {
+            /*
+            float basicCost = 0.0f;
+            if (resultEdges.Count > 0)
+            {
+                GraphEdge<EdgeDistanceData> lastEdge = resultEdges[resultEdges.Count - 1];
+                GraphNode<AnnotationNodeData> lastlastNode = graph.GetNode(lastEdge.GetAnotherNodeIndex(interNode.index));
+                if (lastlastNode!=null && lastlastNode.data.id.IsSpeical)
+                {
+                    basicCost = lastCost;
+                }
+            }*/
             graph.ForeachNodeNeighbor(
                  interNode,
                  (node, edge) =>
@@ -354,12 +367,13 @@ public class VolumeNavigation : MonoBehaviour
                      EdgePickInfo pi = new EdgePickInfo();
                      pi.edgeIndex = edge.index;
                      pi.nodeIndex = edge.GetAnotherNodeIndex(interNode.index);
-                     pi.distance = EdgeDistance(interNode, node, edge);
+                     pi.distance = lastCost + EdgeDistance(interNode, node, edge);
                      edgeHeap.Enqueue(pi);
                      //Debug.Log($"Push {edge.fromNode}->{edge.toNode} \t| dis = {pi.distance} \t| d={interNode.data.depth}");
                  }
                  );
         }
+
         //Begin!
         while (resultEdges.Count < (graph.NodeCount-1))
         {
@@ -384,6 +398,16 @@ public class VolumeNavigation : MonoBehaviour
                 {
                     continue;
                 }
+                /*
+                lastCost = minEdge.distance;
+                if(!minEdge.isFakeEdge)
+                {
+                    if(newNode.data.id.IsValid)
+                    {
+                        lastCost = 0.0f;
+                        Debug.Log("Clear cost!");
+                    }
+                }*/
                 //Add new edge!
                 // add new node if possible
                 GraphEdge<EdgeDistanceData> newEdge;
@@ -399,6 +423,12 @@ public class VolumeNavigation : MonoBehaviour
                         //already removed
                         continue;
                     }
+                    /*
+                    if(fromNode.data.id.IsValid)
+                    {
+                        lastCost = 0.0f;
+                        Debug.Log("Clear cost!");
+                    }*/
                     
                     GraphNode<AnnotationNodeData> newIntersectNode =
                         AddNode(new AnnotationNodeData(AnnotationID.INVALID_ID, minEdge.info.position));
@@ -658,6 +688,7 @@ public class VolumeNavigation : MonoBehaviour
     }
 
     //return minimumY
+    /*
     protected int SearchFloor(int x, int y, int z)
     {
         VolumeCell<VolumeAnalyze.VolumeInfo> volumeInfos = volumeAnalyze.volumeInfos;
@@ -675,7 +706,7 @@ public class VolumeNavigation : MonoBehaviour
                 return y;
             }
         }
-    }
+    }*/
 
     protected Vector3 SearchHit(Vector3 pos, Vector3 dir)
     {

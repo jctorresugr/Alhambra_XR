@@ -16,7 +16,7 @@ public class CanvasUser extends CanvasInteractiveElement
     private UserData userData;
     private TranslateMatrix translateMatrix;
 
-    private static final int radius = 50;
+    private static final int radius = 3e0;
     private static final Path path;
     private static final Paint pathPaint;
     static{

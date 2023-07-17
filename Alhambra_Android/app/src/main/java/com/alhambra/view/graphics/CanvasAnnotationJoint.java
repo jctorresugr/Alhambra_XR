@@ -2,6 +2,7 @@ package com.alhambra.view.graphics;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -27,18 +28,21 @@ public class CanvasAnnotationJoint extends CanvasInteractiveElement {
     public boolean hide=false;
     public boolean showStroke = false;
     protected AnnotationJoint annotationJoint;
-    private static final float radius=30.0f;
-    private static final float radiusDown=90.0f;
-    private static final float radiusHide=22.5f;
+    protected Rect rect = new Rect();
+
+
+    private static final float radius=30.0f*0.5f;
+    private static final float radiusDown=90.0f*0.5f;
+    private static final float radiusHide=22.5f*0.5f;
 
     //styles
-    private static final HSVColor fillColor = HSVColor.createFromRGB(20,255,80,100);
-    private static final HSVColor borderColor = HSVColor.createFromRGB(10,155,60,255);
+    private static final HSVColor fillColor = HSVColor.createFromRGB(160,255,160,40);
+    private static final HSVColor borderColor = HSVColor.createFromRGB(10,155,60,150);
     private static final HSVColor textColor = HSVColor.createFromRGB(110,205,110,255);
     private static final HSVColor linkColor = HSVColor.createFromRGB(90,255,100,255);
 
-    private static final HSVColor fillHideColor = HSVColor.createFromRGB(20,255,80,20);
-    private static final HSVColor borderHideColor = HSVColor.createFromRGB(10,155,60,20);
+    private static final HSVColor fillHideColor = HSVColor.createFromRGB(160,255,160,10);
+    private static final HSVColor borderHideColor = HSVColor.createFromRGB(110,155,60,20);
     private static final HSVColor textHideColor = HSVColor.createFromRGB(110,205,110,125);
     private static final HSVColor linkHideColor = HSVColor.createFromRGB(90,205,100,0);
 
@@ -53,7 +57,7 @@ public class CanvasAnnotationJoint extends CanvasInteractiveElement {
     protected DynamicHSVColor linkDynColor = new DynamicHSVColor(linkColor);
     protected DynamicFloat radiusDyn = new DynamicFloat(radius);
     protected Paint fillPaint = newPaint(fillDynColor.curColor.toARGB(),2.0f,Paint.Style.FILL);
-    protected Paint borderPaint = newPaint(borderDynColor.curColor.toARGB(),10.0f,Paint.Style.STROKE);
+    protected Paint borderPaint = newPaint(borderDynColor.curColor.toARGB(),4.0f,Paint.Style.STROKE);
     protected Paint textPaint = newPaint(textDynColor.curColor.toARGB(),3.0f,Paint.Style.STROKE);
     protected Paint linkPaint = newPaint(linkDynColor.curColor.toARGB(),3.0f,Paint.Style.STROKE);
     {
@@ -103,6 +107,9 @@ public class CanvasAnnotationJoint extends CanvasInteractiveElement {
     @Override
     public void draw(Canvas canvas) {
         float radius = radiusDyn.currentValue;
+
+        canvas.drawRect(rect,fillPaint);
+        canvas.drawRect(rect,borderPaint);
         canvas.drawCircle(x,y,radius,fillPaint);
         canvas.drawCircle(x,y,radius,borderPaint);
         for (CanvasAnnotation ca: canvasAnnotations) {
@@ -125,6 +132,10 @@ public class CanvasAnnotationJoint extends CanvasInteractiveElement {
         BBox r = annotationJoint.getRange();
         this.x = translateInfo.transformPointX(r.getCenterX());
         this.y = translateInfo.transformPointY(r.getCenterZ());
+        rect.left = (int) translateInfo.transformPointX(r.min.x);
+        rect.right = (int) translateInfo.transformPointX(r.max.x);
+        rect.bottom = (int) translateInfo.transformPointY(r.max.z);
+        rect.top = (int) translateInfo.transformPointY(r.min.z);
         setTranslateMatrix(translateMatrix);
         List<AnnotationID> annotationsID = annotationJoint.getAnnotationsID();
         if(canvasAnnotations.size()!=annotationsID.size()){

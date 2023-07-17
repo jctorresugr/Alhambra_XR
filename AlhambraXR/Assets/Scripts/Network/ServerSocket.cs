@@ -53,6 +53,11 @@ public class ServerSocket: Client.IClientListener
     /// The thread used to handle data received by the Client
     /// </summary>
     private Thread m_readThread = null;
+
+    /// <summary>
+    /// The thread used to send data to client, this will avoid main thread stuck issue
+    /// </summary>
+    private Thread m_sendThread = null;
     
     /// <summary>
     /// Is this Server closed ?
@@ -69,6 +74,8 @@ public class ServerSocket: Client.IClientListener
     /// I modify this
     /// </summary>
     private ConcurrentDictionary<Socket, Client> m_clients = new ConcurrentDictionary<Socket, Client>();
+
+    private BlockingCollection<string> m_requireSendString = new BlockingCollection<string>();
 
     /// <summary>
     /// The number of time in micro seconds that the reading and writing threads sleep if no data is to be sent/read
@@ -107,6 +114,8 @@ public class ServerSocket: Client.IClientListener
         m_acceptThread.Start();
         m_readThread = new Thread(ReadThread);
         m_readThread.Start();
+        m_sendThread = new Thread(SendThread);
+        m_sendThread.Start();
     }
 
     /// <summary>
@@ -176,12 +185,13 @@ public class ServerSocket: Client.IClientListener
     /// Send a data to all clients
     /// </summary>
     /// <param name="d">The data to send</param>
+    /*
     public void SendDataToClients(byte[] d)
     {
         lock(this)
             foreach (Client c in m_clients.Values)
                 c.EnqueueData(d);
-    }
+    }*/
 
     /// <summary>
     /// Send a string data to all clients. The byte array data sent is constructed as follow:
@@ -189,16 +199,18 @@ public class ServerSocket: Client.IClientListener
     /// n bytes: the ASCII byte caracters of the string
     /// </summary>
     /// <param name="s">The string to send.</param>
-    public void SendASCIIStringToClients(String s)
+    public void SendASCIIStringToClients(string s)
     {
         Debug.Log($"Send string (Len={s.Length}): {s}");
+        m_requireSendString.Add(s);
+        /*
         byte[] data = new byte[4 + s.Length];
         Encoding.ASCII.GetBytes(s, 0, s.Length, data, 4);
         data[0] = (byte)(s.Length >> 24);
         data[1] = (byte)(s.Length >> 16);
         data[2] = (byte)(s.Length >> 8);
         data[3] = (byte)s.Length;
-        SendDataToClients(data);
+        SendDataToClients(data);*/
     }
 
     /// <summary>
@@ -274,6 +286,28 @@ public class ServerSocket: Client.IClientListener
             {
                 Console.WriteLine($"Error while reading a socket client: {e.Message}. Error code: {e.ErrorCode}");
             }
+        }
+    }
+
+    private byte[] String2Byte(string s)
+    {
+        byte[] data = new byte[4 + s.Length];
+        Encoding.ASCII.GetBytes(s, 0, s.Length, data, 4);
+        data[0] = (byte)(s.Length >> 24);
+        data[1] = (byte)(s.Length >> 16);
+        data[2] = (byte)(s.Length >> 8);
+        data[3] = (byte)s.Length;
+        return data;
+    }
+
+    private void SendThread()
+    {
+        while (!m_closed)
+        {
+            string s = m_requireSendString.Take();
+            byte[] bytes = String2Byte(s);
+            foreach (Client c in m_clients.Values)
+                c.EnqueueData(bytes);
         }
     }
 

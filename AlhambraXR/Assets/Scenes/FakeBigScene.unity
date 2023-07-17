@@ -415,6 +415,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 147764209}
+  - component: {fileID: 147764210}
   m_Layer: 0
   m_Name: MixedRealityPlayspace
   m_TagString: Untagged
@@ -433,11 +434,24 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 1503428716}
   - {fileID: 963194228}
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &147764210
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 147764208}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf28d2d71bb13324cb8fdd1bcc0584dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  movingSpeed: 7
+  targetPos: {x: 0, y: 0, z: 0}
 --- !u!114 &149515418 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5346282920650293930, guid: d01a102e13c9d6e4cb8bfe04a3fcd0e9, type: 3}
@@ -2696,7 +2710,7 @@ Transform:
   - {fileID: 1448527940}
   - {fileID: 600857966}
   m_Father: {fileID: 147764209}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 67.497, z: 0}
 --- !u!114 &963194229
 MonoBehaviour:
@@ -4020,36 +4034,6 @@ Transform:
   m_Father: {fileID: 1708071947}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1503428715
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1503428716}
-  m_Layer: 0
-  m_Name: CameraContainer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1503428716
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1503428715}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 147764209}
-  m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1506404460
 GameObject:
   m_ObjectHideFlags: 0
@@ -4621,7 +4605,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13f8372f367945547917f4c360f2b91a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  volumeAnalyze: {fileID: 1218675094}
   data: {fileID: 756731257}
   referenceTransform: {fileID: 293561427}
   helpNodeProvider: {fileID: 1345019827}
@@ -4820,10 +4803,15 @@ MonoBehaviour:
   cameraContainer: {fileID: 147764209}
   data: {fileID: 756731257}
   referenceTransform: {fileID: 293561427}
+  teleportAnimation: {fileID: 147764210}
   teleportOffset: 1
   upOffset: 1
   updateTime: 0.25
-  tabletControllerSensitivity: 0.5
+  tabletControllerSensitivity: 1
+  tabletControllerYAxisSensitivity: 0.5
+  tabletControllerDeltaTime: 1
+  teleportIndicatorArrowTime: 0.3
+  teleportIndicatorArrowLeastTime: 5
 --- !u!114 &1812294293
 MonoBehaviour:
   m_ObjectHideFlags: 0

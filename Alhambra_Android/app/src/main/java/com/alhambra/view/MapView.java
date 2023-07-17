@@ -1,12 +1,17 @@
 package com.alhambra.view;
 
 import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
 import com.alhambra.ListenerSubscriber;
 import com.alhambra.MainActivity;
+import com.alhambra.R;
 import com.alhambra.dataset.AnnotationDataset;
 import com.alhambra.dataset.SelectionData;
 import com.alhambra.dataset.UserData;
@@ -51,9 +56,13 @@ public class MapView extends BaseCanvasElementView
     public TranslateMatrix translateInfo; //TODO: getter setter for interaction
     public ListenerSubscriber<OnClickSymbols> onClickSymbolsListeners = new ListenerSubscriber<>();
 
-    public void init(){
+    public void init(Context context){
         translateInfo = new TranslateMatrix();
         canvasBackground = new CanvasImageElement();
+        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(),R.drawable.minimap);
+        canvasBackground.setImage(bitmap);
+
+        //canvasBackground.setDrawable(context.getDrawable(R.drawable.minimap));
         this.addOnLayoutChangeListener(this);
     }
     public AnnotationDataset getDataset() {
@@ -114,17 +123,17 @@ public class MapView extends BaseCanvasElementView
 
     public MapView(Context context) {
         super(context);
-        init();
+        init(context);
     }
 
     public MapView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init();
+        init(context);
     }
 
     public MapView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        init();
+        init(context);
     }
 
     public void updateDataset(){
@@ -411,11 +420,35 @@ public class MapView extends BaseCanvasElementView
         translateInfo.scaleX = translateInfo.scaleY = Math.min(translateInfo.scaleX,translateInfo.scaleY);
         translateInfo.translateX = -bounds.min.x*translateInfo.scaleX+paddingRatio*0.5f*w;
         translateInfo.translateY = -bounds.min.z*translateInfo.scaleY+paddingRatio*0.5f*h;
+
+        Rect bgDraw = canvasBackground.drawRect;
+        Rect bgSrc = canvasBackground.orgRect;
+
+        matrix.mapPoints(point(bgSrc.right,bgSrc.bottom));
+        float wScale = paddingLeftRatio*lastWidth/ (float)tempPoint[0];
+        float hScale = paddingLeftRatio*lastHeight/(float)tempPoint[1];
+        float bgScale = Math.min(wScale,hScale);
+
+        /*
+
+        bgDraw.right = (int) (bgSrc.right*bgScale);
+        bgDraw.bottom = (int) (bgSrc.bottom*bgScale);*/
         /*
         Log.i("TranslateInfo","screen size: "+w+" "+h);
         Log.i("TranslateInfo","scale "+translateInfo.scaleX+" "+translateInfo.scaleY+
                 " | trans "+translateInfo.translateX+" "+translateInfo.translateY);
         */
+
+
+        //dirty code, require automatically generate
+        //float bgScale = 1.23f;
+
+        int translateX = (int) (lastWidth*(paddingRatio*0.5f));
+        int translateY = (int) (lastHeight*(paddingRatio*0.5f));
+        canvasBackground.drawRect.left = translateX;
+        canvasBackground.drawRect.right = (int) (canvasBackground.orgRect.right*bgScale)+translateX;
+        canvasBackground.drawRect.top=translateY;
+        canvasBackground.drawRect.bottom = (int) (canvasBackground.orgRect.bottom*bgScale)+translateY;
     }
 
     public void refreshBoundsInfo(){
