@@ -12,17 +12,17 @@ public class VolumeNavigation : MonoBehaviour
     public ReferenceTransform referenceTransform;
     public IHelpNodeProvider helpNodeProvider;
     [Header("Settings")]
-    [Header("Settings - Nav Weight")]
+    [Header("Settings - Nav Weight (Deprecated)")]
     public float depthRatio = 0.01f;
     public float branchRatio = 0.01f;
     public float splitEdgeThreshold = 0.001f;
     public float mainNodeWeight = 0.1f;
-    [Header("Settings - Nav Space Adjust")]
-    public LayerMask layerMask = 1 >> 6;
-    public float normalOffset = 0.001f;
     public Vector3 tempX = Vector3.right;
     public bool useProjection = true;
     public float projectionExceedRatio = 0.05f;
+    [Header("Settings - Nav Space Adjust")]
+    public LayerMask layerMask = 1 >> 6;
+    public float normalOffset = 0.001f;
     //public float clipEdgeThreshold=0.2f;
     [Header("Cache Data")]
     [SerializeField]
@@ -34,6 +34,7 @@ public class VolumeNavigation : MonoBehaviour
     {
         public Graph<AnnotationNodeData, EdgeDistanceData> treeGraph;
         public GraphNode<AnnotationNodeData> root;
+        public List<Annotation> annotations;
     }
 
     public struct AnnotationNodeData
@@ -42,7 +43,7 @@ public class VolumeNavigation : MonoBehaviour
         public bool resultSet; //useless, only for computation temporary storage
         public AnnotationID id;
         public Vector3 centerPos;
-        public XYZCoordinate coord;
+        //public XYZCoordinate coord;
         //Add more if required
 
         public AnnotationNodeData(AnnotationID id, Vector3 centerPos)
@@ -50,7 +51,7 @@ public class VolumeNavigation : MonoBehaviour
             this.id = id;
             this.centerPos = centerPos;
             this.depth = -1;
-            this.coord = new XYZCoordinate();
+            //this.coord = new XYZCoordinate();
             this.index = -1;
             this.resultSet = false;
         }
@@ -218,7 +219,6 @@ public class VolumeNavigation : MonoBehaviour
 
     class DijkstraTempRecord : IComparable<DijkstraTempRecord>
     {
-        //public List<GraphNode<AnnotationNodeData>> route = new List;
         public GraphNode<AnnotationNodeData> node;
         public GraphNode<AnnotationNodeData> preNode=null;
         public float minDistance = float.MaxValue;
@@ -234,8 +234,10 @@ public class VolumeNavigation : MonoBehaviour
     public NavigationInfo Navigate(List<Annotation> annotations, Vector3 userLocalPos, Vector3 suggestForward)
     {
         annotations = annotations.FindAll(a => a.IsValid && a.renderInfo != null && a.renderInfo.IsValid);
+
         //=========================
-        //preprocess
+        //preprocess: add nodes, compute edges
+        //TODO: cache this graph
         graph.Clear();
 
         for (int i = 0; i < annotations.Count; i++)
@@ -324,10 +326,6 @@ public class VolumeNavigation : MonoBehaviour
 
         graph.ForeachNodeExcept(userNode,AddNodeToCandidate);
 
-        //DijkstraTempRecord userRec = candidate[userNode.index];
-        //userRec.minDistance = 0;
-        //userRec.optimized = true;
-
 
         float minDistance = float.MaxValue;
         int curIndex=-1;
@@ -413,6 +411,7 @@ public class VolumeNavigation : MonoBehaviour
             }
         }
 
+        // add an extra node, point to the center of annotation
         foreach (var node in originalNode)
         {
             if (!node.data.id.IsValid)
@@ -429,12 +428,15 @@ public class VolumeNavigation : MonoBehaviour
         NavigationInfo result = new NavigationInfo();
         result.treeGraph = treeGraph;
         result.root = userNode;
+        result.annotations = annotations;
 
         return result;
     }
     /**
      * pass the userTransform and begin to navigate! 
      */
+
+    /*
     public NavigationInfo Navigate2(List<Annotation> annotations, Vector3 userLocalPos, Vector3 suggestForward)
     {
         annotations = annotations.FindAll(a => a.IsValid && a.renderInfo != null && a.renderInfo.IsValid);
@@ -543,14 +545,6 @@ public class VolumeNavigation : MonoBehaviour
                     continue;
                 }
                 Vector3 intersectPos = fromPos + dis * dir;
-                /*
-                if(
-                    Vector3.Distance(intersectPos,fromPos)<splitEdgeThreshold ||
-                    Vector3.Distance(intersectPos,toPos)<splitEdgeThreshold
-                    )
-                {
-                    continue;
-                }*/
                 if(IsHit(nPos,intersectPos))
                 {
                     continue;
@@ -570,17 +564,6 @@ public class VolumeNavigation : MonoBehaviour
 
         void AddCandidateEdge(GraphNode<AnnotationNodeData> interNode)
         {
-            /*
-            float basicCost = 0.0f;
-            if (resultEdges.Count > 0)
-            {
-                GraphEdge<EdgeDistanceData> lastEdge = resultEdges[resultEdges.Count - 1];
-                GraphNode<AnnotationNodeData> lastlastNode = graph.GetNode(lastEdge.GetAnotherNodeIndex(interNode.index));
-                if (lastlastNode!=null && lastlastNode.data.id.IsSpeical)
-                {
-                    basicCost = lastCost;
-                }
-            }*/
             graph.ForeachNodeNeighbor(
                  interNode,
                  (node, edge) =>
@@ -619,16 +602,6 @@ public class VolumeNavigation : MonoBehaviour
                 {
                     continue;
                 }
-                /*
-                lastCost = minEdge.distance;
-                if(!minEdge.isFakeEdge)
-                {
-                    if(newNode.data.id.IsValid)
-                    {
-                        lastCost = 0.0f;
-                        Debug.Log("Clear cost!");
-                    }
-                }*/
                 //Add new edge!
                 // add new node if possible
                 GraphEdge<EdgeDistanceData> newEdge;
@@ -644,12 +617,6 @@ public class VolumeNavigation : MonoBehaviour
                         //already removed
                         continue;
                     }
-                    /*
-                    if(fromNode.data.id.IsValid)
-                    {
-                        lastCost = 0.0f;
-                        Debug.Log("Clear cost!");
-                    }*/
                     
                     GraphNode<AnnotationNodeData> newIntersectNode =
                         AddNode(new AnnotationNodeData(AnnotationID.INVALID_ID, minEdge.info.position));
@@ -906,7 +873,7 @@ public class VolumeNavigation : MonoBehaviour
             
         }
         return results;
-    }
+    }*/
 
     //return minimumY
     /*

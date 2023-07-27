@@ -60,7 +60,7 @@ public struct AnnotationID : IEquatable<AnnotationID>
         {
             m_layer = -1; //Invalid annotation ID
             m_index = -1;
-            Debug.LogWarning("Create Invalid ID: " + this);
+            //Debug.LogWarning("Create Invalid ID: " + this);
         }
     }
 
@@ -95,6 +95,7 @@ public struct AnnotationID : IEquatable<AnnotationID>
     }
 
     public static explicit operator AnnotationID(Color32 c) => new AnnotationID(c);
+    public static explicit operator AnnotationID(Color c) => new AnnotationID(c);
 
 
     public bool Equals(AnnotationID other)

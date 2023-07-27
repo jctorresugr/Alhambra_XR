@@ -12,6 +12,8 @@ public class PositionDataSync : SocketDataBasic, PickPano.IPickPanoListener
     public DataManager data;
     public ReferenceTransform referenceTransform;
     public TeleportAnimation teleportAnimation;
+    public AnnotationRenderBuilder annotationRenderBuilder;
+    public LayerMask modelLayer;
 
     [Header("Settings")]
     public float teleportOffset = 1.0f;
@@ -108,10 +110,24 @@ public class PositionDataSync : SocketDataBasic, PickPano.IPickPanoListener
                 main.AddTask(() =>
                 {
                     Vector3 worldPos = referenceTransform.MapPosition(renderinfo.averagePosition);
-                    TeleportTo(worldPos + renderinfo.Normal * teleportOffset + Vector3.up * upOffset);
+                    RaycastHit hit;
+                    if (Physics.Raycast(worldPos, Vector3.down,out hit,upOffset*4.0f, modelLayer))
+                    {
+                        worldPos = hit.point + Vector3.up * upOffset;
+                    }
+                    else
+                    {
+                        worldPos += renderinfo.Normal * teleportOffset + Vector3.up * upOffset;
+                    }
+                    TeleportTo(worldPos);
                     main.SetArrow(annotation);
                     arrowShowTime = teleportIndicatorArrowTime;
                     arrowShowLeastTime = teleportIndicatorArrowLeastTime;
+                    AnnotationRender annotationRender = annotationRenderBuilder.GetAnnotationUI(annotation.ID);
+                    if(annotationRender!=null)
+                    {
+                        annotationRender.floatPanelText.MarkAsTemporaryHide();
+                    }
                 }
                 );
             }
@@ -141,6 +157,14 @@ public class PositionDataSync : SocketDataBasic, PickPano.IPickPanoListener
                 tabletOffset.y * arCamera.transform.up * tabletControllerYAxisSensitivity +
                 tabletOffset.z * arCamera.transform.right) * tabletControllerSensitivity*Time.deltaTime;
             controllerTotalDelta += delta;
+
+            //TODO: move along the floor, this assume that the floor is flat, do a ray casting if use complex model
+            if(tabletOffset.y==0.0f)
+            {
+                controllerTotalDelta.y = 0.0f;
+            }
+            
+
             TeleportTo(controllerTotalDelta + controllerLastPosition);
         }
         

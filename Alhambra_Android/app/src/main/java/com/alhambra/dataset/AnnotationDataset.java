@@ -457,10 +457,10 @@ public class AnnotationDataset
         Annotation annotation = this.addAnnotation(curIndex,annotationID);
         if(annotation.info!=null && annotation.info.getIndex()!=curIndex){
             curIndex = annotation.info.getIndex();
-            annotationInfo = new AnnotationInfo(curIndex, layer, id, msg.getARGB8888Color(), msg.getDescription(),drawable);
+            annotationInfo = new AnnotationInfo(curIndex, layer, id, msg.getARGB8888Color(), msg.getDescription(),drawable,bitmap);
                     //new BitmapDrawable(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888)));
         }else{
-            annotationInfo = new AnnotationInfo(curIndex, layer, id, msg.getARGB8888Color(), msg.getDescription(),drawable);
+            annotationInfo = new AnnotationInfo(curIndex, layer, id, msg.getARGB8888Color(), msg.getDescription(),drawable,bitmap);
                     //new BitmapDrawable(Bitmap.createBitmap(argb8888Colors, width, height, Bitmap.Config.ARGB_8888)));
         }
         annotation.info=annotationInfo;
@@ -540,6 +540,15 @@ public class AnnotationDataset
             return null;
         }
         return annotation.info;
+    }
+
+    public Annotation getFullDataFromIndex(int index)
+    {
+        Annotation annotation = m_data.get(index);
+        if(annotation==null){
+            return null;
+        }
+        return annotation;
     }
 
     /** Get all the data contained in layer == layer

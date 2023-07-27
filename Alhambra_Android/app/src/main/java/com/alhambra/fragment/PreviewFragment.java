@@ -71,6 +71,8 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
         void onHighlightDataChunk(PreviewFragment fragment, AnnotationInfo annotationInfo);
 
         void onClickChip(Chip chip, int annotationJoint);
+
+        void onClickTeleport(PreviewFragment fragment, Annotation annotation);
     }
 
     /** The dataset associated with this application*/
@@ -99,6 +101,8 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
 
     /** The button user uses to highlight on the hololens a particular data chunk*/
     private Button m_highlightBtn   = null;
+
+    private Button m_teleportBtn = null;
 
     /** The image of the selected entry*/
     private ImageView m_mainImageView = null;
@@ -251,6 +255,7 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
         m_nextBtn          = v.findViewById(R.id.nextEntryButton);
         m_quitSelectionBtn = v.findViewById(R.id.quitSelectionButton);
         m_highlightBtn     = v.findViewById(R.id.highlightButton);
+        m_teleportBtn      = v.findViewById(R.id.teleportButton);
 
         //Initialize Listeners
         m_previousBtn.setOnClickListener(view -> {
@@ -276,6 +281,12 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
             if(m_Annotation_dataset.getMainEntryIndex() != -1)
                 for(IPreviewFragmentListener l : m_listeners)
                     l.onHighlightDataChunk(this, m_Annotation_dataset.getDataFromIndex(m_Annotation_dataset.getMainEntryIndex()));
+        });
+
+        m_teleportBtn.setOnClickListener(view->{
+            if(m_Annotation_dataset.getMainEntryIndex() != -1)
+                for(IPreviewFragmentListener l : m_listeners)
+                    l.onClickTeleport(this,m_Annotation_dataset.getFullDataFromIndex(m_Annotation_dataset.getMainEntryIndex()));;
         });
 
         //Reinit the dataset if needed

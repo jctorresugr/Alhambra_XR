@@ -1,8 +1,7 @@
 package com.alhambra.dataset.data;
 
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-
-import java.util.HashSet;
 
 /** This class describes the chunk of data as saved in the database
  * Each chunk of data is readonly once it is created.*/
@@ -22,7 +21,7 @@ public class AnnotationInfo
     /** The image associated with this chunk of data*/
     private Drawable m_drawable = null;
 
-    //private HashSet<AnnotationJoint> m_joints = new HashSet<>();
+    private Bitmap m_bitmap =null;
 
     /** Constructor
      * @param index the Index of this chunk of data in Android fragment list
@@ -38,6 +37,16 @@ public class AnnotationInfo
         m_color    = color;
         m_text     = text;
         m_drawable = img;
+    }
+
+    public AnnotationInfo(int index, int layer, int id, int color, String text, Drawable img, Bitmap bitmap)
+    {
+        m_index    = index;
+        m_annotationID = new AnnotationID(layer,id);
+        m_color    = color;
+        m_text     = text;
+        m_drawable = img;
+        m_bitmap=bitmap;
     }
 
     /** Get the index of this chunk of data*/
@@ -59,4 +68,8 @@ public class AnnotationInfo
 
     /** Get the image drawable describing this data chunk*/
     public Drawable getImage() {return m_drawable;}
+
+    public Bitmap getBitmap() {
+        return m_bitmap;
+    }
 }

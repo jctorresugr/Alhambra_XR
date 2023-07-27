@@ -80,6 +80,15 @@ public class MoveInteraction extends IInteraction implements GestureAnalyze.OnDo
     }
     
     public void setState(int state){
+
+        if(state!=STATE_NORMAL && this.state==STATE_NORMAL) // to abnormal state
+        {
+            mainActivity.disableSwiping();
+        }
+        else if (state==STATE_NORMAL && this.state!=STATE_NORMAL) // to normal state
+        {
+            mainActivity.enableSwiping();
+        }
         this.state=state;
     }
 }

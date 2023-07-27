@@ -8,8 +8,9 @@ public class NavigationManager : MonoBehaviour
     public VolumeNavigation volumeNavigation;
     public SelectionModelData selectionModelData;
     public Transform user;
-    [Header("Render Component")]
-    public BasicRouteGraphRender render;
+    public NavigationCache navigationCache;
+    //[Header("Render Component")]
+    //public BasicRouteGraphRender render;
     [Header("Config")]
     public bool refreshNow = false;
     public float forwardDistance = 0.1f;
@@ -40,7 +41,7 @@ public class NavigationManager : MonoBehaviour
             triggerDebug = false;
             refreshNow = true;
             selectionModelData.ClearSelectedAnnotations();
-            foreach (var a in render.annotationData.Annotations)
+            foreach (var a in navigationCache.render.annotationData.Annotations)
             {
                 selectionModelData.AddSelectedAnnotations(a.ID);
             }
@@ -60,18 +61,24 @@ public class NavigationManager : MonoBehaviour
         IReadOnlyList<AnnotationID> selectedAnnotations = selectionModelData.SelectedAnnotations;
         if (selectedAnnotations.Count==0)
         {
-            render.ClearDraw();
+            navigationCache.ClearCache();
             return;
         }
+        //relocate user root position (a bit forward)
         Vector3 userLocalPos = user.position + user.forward * forwardDistance;
         RaycastHit rayHit;
         if (Physics.Raycast(userLocalPos, Vector3.down, out rayHit))
         {
             userLocalPos = rayHit.point + Vector3.up * 0.3f;
         }
-        NavigationInfo navigationInfo = volumeNavigation.Navigate(selectedAnnotations, userLocalPos, user.forward);
-        render.ClearDraw();
-        render.SetGraphData(navigationInfo.treeGraph, navigationInfo.root);
-        render.Redraw();
+
+        navigationCache.GenerateNavigationInfo(selectedAnnotations,userLocalPos,user.forward);
+        navigationCache.Redraw();
+        navigationCache.Show();
+        //NavigationInfo navigationInfo = volumeNavigation.Navigate(selectedAnnotations, userLocalPos, user.forward);
+        //render.ClearDraw();
+        //render.SetGraphData(navigationInfo.treeGraph, navigationInfo.root);
+        //render.Redraw();
     }
+
 }

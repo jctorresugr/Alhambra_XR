@@ -213,6 +213,11 @@ public class Graph<N,E>
         return graphEdge;
     }
 
+    public void RemoveEdge(GraphEdge<E> edge)
+    {
+        RemoveEdge(edge.index);
+    }
+
     public void RemoveEdge(int edgeIndex)
     {
         GraphEdge<E> edge = edges[edgeIndex];

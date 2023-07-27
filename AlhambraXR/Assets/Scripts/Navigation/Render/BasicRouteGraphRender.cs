@@ -15,6 +15,7 @@ public abstract class BasicRouteGraphRender: MonoBehaviour
     public LineRenderer template;
     public DataManager annotationData;
     public ReferenceTransform referenceTransform;
+    public NavigationViewLineMapping mapping;
     [Header("data")]
     public Graph<N, E> graph = null;
 

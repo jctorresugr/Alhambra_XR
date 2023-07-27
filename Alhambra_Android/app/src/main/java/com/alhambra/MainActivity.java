@@ -14,6 +14,7 @@ import android.widget.RelativeLayout;
 
 import com.alhambra.dataset.SelectionData;
 import com.alhambra.dataset.UserData;
+import com.alhambra.dataset.data.Annotation;
 import com.alhambra.interactions.DatasetSync;
 import com.alhambra.dataset.data.AnnotationInfo;
 import com.alhambra.dataset.AnnotationDataset;
@@ -370,13 +371,13 @@ public class MainActivity
     @Override
     public void onEnableSwiping(Fragment fragment)
     {
-        m_viewPager.setPagingEnabled(true);
+        enableSwiping();
     }
 
     @Override
     public void onDisableSwiping(Fragment fragment)
     {
-        m_viewPager.setPagingEnabled(false);
+        disableSwiping();
     }
 
     @Override
@@ -387,6 +388,11 @@ public class MainActivity
 
     @Override
     public void onClickChip(Chip chip, int annotationJoint) {
+
+    }
+
+    @Override
+    public void onClickTeleport(PreviewFragment fragment, Annotation annotation) {
 
     }
 
@@ -501,5 +507,14 @@ public class MainActivity
     @Override
     public void onTabReselected(TabLayout.Tab tab) {
 
+    }
+
+
+    public void enableSwiping(){
+        m_viewPager.setPagingEnabled(true);
+    }
+
+    public void disableSwiping(){
+        m_viewPager.setPagingEnabled(false);
     }
 }

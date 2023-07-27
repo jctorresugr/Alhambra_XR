@@ -38,6 +38,23 @@ public class TreeRenderCurved : BasicRouteGraphRender
             this.preDrawPos = preDrawPos;
         }
     }
+    /*
+     * When draw the route
+     * 
+     * For corners:
+     * 
+     * 
+     * ------
+     *   |
+     *   |
+     * 
+     * will be smmothed to:
+     * 
+     * 
+     * --\/--
+     *   |
+     *   |
+     */
     protected void DrawNode(GraphNode<N> rootNode)
     {
         Queue<StateInfo> queue =new Queue<StateInfo>();
@@ -77,13 +94,13 @@ public class TreeRenderCurved : BasicRouteGraphRender
             
             if(curNode.Degree==1) //is leaf
             {
-                GenerateSegment(preDrawPos, curPos);
+                AddMapping(preNode, curNode, GenerateSegment(preDrawPos, curPos));
                 Debug.Log("Leaf! " + curNode.index);
             }
             else
             {
                 Vector3 curDrawPos = Vector3.Lerp(curPos, prePos, bendRatio);
-                GenerateSegment(preDrawPos, curDrawPos);
+                AddMapping(preNode, curNode, GenerateSegment(preDrawPos, curDrawPos));
                 graph.ForeachNodeNeighbor(curNode, preNode, (nextNode, e) =>
                 {
                     Vector3 nextPos = nextNode.data.centerPos;
@@ -96,7 +113,6 @@ public class TreeRenderCurved : BasicRouteGraphRender
             }
             
         }
-        //Vector3 d = curNode.data.centerPos - preNode.data.centerPos;
 
     }
 
@@ -110,16 +126,29 @@ public class TreeRenderCurved : BasicRouteGraphRender
         return lineRenderer;
     }
 
-    protected void GenerateSegment(Vector3 from, Vector3 to)
+    protected LineRenderer GenerateSegment(Vector3 from, Vector3 to)
     {
         LineRenderer lineRenderer = DuplicateTemplate();
         lineRenderer.AssignPositionData(from, to);
         edgeObjects.Add(lineRenderer);
+        return lineRenderer;
     }
 
     protected void RemapPos(ref Vector3 pos)
     {
         pos = referenceTransform.MapPosition(pos);
+    }
+
+    protected void AddMapping(GraphNode<N> a, GraphNode<N> b, LineRenderer render)
+    {
+        GraphEdge<E> e = graph.GetEdge(a, b);
+        if (e != null)
+        {
+            if(mapping!=null)
+            {
+                mapping.Record(e.Index, render);
+            }
+        }
     }
 
     protected void GenerateCurveLine(Vector3 refPre, Vector3 from, Vector3 to,Vector3 refAfter)
@@ -146,11 +175,18 @@ public class TreeRenderCurved : BasicRouteGraphRender
             }
         }
         edgeObjects.Clear();
+        if(mapping!=null)
+            mapping.Clear();
     }
 
     public override void SetGraphData(Graph<N, E> graph, GraphNode<N> root = null)
     {
         this.graph = graph;
         this.rootNode = root;
+        if(mapping!=null)
+        {
+            mapping.graph = graph;
+            mapping.rootNode = root;
+        }
     }
 }

@@ -12,6 +12,9 @@ public class FadeAnnotationInteraction : MonoBehaviour, IPickPanoListener
     [SerializeField]
     private bool isSelected = false;
 
+
+    //another interaction function is in FlaotPanelText.cs
+
     void IPickPanoListener.OnSelection(PickPano pano, Color c)
     {
         if(render.data.ID.IsIncludedInColor(c))
@@ -21,7 +24,13 @@ public class FadeAnnotationInteraction : MonoBehaviour, IPickPanoListener
             {
                 render.Hide();
             }
-        }else
+            PositionScaleAnimation textScaleAnimation = render.floatPanelText.textScaleAnimation;
+            if (textScaleAnimation.IsHidden)
+            {
+                textScaleAnimation.Show();
+            }
+        }
+        else
         {
             isSelected = false;
         }
@@ -49,11 +58,20 @@ public class FadeAnnotationInteraction : MonoBehaviour, IPickPanoListener
         }
         if(IsInsideRange())
         {
-            render.Hide();
+            if(!render.IsHidden)
+            {
+                render.Hide();
+                render.floatPanelText.textScaleAnimation.Show();
+            }
         }
         else
         {
-            render.Show();
+            if (render.IsHidden)
+            {
+                render.Show();
+                render.floatPanelText.textScaleAnimation.Hide();
+            }
+                
         }
     }
 
@@ -77,6 +95,7 @@ public class FadeAnnotationInteraction : MonoBehaviour, IPickPanoListener
             if (!render.IsHidden)
             {
                 render.Hide();
+                render.floatPanelText.textScaleAnimation.Show();
             }
         }
         else

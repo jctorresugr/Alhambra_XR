@@ -285,4 +285,13 @@ public static class Utils
             Directory.CreateDirectory(folderPath);
         }
     }
+
+    public static Vector3 Vector3Div(Vector3 a, Vector3 b)
+    {
+        return new Vector3(
+            a.x / b.x,
+            a.y / b.y,
+            a.z / b.z
+            );
+    }
 }

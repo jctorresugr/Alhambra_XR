@@ -6,6 +6,7 @@ import android.graphics.Path;
 
 import com.alhambra.dataset.UserData;
 import com.alhambra.view.base.CanvasInteractiveElement;
+import com.alhambra.view.base.DynamicFloat;
 import com.sereno.math.MathUtils;
 import com.sereno.math.TranslateMatrix;
 import com.sereno.math.Vector3;
@@ -16,7 +17,7 @@ public class CanvasUser extends CanvasInteractiveElement
     private UserData userData;
     private TranslateMatrix translateMatrix;
 
-    private static final int radius = 3e0;
+    private static final int radius = 30;
     private static final Path path;
     private static final Paint pathPaint;
     static{
@@ -32,14 +33,27 @@ public class CanvasUser extends CanvasInteractiveElement
         pathPaint = newPaint(200,100,10,125,6.0f,Paint.Style.STROKE);
     }
 
+    protected DynamicFloat posX= new DynamicFloat();
+    protected DynamicFloat posY= new DynamicFloat();
+
+    @Override
+    public void update() {
+        super.update();
+        posX.targetValue =this.x;
+        posY.targetValue =this.y;
+        float dt=parent.getDeltaTime();
+        posX.update(dt);
+        posY.update(dt);
+    }
+
     @Override
     public void draw(Canvas canvas) {
-        float deg = userData.getRotation().y;
-        canvas.translate(x,y);
+        float deg = -userData.getRotation().y;
+        canvas.translate(posX.currentValue,posY.currentValue);
         canvas.rotate(-deg);
         canvas.drawPath(path,pathPaint);
         canvas.rotate(deg);
-        canvas.translate(-x,-y);
+        canvas.translate(-posX.currentValue,-posY.currentValue);
     }
 
     @Override

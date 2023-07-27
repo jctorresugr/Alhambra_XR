@@ -22,18 +22,16 @@ public class MinimapInteraction extends IInteraction implements MapView.OnClickS
 
     @Override
     public void onClickAnnotation(Annotation annotation) {
-        mainActivity.sendServerAction("TeleportAnnotation",annotation.id);
+        //mainActivity.sendServerAction("TeleportAnnotation",annotation.id);
         AnnotationDataset annotationDataset = mainActivity.getAnnotationDataset();
         annotationDataset.setMainEntryIndex(annotation.info.getIndex());
-        //viewPager.setCurrentItem(0);
     }
 
     @Override
     public void onClickAnnotationJoint(AnnotationJoint annotationJoint) {
-        mainActivity.sendServerAction("TeleportAnnotationJoint",annotationJoint.getId());
+        //mainActivity.sendServerAction("TeleportAnnotationJoint",annotationJoint.getId());
         selectionData.clearSelectedGroup();
         selectionData.addSelectedGroup(annotationJoint.getId());
-        //viewPager.setCurrentItem(0);
     }
 
     public void setMapView(MapView mapView) {

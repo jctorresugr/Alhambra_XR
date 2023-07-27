@@ -5,6 +5,7 @@ import android.util.Log;
 import com.alhambra.MainActivity;
 import com.alhambra.dataset.AnnotationDataset;
 import com.alhambra.dataset.SelectionData;
+import com.alhambra.dataset.data.Annotation;
 import com.alhambra.dataset.data.AnnotationInfo;
 import com.alhambra.dataset.data.AnnotationJoint;
 import com.alhambra.fragment.PreviewFragment;
@@ -73,5 +74,10 @@ public class SelectionInteraction extends IInteraction implements SelectionData.
             selectionData.removeSelectedGroup(annotationJoint);
         }
 
+    }
+
+    @Override
+    public void onClickTeleport(PreviewFragment fragment, Annotation annotation) {
+        mainActivity.sendServerAction("TeleportAnnotation",annotation.id);
     }
 }

@@ -62,7 +62,6 @@ public class MapView extends BaseCanvasElementView
         Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(),R.drawable.minimap);
         canvasBackground.setImage(bitmap);
 
-        //canvasBackground.setDrawable(context.getDrawable(R.drawable.minimap));
         this.addOnLayoutChangeListener(this);
     }
     public AnnotationDataset getDataset() {
@@ -430,18 +429,10 @@ public class MapView extends BaseCanvasElementView
         float bgScale = Math.min(wScale,hScale);
 
         /*
-
-        bgDraw.right = (int) (bgSrc.right*bgScale);
-        bgDraw.bottom = (int) (bgSrc.bottom*bgScale);*/
-        /*
         Log.i("TranslateInfo","screen size: "+w+" "+h);
         Log.i("TranslateInfo","scale "+translateInfo.scaleX+" "+translateInfo.scaleY+
                 " | trans "+translateInfo.translateX+" "+translateInfo.translateY);
         */
-
-
-        //dirty code, require automatically generate
-        //float bgScale = 1.23f;
 
         int translateX = (int) (lastWidth*(paddingRatio*0.5f));
         int translateY = (int) (lastHeight*(paddingRatio*0.5f));
@@ -454,6 +445,7 @@ public class MapView extends BaseCanvasElementView
     public void refreshBoundsInfo(){
         recalculateBounds(m_dataset.getModelBounds());
         regenerateElement();
+        updateSelectionVisualEffect();
     }
 
     @Override
