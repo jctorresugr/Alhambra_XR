@@ -170,9 +170,14 @@ public class DragViewLayout extends RelativeLayout {
                         WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.RGBA_8888);
         floatLayoutParams.gravity = Gravity.LEFT | Gravity.TOP;
-        floatLayoutParams.x = mScreenWidth-mWidth;
+        if(mWidth==0){ //avoid outside of the screen
+            floatLayoutParams.x = 0;
+        }else{
+            floatLayoutParams.x = mScreenWidth-mWidth;
+        }
         floatLayoutParams.y = (int)(mScreenHeight * 0.3);
         mWindowManager.addView(this, floatLayoutParams);
+        updateSize();
     }
 
     public void hide(){

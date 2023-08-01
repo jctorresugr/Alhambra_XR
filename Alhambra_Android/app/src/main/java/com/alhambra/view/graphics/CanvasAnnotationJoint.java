@@ -10,6 +10,7 @@ import android.view.View;
 import com.alhambra.Utils;
 import com.alhambra.dataset.data.AnnotationID;
 import com.alhambra.dataset.data.AnnotationJoint;
+import com.alhambra.experiment.ExperimentDataCollection;
 import com.alhambra.view.MapView;
 import com.alhambra.view.base.CanvasBaseElement;
 import com.alhambra.view.base.CanvasInteractiveElement;
@@ -180,4 +181,9 @@ public class CanvasAnnotationJoint extends CanvasInteractiveElement {
         super.onLoseFocus(e);
     }
 
+    @Override
+    public void onClick(MotionEvent e) {
+        super.onClick(e);
+        ExperimentDataCollection.add("ui_map_element_annotationJoint",annotationJoint.getId());
+    }
 }

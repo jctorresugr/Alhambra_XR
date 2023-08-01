@@ -216,6 +216,8 @@ PlayerSettings:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -702,7 +704,7 @@ PlayerSettings:
   metroPackageName: Template3D1
   metroPackageVersion: 1.0.0.0
   metroCertificatePath: Assets/debugCertificate.pfx
-  metroCertificatePassword: "\uCB6A"
+  metroCertificatePassword: "\uCB6A\0\uFB65"
   metroCertificateSubject: DebugCertificate
   metroCertificateIssuer: DebugCertificate
   metroCertificateNotAfter: 0037725675bdda01

@@ -4,8 +4,10 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.view.MotionEvent;
 
 import com.alhambra.dataset.data.Annotation;
+import com.alhambra.experiment.ExperimentDataCollection;
 import com.alhambra.view.base.CanvasInteractiveElement;
 import com.alhambra.view.base.DynamicFloat;
 import com.alhambra.view.base.DynamicHSVColor;
@@ -132,4 +134,10 @@ public class CanvasAnnotation extends CanvasInteractiveElement {
         return annotation;
     }
 
+    @Override
+    public void onClick(MotionEvent e) {
+        super.onClick(e);
+
+        ExperimentDataCollection.add("ui_map_element_annotation",annotation.id);
+    }
 }

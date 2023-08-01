@@ -5,14 +5,11 @@ import android.os.Looper;
 import android.util.Log;
 
 import com.alhambra.IReceiveMessageListener;
+import com.alhambra.ListenerSubscriber;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 
@@ -21,6 +18,14 @@ public class NetworkJsonParser implements SocketManager.ISocketManagerListener {
     private HashMap<String, IReceiveMessageListener> m_receiveMessageListener = new HashMap<>();
     private SocketManager m_socket = null;
     private Handler mainThreadHandler;
+
+    //TODO: add a basic filter in the experiment data collection
+    public interface OnNetworkJsonParseListener {
+        void beforeProcess(String tag, JsonElement data, String jsonMsg);
+        void failedProcess(String tag, String jsonMsg);
+    }
+
+    public ListenerSubscriber<OnNetworkJsonParseListener> listeners = new ListenerSubscriber<>();
 
     public void init(SocketManager socket){
         mainThreadHandler = new Handler(Looper.getMainLooper());
@@ -68,6 +73,7 @@ public class NetworkJsonParser implements SocketManager.ISocketManagerListener {
             SeqJSONMessage seqJSONMessage = JSONUtils.gson.fromJson(data,SeqJSONMessage.class);
             processSeqMessage(socket, seqJSONMessage);
         } else if(m_receiveMessageListener.containsKey(action)) {
+            listeners.invoke(l->l.beforeProcess(action,data,jsonMsg));
             IReceiveMessageListener iReceiveMessageListener = m_receiveMessageListener.get(action);
             if (iReceiveMessageListener != null) {
                 mainThreadHandler.post(
@@ -79,6 +85,7 @@ public class NetworkJsonParser implements SocketManager.ISocketManagerListener {
             }
         }else{
             Log.w(LOG_TAG,"Unknown socket information: "+jsonMsg);
+            listeners.invoke(l->l.failedProcess(action,jsonMsg));
         }
 
     }

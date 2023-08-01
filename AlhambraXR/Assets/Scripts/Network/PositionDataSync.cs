@@ -109,7 +109,9 @@ public class PositionDataSync : SocketDataBasic, PickPano.IPickPanoListener
             {
                 main.AddTask(() =>
                 {
-                    Vector3 worldPos = referenceTransform.MapPosition(renderinfo.averagePosition);
+                    Vector3 worldPos = 
+                        referenceTransform.MapPosition(renderinfo.averagePosition)
+                        + renderinfo.Normal*teleportOffset;
                     RaycastHit hit;
                     if (Physics.Raycast(worldPos, Vector3.down,out hit,upOffset*4.0f, modelLayer))
                     {
@@ -117,7 +119,7 @@ public class PositionDataSync : SocketDataBasic, PickPano.IPickPanoListener
                     }
                     else
                     {
-                        worldPos += renderinfo.Normal * teleportOffset + Vector3.up * upOffset;
+                        worldPos += Vector3.up * upOffset;
                     }
                     TeleportTo(worldPos);
                     main.SetArrow(annotation);

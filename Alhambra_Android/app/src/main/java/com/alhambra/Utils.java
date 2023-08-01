@@ -6,7 +6,15 @@ import android.graphics.Path;
 
 import com.google.gson.Gson;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -50,5 +58,20 @@ public class Utils {
         result.lineTo(x0,y0);
         result.close();
         return result;
+    }
+
+    public static String readWholeString(File file) {
+        try{
+            FileInputStream fis = new FileInputStream(file);
+            byte[] data = new byte[(int) file.length()];
+            fis.read(data);
+            fis.close();
+
+            return new String(data, StandardCharsets.UTF_8);
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }

@@ -15,6 +15,7 @@ import android.widget.RelativeLayout;
 import com.alhambra.dataset.SelectionData;
 import com.alhambra.dataset.UserData;
 import com.alhambra.dataset.data.Annotation;
+import com.alhambra.experiment.task.ExperimentTaskInteraction;
 import com.alhambra.interactions.DatasetSync;
 import com.alhambra.dataset.data.AnnotationInfo;
 import com.alhambra.dataset.AnnotationDataset;
@@ -31,7 +32,6 @@ import com.alhambra.interactions.SearchInteraction;
 import com.alhambra.interactions.SelectionInteraction;
 import com.alhambra.network.JSONUtils;
 import com.alhambra.network.NetworkJsonParser;
-import com.alhambra.network.PackedJSONMessages;
 import com.alhambra.network.receivingmsg.AddAnnotationMessage;
 import com.alhambra.network.receivingmsg.AnnotationMessage;
 import com.alhambra.network.receivingmsg.SelectionMessage;
@@ -40,15 +40,12 @@ import com.alhambra.network.sendingmsg.FinishAnnotation;
 import com.alhambra.network.sendingmsg.HighlightDataChunk;
 import com.alhambra.network.sendingmsg.OverviewMessage;
 import com.alhambra.network.sendingmsg.StartAnnotation;
+import com.alhambra.experiment.ExperimentDataCollection;
+import com.alhambra.experiment.ExperimentNetworkCollector;
 import com.alhambra.view.FloatMiniMapView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.tabs.TabLayout;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -56,7 +53,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /** The Main Activity of this application. This is the first thing that is suppose to start*/
 public class MainActivity
@@ -119,6 +115,7 @@ public class MainActivity
     private MinimapInteraction minimapInteraction;
     private MinimapInteraction minimapInteractionTiny;
     private MoveInteraction moveInteraction;
+    private ExperimentTaskInteraction experimentTaskInteraction;
 
     /*--------------------------------------*/
     /*-----Initialization of everything-----*/
@@ -148,6 +145,8 @@ public class MainActivity
         this.addInteraction(minimapInteractionTiny);
         moveInteraction = new MoveInteraction();
         this.addInteraction(moveInteraction);
+        experimentTaskInteraction = new ExperimentTaskInteraction();
+        addInteraction(experimentTaskInteraction);
     }
 
     public void regReceiveMessageListener(String actionName, IReceiveMessageListener l){
@@ -229,8 +228,11 @@ public class MainActivity
             if(mainEntryIndex != -1)
                 m_Annotation_dataset.setMainEntryIndex(mainEntryIndex);
             m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
+            experimentTaskInteraction.onSelection(indexArr);
         });
     }
+
+
 
     public void onReceiveAnnotation(JsonElement jsonElement) {
         final AnnotationMessage annotation = JSONUtils.gson.fromJson(jsonElement,AnnotationMessage.class);
@@ -366,6 +368,17 @@ public class MainActivity
         initLayout();
         initNetwork();
         initFunctions();
+        initExperiment();
+    }
+
+    private ExperimentNetworkCollector experimentNetworkCollector;
+    private void initExperiment() {
+        ExperimentDataCollection.instance.setFolder(getExternalFilesDir(null));
+        experimentNetworkCollector = new ExperimentNetworkCollector();
+        experimentNetworkCollector.addLimit("SyncPos",0.95f);
+        experimentNetworkCollector.addLimit("UpdateAnnotationRenderInfo");
+        experimentNetworkCollector.addLimit("SyncAnnotationJoint");
+        networkJsonParser.listeners.addListener(experimentNetworkCollector);
     }
 
     @Override
@@ -380,10 +393,13 @@ public class MainActivity
         disableSwiping();
     }
 
+
     @Override
     public void onHighlightDataChunk(PreviewFragment fragment, AnnotationInfo annotationInfo)
     {
-        m_socket.push(HighlightDataChunk.generateJSON(annotationInfo.getLayer(), annotationInfo.getID()));
+        String json=HighlightDataChunk.generateJSON(annotationInfo.getLayer(), annotationInfo.getID());
+        m_socket.push(json);
+        ExperimentDataCollection.add("net_send_highlight",json);
     }
 
     @Override
@@ -404,14 +420,16 @@ public class MainActivity
 
     @Override
     public void askStartAnnotation(AnnotationFragment frag) {
-        m_socket.push(StartAnnotation.generateJSON());
+        String json = StartAnnotation.generateJSON();
+        m_socket.push(json);
+        ExperimentDataCollection.add("net_send_startAnnotation",json);
     }
 
     @Override
     public void onConfirmAnnotation(AnnotationFragment frag)
     {
         ArrayList<String> jointTokens = frag.getJointTokens();
-        m_socket.push(FinishAnnotation.generateJSON(true,
+        String json = FinishAnnotation.generateJSON(true,
                 frag.getAnnotationCanvasData().getGeometries(),
                 frag.getAnnotationCanvasData().getWidth(),
                 frag.getAnnotationCanvasData().getHeight(),
@@ -419,23 +437,28 @@ public class MainActivity
                 frag.getCameraPos(),
                 frag.getCameraRot(),
                 frag.getSelectedAnnotationJointIDs(),
-                jointTokens));
+                jointTokens);
+        ExperimentDataCollection.add("net_send_finishAnnotation",json);
+        m_socket.push(json);
         frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);
     }
 
     public void sendServerData(String s) {
         m_socket.push(s);
+
     }
 
     public void sendServerAction(String actionName, Object data) {
-        m_socket.push(JSONUtils.createActionJson(actionName, data));
+        String json=JSONUtils.createActionJson(actionName, data);
+        ExperimentDataCollection.add("net_send_"+actionName,json);
+        sendServerData(json);
     }
 
     @Override
     public void onCancelAnnotation(AnnotationFragment frag)
     {
-        m_socket.push(FinishAnnotation.generateJSON(
+        String json=FinishAnnotation.generateJSON(
                 false,
                 frag.getAnnotationCanvasData().getGeometries(),
                 frag.getAnnotationCanvasData().getWidth(),
@@ -445,7 +468,9 @@ public class MainActivity
                 frag.getCameraRot(),
                 frag.getSelectedAnnotationJointIDs(),
                 new ArrayList<>()
-                ));
+        );
+        ExperimentDataCollection.add("net_send_finishAnnotation",json);
+        m_socket.push(json);
         frag.clearAnnotation();
         //runOnUiThread(this::disableAnnotationTab);
     }
@@ -463,6 +488,11 @@ public class MainActivity
     @Override
     public void onOverViewUIInit(OverviewFragment frag) {
         minimapInteraction.setMapView(m_overviewFragment.getMapView());
+    }
+
+    @Override
+    public void onBeginTask(OverviewFragment frag) {
+
     }
 
     public AnnotationDataset getAnnotationDataset() {
@@ -516,5 +546,19 @@ public class MainActivity
 
     public void disableSwiping(){
         m_viewPager.setPagingEnabled(false);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        ExperimentDataCollection.save();
+    }
+
+    public OverviewFragment getOverviewFragment() {
+        return m_overviewFragment;
+    }
+
+    public NetworkJsonParser getNetworkJsonParser() {
+        return networkJsonParser;
     }
 }

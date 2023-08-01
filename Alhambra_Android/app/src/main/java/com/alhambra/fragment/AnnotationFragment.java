@@ -16,27 +16,22 @@ import android.widget.TextView;
 import com.alhambra.R;
 import com.alhambra.dataset.AnnotationDataset;
 import com.alhambra.dataset.data.AnnotationJoint;
+import com.alhambra.experiment.ExperimentDataCollection;
 import com.alhambra.view.CustomChipTextEditorController;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
-import com.sereno.color.Color;
-import com.sereno.color.HSVColor;
 import com.sereno.math.Quaternion;
 import com.sereno.view.AnnotationCanvasData;
 import com.sereno.view.AnnotationCanvasView;
 import com.sereno.view.AnnotationGeometry;
 import com.sereno.view.AnnotationPolygon;
 import com.sereno.view.AnnotationStroke;
-import com.sereno.view.ColorPickerData;
 import com.sereno.view.ColorPickerView;
 
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import androidx.annotation.NonNull;
 
@@ -194,15 +189,18 @@ public class AnnotationFragment extends AlhambraFragment
             for(IAnnotationFragmentListener l : m_listeners)
                 l.askStartAnnotation(AnnotationFragment.this);
             m_startAnnotationTxt.setVisibility(View.VISIBLE);
+            ExperimentDataCollection.add("ui_AnnotationFragment_startAnnotationBtn");
         });
 
         m_confirmBtn.setOnClickListener(view -> {
             for(IAnnotationFragmentListener l : m_listeners)
                 l.onConfirmAnnotation(AnnotationFragment.this);
+            ExperimentDataCollection.add("ui_AnnotationFragment_confirmBtn");
         });
         m_cancelBtn.setOnClickListener(view -> {
             for(IAnnotationFragmentListener l : m_listeners)
                 l.onCancelAnnotation(AnnotationFragment.this);
+            ExperimentDataCollection.add("ui_AnnotationFragment_cancelBtn");
         });
 
         m_colorPicker.getModel().addListener((data, color) -> m_currentStrokeColor = color);

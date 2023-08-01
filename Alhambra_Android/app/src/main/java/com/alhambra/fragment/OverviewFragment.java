@@ -22,6 +22,7 @@ public class OverviewFragment extends AlhambraFragment {
 
     private Button m_showAllBtn;
     private Button m_stopShowAllBtn;
+    private Button m_beginTask;
     private MapView m_mapView;
     private AnnotationDataset annotationDataset;
     private UserData userData;
@@ -35,6 +36,7 @@ public class OverviewFragment extends AlhambraFragment {
         void showAllAnnotation(OverviewFragment frag);
         void stopShowAllAnnotation(OverviewFragment frag);
         void onOverViewUIInit(OverviewFragment frag);
+        void onBeginTask(OverviewFragment frag);
     }
 
     private ArrayList<OverviewFragmentListener> m_listeners = new ArrayList<>();
@@ -60,6 +62,7 @@ public class OverviewFragment extends AlhambraFragment {
         View v = inflater.inflate(R.layout.overview_fragment,container,false);
         m_showAllBtn = v.findViewById(R.id.showAllBtn);
         m_stopShowAllBtn = v.findViewById(R.id.stopShowAllBtn);
+        m_beginTask = v.findViewById(R.id.beginTaskButton);
         m_mapView = v.findViewById(R.id.annotationMapView2);
         m_mapView.setUserData(userData);
         m_mapView.setSelectionData(selectionData);
@@ -73,6 +76,11 @@ public class OverviewFragment extends AlhambraFragment {
         m_stopShowAllBtn.setOnClickListener(view->{
             for(OverviewFragmentListener l:m_listeners) {
                 l.stopShowAllAnnotation(this);
+            }
+        });
+        m_beginTask.setOnClickListener(view->{
+            for(OverviewFragmentListener l:m_listeners) {
+                l.onBeginTask(this);
             }
         });
 

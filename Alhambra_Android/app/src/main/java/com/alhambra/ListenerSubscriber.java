@@ -11,7 +11,7 @@ public class ListenerSubscriber<T> {
         void run(T listener);
 
     }
-    ArrayList<T> listeners = new ArrayList<>();
+    protected transient ArrayList<T> listeners = new ArrayList<>();
     public void addListener(T listener) {
         listeners.add(listener);
     }

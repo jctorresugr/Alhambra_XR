@@ -49,20 +49,7 @@ public class Main : MonoBehaviour,
     [SerializeField]
     private SelectionModelData m_model;
 
-    /// <summary>
-    /// The Random string value
-    /// </summary>
-    private String m_randomStr = "";
-
-    /// <summary>
-    /// Should we enable the Random Text?
-    /// </summary>
-    private bool m_enableRandomText = false;
-
-    /// <summary>
-    /// Should we update the random text values?
-    /// </summary>
-    private bool m_updateRandomText = false;
+    
 
     /// <summary>
     /// Save Application.persistentDataPath for it to be used asynchronously...
@@ -114,10 +101,7 @@ public class Main : MonoBehaviour,
     /// </summary>
     public UnityEngine.UI.Text IPValueText;
 
-    /// <summary>
-    /// Any text that has to be displayed
-    /// </summary>
-    public UnityEngine.UI.Text RandomText;
+
 
     public DataSync dataSync;
 
@@ -141,6 +125,7 @@ public class Main : MonoBehaviour,
     public SaveAndLoader saveAndLoader;
     public IndexTextureManager indexTextureManager;
     public ServerJsonParser serverParser;
+    public ScreenText screenText;
     //public VolumeNavigation volumeNavigation;
 
     //public VolumeAnalyze volumeAnalyze;
@@ -220,8 +205,6 @@ public class Main : MonoBehaviour,
         //Default text helpful to bind headset to tablet
         m_updateIPTexts = true;
         m_enableIPTexts = !m_server.Connected;
-        m_updateRandomText = true;
-        m_enableRandomText = false;
 
         //Necessary because Main cannot be focused
         CoreServices.InputSystem?.RegisterHandler<IMixedRealityInputActionHandler>(this);
@@ -238,7 +221,6 @@ public class Main : MonoBehaviour,
         lock(this)
         {
             HandleIPTxt();
-            HandleRandomText();
             HandlePointingArrow();
             HandleTasks();
         }
@@ -269,26 +251,6 @@ public class Main : MonoBehaviour,
                 IPValueText.text  = $"{ServerSocket.DeviceServerAddress}:{AlhambraServer.SERVER_PORT}";
             }
             m_updateIPTexts = false;
-        }
-    }
-
-    /// <summary>
-    /// Handle the random text to display
-    /// </summary>
-    private void HandleRandomText()
-    {
-        //Update the displayed text requiring networking attention
-        if (m_updateRandomText)
-        {
-            //Enable/Disable the random text
-            RandomText.enabled = m_enableRandomText;
-
-            //If we should enable the text, set the text value
-            if (m_enableRandomText)
-            {
-                RandomText.text = m_randomStr;
-            }
-            m_updateRandomText = false;
         }
     }
 
@@ -410,12 +372,7 @@ public class Main : MonoBehaviour,
         else if (commonMsg.action == "startAnnotation")
         {
             //Display instruction to the user
-            lock (this)
-            {
-                m_updateRandomText = true;
-                m_enableRandomText = true;
-                m_randomStr = "Tap to start annotating\non the tablet";
-            }
+            screenText.SetText("Tap to start annotating\non the tablet");
 
             //Change the current action and remove highlighting if needed
             CurrentAction oldAction = m_model.CurrentAction;
@@ -811,11 +768,7 @@ public class Main : MonoBehaviour,
             {
                 //Go back to the default state
                 m_model.CurrentAction = CurrentAction.DEFAULT;
-                lock (this)
-                {
-                    m_updateRandomText = true;
-                    m_enableRandomText = false;
-                }
+                screenText.EnableText = false;
 
                 RTCamera.transform.position = Camera.main.transform.position;
                 RTCamera.transform.rotation = Camera.main.transform.rotation;

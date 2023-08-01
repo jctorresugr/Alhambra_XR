@@ -98,14 +98,12 @@ public class AnnotationRender : AnnotationRenderBase
         {
             return frame.up *
             (
-                (
-                    data.renderInfo.OBBBounds.size.y * baseOffset *
-                    referenceTransform.referTransform.lossyScale.y
-                )
-                +
-                normalOffset
-            )
-            ;
+                data.renderInfo.OBBBounds.size.y * 
+                baseOffset *
+                referenceTransform.referTransform.lossyScale.y
+            ) + 
+            normalOffset* data.renderInfo.Normal
+           ;
         }
 
         frame.position += ComputeOffset();

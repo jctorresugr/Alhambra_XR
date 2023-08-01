@@ -18,6 +18,7 @@ import com.alhambra.dataset.data.AnnotationInfo;
 import com.alhambra.dataset.AnnotationDataset;
 import com.alhambra.R;
 import com.alhambra.dataset.data.AnnotationJoint;
+import com.alhambra.experiment.ExperimentDataCollection;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.sereno.Tree;
@@ -226,7 +227,10 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
         //Put that in the tree view and set all the interactive listeners
         Tree<View> idTree = new Tree<>(preview);
         preview.setClickable(true);
-        preview.setOnClickListener(view -> m_Annotation_dataset.setMainEntryIndex(idx));
+        preview.setOnClickListener(view -> {
+            m_Annotation_dataset.setMainEntryIndex(idx);
+            ExperimentDataCollection.add("ui_PreviewFragment_preview",idx);
+        });
         treeModel.addChild(idTree, -1);
         m_datasetEntries.put(idx, idTree);
 
@@ -259,17 +263,24 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
 
         //Initialize Listeners
         m_previousBtn.setOnClickListener(view -> {
-            if(m_currentSelection != null)
-                m_Annotation_dataset.setMainEntryIndex(findPreviousID());
+            if(m_currentSelection != null){
+                int previousID = findPreviousID();
+                ExperimentDataCollection.add("ui_PreviewFragment_previousBtn",m_Annotation_dataset.getMainEntryIndex(), previousID);
+                m_Annotation_dataset.setMainEntryIndex(previousID);
+            }
         });
 
         m_nextBtn.setOnClickListener(view -> {
-            if(m_currentSelection != null)
-                m_Annotation_dataset.setMainEntryIndex(findNextID());
+            if(m_currentSelection != null){
+                int previousID = findNextID();
+                ExperimentDataCollection.add("ui_PreviewFragment_nextBtn",m_Annotation_dataset.getMainEntryIndex(), previousID);
+                m_Annotation_dataset.setMainEntryIndex(previousID);
+            }
         });
 
         m_quitSelectionBtn.setOnClickListener(view -> {
             if(m_currentSelection != null){
+                ExperimentDataCollection.add("ui_PreviewFragment_quitSelectionBtn",m_selection_data);
                 m_Annotation_dataset.setCurrentSelection(new int[0]);
                 m_selection_data.setKeyword("");
                 m_selection_data.clearSelectedGroup();
@@ -278,15 +289,20 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
         });
 
         m_highlightBtn.setOnClickListener(view -> {
-            if(m_Annotation_dataset.getMainEntryIndex() != -1)
+            if(m_Annotation_dataset.getMainEntryIndex() != -1){
+                ExperimentDataCollection.add("ui_PreviewFragment_highlightBtn",m_Annotation_dataset.getMainEntryIndex());
                 for(IPreviewFragmentListener l : m_listeners)
                     l.onHighlightDataChunk(this, m_Annotation_dataset.getDataFromIndex(m_Annotation_dataset.getMainEntryIndex()));
+            }
         });
 
         m_teleportBtn.setOnClickListener(view->{
-            if(m_Annotation_dataset.getMainEntryIndex() != -1)
+            if(m_Annotation_dataset.getMainEntryIndex() != -1){
+                ExperimentDataCollection.add("ui_PreviewFragment_teleportBtn",m_Annotation_dataset.getMainEntryIndex());
                 for(IPreviewFragmentListener l : m_listeners)
                     l.onClickTeleport(this,m_Annotation_dataset.getFullDataFromIndex(m_Annotation_dataset.getMainEntryIndex()));;
+            }
+
         });
 
         //Reinit the dataset if needed
@@ -398,6 +414,7 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
                     Chip chipClicked = (Chip) v;
                     for(IPreviewFragmentListener l : m_listeners)
                         l.onClickChip(chipClicked,aj.getId());
+                        ExperimentDataCollection.add("ui_PreviewFragment_chipAnnotationJoint",aj.getId());
                 });
             }
         });

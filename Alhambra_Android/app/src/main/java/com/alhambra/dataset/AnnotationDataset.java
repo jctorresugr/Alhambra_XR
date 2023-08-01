@@ -288,6 +288,18 @@ public class AnnotationDataset
         return m_data.get(index);
     }
 
+    public ArrayList<Annotation> getAnnotations(int[] index){
+        ArrayList<Annotation> annotations = new ArrayList<>();
+        if(index==null||index.length==0){
+            return annotations;
+        }
+        for(int i : index)
+        {
+            annotations.add(m_data.get(i));
+        }
+        return annotations;
+    }
+
     public boolean hasSelectionIndex(int x){
         for (int i : m_currentSelection) {
             if(i==x){

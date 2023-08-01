@@ -5,13 +5,8 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.viewpager.widget.ViewPager;
 
@@ -19,9 +14,8 @@ import com.alhambra.R;
 import com.alhambra.dataset.AnnotationDataset;
 import com.alhambra.dataset.SelectionData;
 import com.alhambra.dataset.UserData;
-import com.alhambra.interactions.MinimapInteraction;
+import com.alhambra.experiment.ExperimentDataCollection;
 import com.alhambra.view.base.DragViewLayout;
-import com.alhambra.view.base.DynamicFloat;
 import com.sereno.color.Color;
 import com.sereno.math.MathUtils;
 
@@ -78,6 +72,8 @@ public class FloatMiniMapView extends DragViewLayout {
             }else{
                 setToBigView();
             }
+
+            ExperimentDataCollection.add("ui_minimap_scaleButton",isZoomed);
         });
     }
 
