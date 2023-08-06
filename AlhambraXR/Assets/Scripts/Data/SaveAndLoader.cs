@@ -112,6 +112,10 @@ public class SaveAndLoader : MonoBehaviour
                 {
                     joint.AddAnnotation(annot);
                 }
+                if (preAssignedIndexTexture != null)
+                {
+                    data.IndexTexture = preAssignedIndexTexture;
+                }
             }
         }
         else

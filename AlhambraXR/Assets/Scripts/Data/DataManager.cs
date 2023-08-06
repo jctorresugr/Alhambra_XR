@@ -89,6 +89,23 @@ public class DataManager : MonoBehaviour
         return null;
     }
 
+    public Annotation AddAnnotation(AnnotationRenderInfo renderInfo, AnnotationInfo info)
+    {
+        AnnotationID id = info.ID;
+        Annotation annot = FindAnnotationID(id);
+        if (annot == null)
+        {
+            annot = new Annotation(id);
+            annot.renderInfo = renderInfo;
+            annot.info = info;
+            annotations.Add(annot);
+            OnAnnotationAddEvent?.Invoke(annot);
+            Debug.Log("Add annotation " + id);
+            return annot;
+        }
+        return null;
+    }
+
     // compatible with old code
     public void AddAnnoationRenderInfo(AnnotationRenderInfo renderInfo)
     {

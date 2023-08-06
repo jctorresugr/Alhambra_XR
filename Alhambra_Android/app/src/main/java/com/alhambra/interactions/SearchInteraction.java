@@ -9,6 +9,8 @@ import com.alhambra.dataset.SelectionData;
 import com.alhambra.dataset.data.Annotation;
 import com.alhambra.dataset.data.AnnotationInfo;
 import com.alhambra.dataset.data.AnnotationJoint;
+import com.alhambra.experiment.ExperimentDataCollection;
+import com.alhambra.experiment.task.ExperimentTaskInteraction;
 import com.sereno.math.BBox;
 
 import java.util.HashSet;
@@ -114,6 +116,7 @@ public class SearchInteraction extends IInteraction implements TextWatcher, Anno
         isSetting=true;
         if(!mainActivity.filterEditor.getText().toString().equals(text)) {
             mainActivity.filterEditor.setText(text);
+            ExperimentDataCollection.add("all_search_textEdit",text.toString());
         }
         isSetting=false;
     }

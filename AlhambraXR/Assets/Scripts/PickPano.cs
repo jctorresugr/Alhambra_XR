@@ -469,7 +469,7 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
     /// <param name="outputColor">The color of the annotation inside the Index Texture. Every pixel of that color refers to the same annotation (the newly created one)</param>
     /// <returns>True on success (we found a suitable color for the annotation), false otherwise. If false, outputColor == Color32(0,0,0,0).</returns>
     [BurstCompile(FloatPrecision.Medium, FloatMode.Fast)]
-    public bool AddAnnotation(Texture2D uvMapping, out Color32 outputColor)
+    public bool AddAnnotation(Texture2D uvMapping, out Color32 outputColor, out AnnotationRenderInfo annotationRenderInfo)
     {
         //Get the pixels of the uvMapping to anchor, and the texture that contains the annotation
         NativeArray<Color> newRGBA = uvMapping.GetRawTextureData<Color>();
@@ -481,6 +481,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         int uvHeight = uvMapping.height;
         int srcWidth = srcAnnotationTexture.width;
         int srcHeight = srcAnnotationTexture.height;
+
+        annotationRenderInfo = null;
 
         //The purpose is to find on which layer to anchor this annotation
         int     layer      = 2;
@@ -682,7 +684,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         );
 
         Debug.Log($"Finish to add annotation Color {layerColor}");
-        data.AddAnnoationRenderInfo(annot);
+        //data.AddAnnoationRenderInfo(annot);
+        annotationRenderInfo = annot;
 
         srcAnnotationTexture.Apply();
         foreach (var l in m_listeners)

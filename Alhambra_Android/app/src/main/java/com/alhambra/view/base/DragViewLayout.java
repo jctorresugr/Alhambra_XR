@@ -6,12 +6,13 @@ import android.graphics.PixelFormat;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 
-public class DragViewLayout extends RelativeLayout {
+public class DragViewLayout extends RelativeLayout{
 
     //view所在位置
     int mLastX, mLastY;
@@ -21,6 +22,8 @@ public class DragViewLayout extends RelativeLayout {
 
     //view高宽
     protected int mWidth, mHeight;
+
+    protected boolean canBeDragged=true;
 
     /**
      * 是否在拖拽过程中
@@ -44,6 +47,7 @@ public class DragViewLayout extends RelativeLayout {
     private float xInView;
     private float yInView;
     public boolean enableAttachEdge=true;
+    public View dispatchEventToView = null;
 
 
     public DragViewLayout(Context context) {
@@ -69,38 +73,43 @@ public class DragViewLayout extends RelativeLayout {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
-        int action = event.getAction();
-        switch (action) {
-            case MotionEvent.ACTION_DOWN:
-                mLastX = (int) event.getRawX();
-                mLastY = (int) event.getRawY();
-                yInView = event.getY();
-                xInView = event.getX();
-                xInScreen = event.getRawX();
-                yInScreen = event.getRawY();
-                break;
-            case MotionEvent.ACTION_MOVE:
-                int dx = (int) event.getRawX() - mLastX;
-                int dy = (int) event.getRawY() - mLastY;
-                if (Math.abs(dx) > mTouchSlop || Math.abs(dy) > mTouchSlop) {
-                    isDrag = true;
-                }
-                xInScreen = event.getRawX();
-                yInScreen = event.getRawY();
-                mLastX = (int) event.getRawX();
-                mLastY = (int) event.getRawY();
-                //拖拽时调用WindowManager updateViewLayout更新悬浮球位置
-                updateFloatPosition(false);
-                break;
-            case MotionEvent.ACTION_UP:
-                if (isDrag) {
-                    //执行贴边
-                    startEdgeAttach();
-                    isDrag = false;
-                }
-                break;
-            default:
-                break;
+        if(canBeDragged){
+            int action = event.getAction();
+            switch (action) {
+                case MotionEvent.ACTION_DOWN:
+                    mLastX = (int) event.getRawX();
+                    mLastY = (int) event.getRawY();
+                    yInView = event.getY();
+                    xInView = event.getX();
+                    xInScreen = event.getRawX();
+                    yInScreen = event.getRawY();
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    int dx = (int) event.getRawX() - mLastX;
+                    int dy = (int) event.getRawY() - mLastY;
+                    if (Math.abs(dx) > mTouchSlop || Math.abs(dy) > mTouchSlop) {
+                        isDrag = true;
+                    }
+                    xInScreen = event.getRawX();
+                    yInScreen = event.getRawY();
+                    mLastX = (int) event.getRawX();
+                    mLastY = (int) event.getRawY();
+                    //拖拽时调用WindowManager updateViewLayout更新悬浮球位置
+                    updateFloatPosition(false);
+                    break;
+                case MotionEvent.ACTION_UP:
+                    if (isDrag) {
+                        //执行贴边
+                        startEdgeAttach();
+                        isDrag = false;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        if(dispatchEventToView!=null){
+            dispatchEventToView.dispatchTouchEvent(event);
         }
         return super.dispatchTouchEvent(event);
     }
@@ -210,4 +219,13 @@ public class DragViewLayout extends RelativeLayout {
     public void setTouchSlop(int mTouchSlop) {
         this.mTouchSlop = mTouchSlop;
     }
+
+    public boolean isCanBeDragged() {
+        return canBeDragged;
+    }
+
+    public void setCanBeDragged(boolean canBeDragged) {
+        this.canBeDragged = canBeDragged;
+    }
+
 }

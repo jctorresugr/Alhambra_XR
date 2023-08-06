@@ -282,7 +282,7 @@ public class PreviewFragment extends AlhambraFragment implements AnnotationDatas
             if(m_currentSelection != null){
                 ExperimentDataCollection.add("ui_PreviewFragment_quitSelectionBtn",m_selection_data);
                 m_Annotation_dataset.setCurrentSelection(new int[0]);
-                m_selection_data.setKeyword("");
+                //m_selection_data.setKeyword("");
                 m_selection_data.clearSelectedGroup();
             }
 

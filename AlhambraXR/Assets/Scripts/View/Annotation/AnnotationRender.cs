@@ -21,6 +21,7 @@ public class AnnotationRender : AnnotationRenderBase
     [Header("Text Plane Layout")]
     public float textMinOffset = 0.1f;
     public float textMaxOffset = 1.0f;
+    public float defaultOffsetRelativeToOBB = 1.0f;
     public LayerMask modelLayer;
 
     private float animationTime = 0.0f;
@@ -87,7 +88,7 @@ public class AnnotationRender : AnnotationRenderBase
         frame.rotation = Quaternion.LookRotation(xYZCoordinate.z, xYZCoordinate.y);
         frame.position = referenceTransform.MapPosition(
           xYZCoordinate.TransformToGlobalPos(
-              localCenter
+                localCenter
               )
           );
         frameScaleAnimation.targetScale = frame.localScale =
@@ -107,7 +108,7 @@ public class AnnotationRender : AnnotationRenderBase
         }
 
         frame.position += ComputeOffset();
-        floatPanelText.transform.position += ComputeOffset(1.0f);
+        floatPanelText.transform.position += ComputeOffset(defaultOffsetRelativeToOBB);
         RaycastHit hit;
         if(!Physics.Raycast(floatPanelText.transform.position,Vector3.down, out hit, float.MaxValue,modelLayer))
         {

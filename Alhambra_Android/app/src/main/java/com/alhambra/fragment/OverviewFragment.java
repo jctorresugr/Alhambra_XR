@@ -8,7 +8,6 @@ import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 
 import com.alhambra.R;
 import com.alhambra.dataset.AnnotationDataset;
@@ -22,7 +21,8 @@ public class OverviewFragment extends AlhambraFragment {
 
     private Button m_showAllBtn;
     private Button m_stopShowAllBtn;
-    private Button m_beginTask;
+    private Button m_beginTaskBtn;
+    private Button m_switchSceneBtn;
     private MapView m_mapView;
     private AnnotationDataset annotationDataset;
     private UserData userData;
@@ -37,6 +37,7 @@ public class OverviewFragment extends AlhambraFragment {
         void stopShowAllAnnotation(OverviewFragment frag);
         void onOverViewUIInit(OverviewFragment frag);
         void onBeginTask(OverviewFragment frag);
+        void onSwitchScene(OverviewFragment frag);
     }
 
     private ArrayList<OverviewFragmentListener> m_listeners = new ArrayList<>();
@@ -62,8 +63,9 @@ public class OverviewFragment extends AlhambraFragment {
         View v = inflater.inflate(R.layout.overview_fragment,container,false);
         m_showAllBtn = v.findViewById(R.id.showAllBtn);
         m_stopShowAllBtn = v.findViewById(R.id.stopShowAllBtn);
-        m_beginTask = v.findViewById(R.id.beginTaskButton);
+        m_beginTaskBtn = v.findViewById(R.id.beginTaskButton);
         m_mapView = v.findViewById(R.id.annotationMapView2);
+        m_switchSceneBtn = v.findViewById(R.id.switchSceneButton);
         m_mapView.setUserData(userData);
         m_mapView.setSelectionData(selectionData);
         m_mapView.setDataset(annotationDataset);
@@ -78,9 +80,14 @@ public class OverviewFragment extends AlhambraFragment {
                 l.stopShowAllAnnotation(this);
             }
         });
-        m_beginTask.setOnClickListener(view->{
+        m_beginTaskBtn.setOnClickListener(view->{
             for(OverviewFragmentListener l:m_listeners) {
                 l.onBeginTask(this);
+            }
+        });
+        m_switchSceneBtn.setOnClickListener(view->{
+            for(OverviewFragmentListener l:m_listeners) {
+                l.onSwitchScene(this);
             }
         });
 

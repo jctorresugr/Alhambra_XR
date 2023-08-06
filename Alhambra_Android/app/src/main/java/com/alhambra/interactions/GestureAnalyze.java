@@ -82,7 +82,6 @@ public class GestureAnalyze implements View.OnTouchListener {
         view.setOnTouchListener(this);
     }
 
-    //TODO: resolve pointer
     public boolean supplyEvent(MotionEvent e) {
         boolean result = false;
         int pointerCount = e.getPointerCount();

@@ -6,11 +6,14 @@ import androidx.fragment.app.Fragment;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.alhambra.dataset.SelectionData;
 import com.alhambra.dataset.UserData;
@@ -338,6 +341,7 @@ public class MainActivity
         floatView = new FloatMiniMapView(MainActivity.this);
         floatView.setData(m_Annotation_dataset,userData,selectionData);
         floatView.pager=m_viewPager;
+        floatView.dispatchEventToView = this.getWindow().getDecorView().getRootView();
     }
 
     @Override
@@ -495,6 +499,21 @@ public class MainActivity
 
     }
 
+    private static final String SCENE_FAKE="Scenes/FakeBigScene";
+    private static final String SCENE_TINY="Scenes/TinyScene";
+    private String sceneName=SCENE_FAKE;
+
+    @Override
+    public void onSwitchScene(OverviewFragment frag) {
+        if(sceneName.equals(SCENE_FAKE)){
+            sceneName = SCENE_TINY;
+        }else{
+            sceneName = SCENE_FAKE;
+        }
+        sendServerAction("SceneChange",sceneName);
+        Toast.makeText(getApplicationContext(),"Please restart tablet application after switch scene!",Toast.LENGTH_LONG).show();
+    }
+
     public AnnotationDataset getAnnotationDataset() {
         return m_Annotation_dataset;
     }
@@ -518,6 +537,7 @@ public class MainActivity
 
         switch (tab.getPosition()){
             case 2:
+                floatView.show();
                 floatView.setToSmallView();
             case 0:
                 floatView.show();
@@ -542,10 +562,12 @@ public class MainActivity
 
     public void enableSwiping(){
         m_viewPager.setPagingEnabled(true);
+        floatView.setCanBeDragged(true);
     }
 
     public void disableSwiping(){
         m_viewPager.setPagingEnabled(false);
+        floatView.setCanBeDragged(false);
     }
 
     @Override

@@ -28,6 +28,7 @@ public class FloatMiniMapView extends DragViewLayout {
     private boolean isZoomed = false;
     private static final float SMALL_ZOOM = 0.35f;
     private static final float BIG_ZOOM = 0.75f;
+
     public FloatMiniMapView(Context context) {
         super(context);
         init(context);

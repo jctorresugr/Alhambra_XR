@@ -14,7 +14,7 @@
                 },
                 "m_snapshotWidth": 1619,
                 "m_snapshotHeight": 465,
-                "m_description": "There are some black debris on the floor, nearby the door."
+                "m_description": "There are some Black blocks on the floor, nearby the door. It is collinear with the another debris. The block is weathered a lot."
             },
             "renderInfo": {
                 "color": {
@@ -83,7 +83,7 @@
                 },
                 "m_snapshotWidth": 1023,
                 "m_snapshotHeight": 495,
-                "m_description": "There are some black debris on the floor, nearby the wall."
+                "m_description": "There are some Black blocks on the floor, nearby the wall. It is collinear with the another debris."
             },
             "renderInfo": {
                 "color": {
@@ -152,7 +152,7 @@
                 },
                 "m_snapshotWidth": 870,
                 "m_snapshotHeight": 531,
-                "m_description": "There are some black debris on the floor."
+                "m_description": "There are some Black blocks on the floor."
             },
             "renderInfo": {
                 "color": {
@@ -359,7 +359,7 @@
                 },
                 "m_snapshotWidth": 429,
                 "m_snapshotHeight": 471,
-                "m_description": "This part seems damaged."
+                "m_description": "It has a different strucutre to connect between different room. The slope might be decoration or a sturcture to support the building."
             },
             "renderInfo": {
                 "color": {
@@ -428,7 +428,7 @@
                 },
                 "m_snapshotWidth": 1693,
                 "m_snapshotHeight": 507,
-                "m_description": "Decorations along the wall and floor"
+                "m_description": "These intricate patterns mainly consist of geometric, decorated with vibrant marble. It is incomplete."
             },
             "renderInfo": {
                 "color": {
@@ -497,7 +497,7 @@
                 },
                 "m_snapshotWidth": 1225,
                 "m_snapshotHeight": 827,
-                "m_description": "Black debris on the floor."
+                "m_description": "Black bricks on the floor, but outside the building. It is the marginal (corner) of the whole black floor."
             },
             "renderInfo": {
                 "color": {
@@ -566,7 +566,7 @@
                 },
                 "m_snapshotWidth": 1337,
                 "m_snapshotHeight": 1075,
-                "m_description": "Special Decoration "
+                "m_description": "The pattern is similar with the alicatado of wall of the Cuarto Dorado, it is outside the buliding. We are unclear about the surrounding context since it is damaged. "
             },
             "renderInfo": {
                 "color": {
@@ -635,7 +635,7 @@
                 },
                 "m_snapshotWidth": 1518,
                 "m_snapshotHeight": 503,
-                "m_description": "Black debris on the floor."
+                "m_description": "Black blocks on the floor. It is colinear with another block."
             },
             "renderInfo": {
                 "color": {
@@ -704,7 +704,7 @@
                 },
                 "m_snapshotWidth": 1523,
                 "m_snapshotHeight": 581,
-                "m_description": "Black debris on the floor."
+                "m_description": "Black blocks on the floor. It seems the marginal of the whole black blocks floor."
             },
             "renderInfo": {
                 "color": {
@@ -757,6 +757,696 @@
             "id": {
                 "m_layer": 2,
                 "m_index": 11
+            }
+        },
+        {
+            "info": {
+                "m_color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 12,
+                    "a": 255
+                },
+                "m_annotationID": {
+                    "m_layer": 2,
+                    "m_index": 12
+                },
+                "m_snapshotWidth": 355,
+                "m_snapshotHeight": 697,
+                "m_description": "This part is visually lighter. It seems suffer the great loss of glaze due to the wear and tear."
+            },
+            "renderInfo": {
+                "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 12,
+                    "a": 255
+                },
+                "Bounds": {
+                    "m_Center": {
+                        "x": 0.03846839815378189,
+                        "y": -0.026545817032456399,
+                        "z": -0.11769244074821472
+                    },
+                    "m_Extent": {
+                        "x": 0.0,
+                        "y": 0.004122374579310417,
+                        "z": 0.004458770155906677
+                    }
+                },
+                "OBBBounds": {
+                    "m_Center": {
+                        "x": 0.00018560606986284256,
+                        "y": 0.000004235660071572056,
+                        "z": -0.00012912973761558533
+                    },
+                    "m_Extent": {
+                        "x": 0.0041223736479878429,
+                        "y": 1.1232259566895664e-10,
+                        "z": 0.004458766430616379
+                    }
+                },
+                "normal": {
+                    "x": 1.0,
+                    "y": -2.7107077471555386e-8,
+                    "z": 0.0
+                },
+                "tangent": {
+                    "x": 0.0,
+                    "y": -1.0,
+                    "z": 0.0
+                },
+                "averagePosition": {
+                    "x": 0.03846416249871254,
+                    "y": -0.02636021189391613,
+                    "z": -0.11756331473588944
+                },
+                "pointCount": 203603
+            },
+            "id": {
+                "m_layer": 2,
+                "m_index": 12
+            }
+        },
+        {
+            "info": {
+                "m_color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 13,
+                    "a": 255
+                },
+                "m_annotationID": {
+                    "m_layer": 2,
+                    "m_index": 13
+                },
+                "m_snapshotWidth": 201,
+                "m_snapshotHeight": 465,
+                "m_description": "The color is almost faded. It seems suffer the extreme loss of glaze due to the wear and tear."
+            },
+            "renderInfo": {
+                "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 13,
+                    "a": 255
+                },
+                "Bounds": {
+                    "m_Center": {
+                        "x": 0.07920709997415543,
+                        "y": -0.01377654355019331,
+                        "z": 0.030246159061789514
+                    },
+                    "m_Extent": {
+                        "x": 0.00001981109380722046,
+                        "y": 0.0027762548997998239,
+                        "z": 0.002607954666018486
+                    }
+                },
+                "OBBBounds": {
+                    "m_Center": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                    },
+                    "m_Extent": {
+                        "x": 0.00001981109380722046,
+                        "y": 0.0027762548997998239,
+                        "z": 0.002607954666018486
+                    }
+                },
+                "normal": {
+                    "x": 0.9999805092811585,
+                    "y": 0.0040972428396344189,
+                    "z": 0.004720817320048809
+                },
+                "tangent": {
+                    "x": 0.004097524099051952,
+                    "y": -0.9999915957450867,
+                    "z": 0.0
+                },
+                "averagePosition": {
+                    "x": 0.0792117714881897,
+                    "y": -0.013756242580711842,
+                    "z": 0.03032902255654335
+                },
+                "pointCount": 75290
+            },
+            "id": {
+                "m_layer": 2,
+                "m_index": 13
+            }
+        },
+        {
+            "info": {
+                "m_color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 14,
+                    "a": 255
+                },
+                "m_annotationID": {
+                    "m_layer": 2,
+                    "m_index": 14
+                },
+                "m_snapshotWidth": 951,
+                "m_snapshotHeight": 847,
+                "m_description": "Black blocks on the floor. It seems the marginal of the whole black blocks floor. But this shows a more complete texture of the block pattern."
+            },
+            "renderInfo": {
+                "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 14,
+                    "a": 255
+                },
+                "Bounds": {
+                    "m_Center": {
+                        "x": 0.10044875741004944,
+                        "y": -0.03687707707285881,
+                        "z": 0.0150635140016675
+                    },
+                    "m_Extent": {
+                        "x": 0.010309755802154541,
+                        "y": 0.000004801899194717407,
+                        "z": 0.013052204623818398
+                    }
+                },
+                "OBBBounds": {
+                    "m_Center": {
+                        "x": -0.0006450479850172997,
+                        "y": -0.000010225726327917073,
+                        "z": 0.0012364108115434647
+                    },
+                    "m_Extent": {
+                        "x": 0.013039752840995789,
+                        "y": 6.933896656846628e-8,
+                        "z": 0.01017947867512703
+                    }
+                },
+                "normal": {
+                    "x": 0.0004660602717194706,
+                    "y": 0.9999998807907105,
+                    "z": -3.469079956630594e-7
+                },
+                "tangent": {
+                    "x": 0.056119903922080997,
+                    "y": 0.0,
+                    "z": 0.9984240531921387
+                },
+                "averagePosition": {
+                    "x": 0.10185161978006363,
+                    "y": -0.03686750307679176,
+                    "z": 0.01560983993113041
+                },
+                "pointCount": 606821
+            },
+            "id": {
+                "m_layer": 2,
+                "m_index": 14
+            }
+        },
+        {
+            "info": {
+                "m_color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 15,
+                    "a": 255
+                },
+                "m_annotationID": {
+                    "m_layer": 2,
+                    "m_index": 15
+                },
+                "m_snapshotWidth": 1024,
+                "m_snapshotHeight": 1347,
+                "m_description": "The wall is seriously damaged. But it form a regular stairs shape. We could estimate the size of building blocks from this cue."
+            },
+            "renderInfo": {
+                "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 15,
+                    "a": 255
+                },
+                "Bounds": {
+                    "m_Center": {
+                        "x": 0.06489458680152893,
+                        "y": -0.024927696213126184,
+                        "z": -0.13436760008335114
+                    },
+                    "m_Extent": {
+                        "x": 0.0074875373393297199,
+                        "y": 0.004290318116545677,
+                        "z": 0.0
+                    }
+                },
+                "OBBBounds": {
+                    "m_Center": {
+                        "x": -0.0006374306976795197,
+                        "y": 0.00014528632164001465,
+                        "z": 0.002180900424718857
+                    },
+                    "m_Extent": {
+                        "x": 0.004290318116545677,
+                        "y": 0.0,
+                        "z": 0.007487531751394272
+                    }
+                },
+                "normal": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 1.0
+                },
+                "tangent": {
+                    "x": 0.0,
+                    "y": -1.0,
+                    "z": 0.0
+                },
+                "averagePosition": {
+                    "x": 0.06707549840211868,
+                    "y": -0.025565125048160554,
+                    "z": -0.13451288640499116
+                },
+                "pointCount": 894945
+            },
+            "id": {
+                "m_layer": 2,
+                "m_index": 15
+            }
+        },
+        {
+            "info": {
+                "m_color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 16,
+                    "a": 255
+                },
+                "m_annotationID": {
+                    "m_layer": 2,
+                    "m_index": 16
+                },
+                "m_snapshotWidth": 293,
+                "m_snapshotHeight": 1885,
+                "m_description": "The wall is seriously damaged. The shape might be formed by wear and tear, but it may also indicate that the original shape of the wall might be not flat."
+            },
+            "renderInfo": {
+                "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 16,
+                    "a": 255
+                },
+                "Bounds": {
+                    "m_Center": {
+                        "x": 0.0829630121588707,
+                        "y": -0.024867182597517968,
+                        "z": 0.028311213478446008
+                    },
+                    "m_Extent": {
+                        "x": 0.0037673786282539369,
+                        "y": 0.011608729138970375,
+                        "z": 0.0053843725472688679
+                    }
+                },
+                "OBBBounds": {
+                    "m_Center": {
+                        "x": -0.0003895217087119818,
+                        "y": -0.004380259662866592,
+                        "z": -0.0016528982669115067
+                    },
+                    "m_Extent": {
+                        "x": 0.003883268916979432,
+                        "y": 0.00535972137004137,
+                        "z": 0.011612916365265847
+                    }
+                },
+                "normal": {
+                    "x": 0.1849501132965088,
+                    "y": 0.06462381780147553,
+                    "z": -0.9806208610534668
+                },
+                "tangent": {
+                    "x": -0.9937612414360046,
+                    "y": -0.05757015943527222,
+                    "z": 0.09552162885665894
+                },
+                "averagePosition": {
+                    "x": 0.08217279613018036,
+                    "y": -0.02638143301010132,
+                    "z": 0.023860245943069459
+                },
+                "pointCount": 377584
+            },
+            "id": {
+                "m_layer": 2,
+                "m_index": 16
+            }
+        },
+        {
+            "info": {
+                "m_color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 17,
+                    "a": 255
+                },
+                "m_annotationID": {
+                    "m_layer": 2,
+                    "m_index": 17
+                },
+                "m_snapshotWidth": 373,
+                "m_snapshotHeight": 1461,
+                "m_description": "This part is visually lighter. It seems suffer the great loss of glaze due to the wear and tear."
+            },
+            "renderInfo": {
+                "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 17,
+                    "a": 255
+                },
+                "Bounds": {
+                    "m_Center": {
+                        "x": 0.07916845381259918,
+                        "y": -0.01949719339609146,
+                        "z": 0.04833409935235977
+                    },
+                    "m_Extent": {
+                        "x": 0.000042691826820373535,
+                        "y": 0.010179657489061356,
+                        "z": 0.005384176969528198
+                    }
+                },
+                "OBBBounds": {
+                    "m_Center": {
+                        "x": -0.00039810966700315475,
+                        "y": 0.0000422726952820085,
+                        "z": -0.00009686918929219246
+                    },
+                    "m_Extent": {
+                        "x": 0.010179740376770497,
+                        "y": 0.000019360690203029662,
+                        "z": 0.0053841667249798779
+                    }
+                },
+                "normal": {
+                    "x": 0.9999890327453613,
+                    "y": 0.003756884951144457,
+                    "z": -0.002798486966639757
+                },
+                "tangent": {
+                    "x": 0.003755098907276988,
+                    "y": -0.9999929666519165,
+                    "z": 0.0
+                },
+                "averagePosition": {
+                    "x": 0.07914113253355026,
+                    "y": -0.01989542692899704,
+                    "z": 0.04843107983469963
+                },
+                "pointCount": 480803
+            },
+            "id": {
+                "m_layer": 2,
+                "m_index": 17
+            }
+        },
+        {
+            "info": {
+                "m_color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 18,
+                    "a": 255
+                },
+                "m_annotationID": {
+                    "m_layer": 2,
+                    "m_index": 18
+                },
+                "m_snapshotWidth": 257,
+                "m_snapshotHeight": 1823,
+                "m_description": "This part is visually darker. It seems suffer the pollute or oxidation. This may also indicate the material might involves metal."
+            },
+            "renderInfo": {
+                "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 18,
+                    "a": 255
+                },
+                "Bounds": {
+                    "m_Center": {
+                        "x": 0.07923903316259384,
+                        "y": -0.025974836200475694,
+                        "z": 0.07828383892774582
+                    },
+                    "m_Extent": {
+                        "x": 0.0000036284327507019045,
+                        "y": 0.010600116103887558,
+                        "z": 0.003197021782398224
+                    }
+                },
+                "OBBBounds": {
+                    "m_Center": {
+                        "x": -0.002666720189154148,
+                        "y": -0.00002081719685520511,
+                        "z": 0.0009046753402799368
+                    },
+                    "m_Extent": {
+                        "x": 0.010600117035210133,
+                        "y": 9.329651220468804e-7,
+                        "z": 0.003197023645043373
+                    }
+                },
+                "normal": {
+                    "x": 0.9999995231628418,
+                    "y": 0.0000019938445348088864,
+                    "z": -0.0009341490222141147
+                },
+                "tangent": {
+                    "x": 0.0000020184568256809145,
+                    "y": -1.0,
+                    "z": 0.0
+                },
+                "averagePosition": {
+                    "x": 0.07925871014595032,
+                    "y": -0.028641559183597566,
+                    "z": 0.07737914472818375
+                },
+                "pointCount": 272578
+            },
+            "id": {
+                "m_layer": 2,
+                "m_index": 18
+            }
+        },
+        {
+            "info": {
+                "m_color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 19,
+                    "a": 255
+                },
+                "m_annotationID": {
+                    "m_layer": 2,
+                    "m_index": 19
+                },
+                "m_snapshotWidth": 1751,
+                "m_snapshotHeight": 1685,
+                "m_description": "The wall is almost the same as the other side of wall."
+            },
+            "renderInfo": {
+                "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 19,
+                    "a": 255
+                },
+                "Bounds": {
+                    "m_Center": {
+                        "x": -0.1307005137205124,
+                        "y": -0.023568045347929,
+                        "z": -0.11101632565259934
+                    },
+                    "m_Extent": {
+                        "x": 0.00006248056888580322,
+                        "y": 0.011862474493682385,
+                        "z": 0.025911889970302583
+                    }
+                },
+                "OBBBounds": {
+                    "m_Center": {
+                        "x": -0.00019800662994384766,
+                        "y": 0.00019025699293706566,
+                        "z": -0.0009220056235790253
+                    },
+                    "m_Extent": {
+                        "x": 0.011862490326166153,
+                        "y": 0.000049568698159419,
+                        "z": 0.025911903008818628
+                    }
+                },
+                "normal": {
+                    "x": -0.9999986290931702,
+                    "y": 0.0015647753607481719,
+                    "z": -0.0006097605801187456
+                },
+                "tangent": {
+                    "x": -0.0015516382409259678,
+                    "y": -0.9999988079071045,
+                    "z": 0.0
+                },
+                "averagePosition": {
+                    "x": -0.13051056861877442,
+                    "y": -0.023766333237290384,
+                    "z": -0.11193819344043732
+                },
+                "pointCount": 2736983
+            },
+            "id": {
+                "m_layer": 2,
+                "m_index": 19
+            }
+        },
+        {
+            "info": {
+                "m_color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 20,
+                    "a": 255
+                },
+                "m_annotationID": {
+                    "m_layer": 2,
+                    "m_index": 20
+                },
+                "m_snapshotWidth": 1569,
+                "m_snapshotHeight": 403,
+                "m_description": "Geomtric vibrant marble decoration, but outside."
+            },
+            "renderInfo": {
+                "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 20,
+                    "a": 255
+                },
+                "Bounds": {
+                    "m_Center": {
+                        "x": -0.0911531075835228,
+                        "y": -0.035693299025297168,
+                        "z": 0.05873518064618111
+                    },
+                    "m_Extent": {
+                        "x": 0.001280374825000763,
+                        "y": 0.001178201287984848,
+                        "z": 0.016404997557401658
+                    }
+                },
+                "OBBBounds": {
+                    "m_Center": {
+                        "x": 0.00013864412903785706,
+                        "y": 0.0009241250227205455,
+                        "z": -0.00157267227768898
+                    },
+                    "m_Extent": {
+                        "x": 0.0035591083578765394,
+                        "y": 0.0012543759075924755,
+                        "z": 0.016278309747576715
+                    }
+                },
+                "normal": {
+                    "x": -0.9886788129806519,
+                    "y": 0.15004271268844605,
+                    "z": 0.001122835325077176
+                },
+                "tangent": {
+                    "x": 0.008430736139416695,
+                    "y": -0.9886806011199951,
+                    "z": 0.14979851245880128
+                },
+                "averagePosition": {
+                    "x": -0.09006644785404206,
+                    "y": -0.03581826388835907,
+                    "z": 0.05707617849111557
+                },
+                "pointCount": 427961
+            },
+            "id": {
+                "m_layer": 2,
+                "m_index": 20
+            }
+        },
+        {
+            "info": {
+                "m_color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 21,
+                    "a": 255
+                },
+                "m_annotationID": {
+                    "m_layer": 2,
+                    "m_index": 21
+                },
+                "m_snapshotWidth": 416,
+                "m_snapshotHeight": 311,
+                "m_description": "The right side is much darker, it might be polluted, or the building material may include other kinds of rock, like iron element."
+            },
+            "renderInfo": {
+                "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 21,
+                    "a": 255
+                },
+                "Bounds": {
+                    "m_Center": {
+                        "x": -0.051787473261356357,
+                        "y": -0.009686941280961037,
+                        "z": -0.08650579303503037
+                    },
+                    "m_Extent": {
+                        "x": 0.0028605088591575624,
+                        "y": 0.0010094456374645234,
+                        "z": 0.0
+                    }
+                },
+                "OBBBounds": {
+                    "m_Center": {
+                        "x": 0.00003102235496044159,
+                        "y": 0.000003986072897532722,
+                        "z": 0.00010779500007629395
+                    },
+                    "m_Extent": {
+                        "x": 0.0010094456374645234,
+                        "y": 3.2787283998914065e-10,
+                        "z": 0.0028605088591575624
+                    }
+                },
+                "normal": {
+                    "x": 1.1459118809398206e-7,
+                    "y": 0.0,
+                    "z": -1.0
+                },
+                "tangent": {
+                    "x": 0.0,
+                    "y": -1.0,
+                    "z": 0.0
+                },
+                "averagePosition": {
+                    "x": -0.05189526453614235,
+                    "y": -0.009655918926000595,
+                    "z": -0.08650180697441101
+                },
+                "pointCount": 115750
+            },
+            "id": {
+                "m_layer": 2,
+                "m_index": 21
             }
         }
     ],
@@ -870,14 +1560,14 @@
             },
             "range": {
                 "m_Center": {
-                    "x": -0.12276361137628555,
-                    "y": -0.03371812030673027,
-                    "z": -0.10956975072622299
+                    "x": -0.086927130818367,
+                    "y": -0.02272495999932289,
+                    "z": -0.10911938548088074
                 },
                 "m_Extent": {
-                    "x": 0.0021636858582496645,
-                    "y": 0.0030543021857738497,
-                    "z": 0.02216321974992752
+                    "x": 0.03800016641616821,
+                    "y": 0.014047463424503804,
+                    "z": 0.022613588720560075
                 }
             },
             "name": "Room E",
@@ -886,6 +1576,10 @@
                 {
                     "m_layer": 2,
                     "m_index": 7
+                },
+                {
+                    "m_layer": 2,
+                    "m_index": 21
                 }
             ]
         },
@@ -897,14 +1591,14 @@
             },
             "range": {
                 "m_Center": {
-                    "x": -0.12998226284980775,
-                    "y": -0.029323695227503778,
-                    "z": 0.02267630025744438
+                    "x": -0.11782104521989823,
+                    "y": -0.024288535118103029,
+                    "z": -0.030894018709659578
                 },
                 "m_Extent": {
-                    "x": 0.015787094831466676,
-                    "y": 0.007453562691807747,
-                    "z": 0.044599782675504687
+                    "x": 0.02794831246137619,
+                    "y": 0.012582965195178986,
+                    "z": 0.10603419691324234
                 }
             },
             "name": "Outdoor A",
@@ -917,6 +1611,14 @@
                 {
                     "m_layer": 2,
                     "m_index": 9
+                },
+                {
+                    "m_layer": 2,
+                    "m_index": 19
+                },
+                {
+                    "m_layer": 2,
+                    "m_index": 20
                 }
             ]
         },
@@ -950,6 +1652,57 @@
                     "m_index": 11
                 }
             ]
+        },
+        {
+            "position": {
+                "x": 0.07461345195770264,
+                "y": -0.023099707439541818,
+                "z": -0.026443369686603547
+            },
+            "range": {
+                "m_Center": {
+                    "x": 0.07461345195770264,
+                    "y": -0.023099707439541818,
+                    "z": -0.026443369686603547
+                },
+                "m_Extent": {
+                    "x": 0.03614506125450134,
+                    "y": 0.013782171532511711,
+                    "z": 0.10792423039674759
+                }
+            },
+            "name": "Outdoor C",
+            "id": 6,
+            "annotationsID": [
+                {
+                    "m_layer": 2,
+                    "m_index": 12
+                },
+                {
+                    "m_layer": 2,
+                    "m_index": 13
+                },
+                {
+                    "m_layer": 2,
+                    "m_index": 14
+                },
+                {
+                    "m_layer": 2,
+                    "m_index": 15
+                },
+                {
+                    "m_layer": 2,
+                    "m_index": 16
+                },
+                {
+                    "m_layer": 2,
+                    "m_index": 17
+                },
+                {
+                    "m_layer": 2,
+                    "m_index": 18
+                }
+            ]
         }
     ],
     "modelBounds": {
@@ -966,6 +1719,6 @@
     },
     "datasetName": "BigFakeModel",
     "indexTexture": {
-        "instanceID": -1818
+        "instanceID": 22198
     }
 }

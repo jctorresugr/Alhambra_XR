@@ -23,6 +23,18 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Debug:" />
+
+        <Button
+            android:id="@+id/switchSceneButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Switch Scene" />
+
         <Button
             android:id="@+id/beginTaskButton"
             android:layout_width="match_parent"

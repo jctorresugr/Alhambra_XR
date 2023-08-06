@@ -1,6 +1,7 @@
 package com.alhambra.experiment.task;
 
 import com.alhambra.dataset.data.AnnotationID;
+import com.alhambra.experiment.ExperimentDataCollection;
 
 import java.util.ArrayList;
 
@@ -45,7 +46,7 @@ public class ExperimentTaskList {
         if(currentTask.isFinished()){
             currentTaskIndex++;
             markStart();
-
+            ExperimentDataCollection.add("experiment_middle_save",currentTask);
         }
     }
 

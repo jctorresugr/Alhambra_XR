@@ -23,6 +23,7 @@ public class MoveInteraction extends IInteraction implements GestureAnalyze.OnDo
         RelativeLayout globalRelativeLayout = mainActivity.getGlobalRelativeLayout();
         globalRelativeLayout.setClickable(true);
         gestureAnalyze.reg(globalRelativeLayout);
+        gestureAnalyze.reg(mainActivity.floatView);
         gestureAnalyze.subscriber.addListener(this);
     }
 
@@ -81,6 +82,7 @@ public class MoveInteraction extends IInteraction implements GestureAnalyze.OnDo
     
     public void setState(int state){
 
+        //TODO: dirty code, use interface and events
         if(state!=STATE_NORMAL && this.state==STATE_NORMAL) // to abnormal state
         {
             mainActivity.disableSwiping();

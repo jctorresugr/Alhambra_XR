@@ -130,6 +130,8 @@ public class Main : MonoBehaviour,
 
     //public VolumeAnalyze volumeAnalyze;
 
+    public bool computeAnnotationAtStart=false;
+
 
     private void Awake()
     {
@@ -168,7 +170,7 @@ public class Main : MonoBehaviour,
         m_model.AddListener(this);
         if (indexTextureManager != null)
         {
-            PickPanoModel.Init(m_model,indexTextureManager.IndexTexture,false);
+            PickPanoModel.Init(m_model,indexTextureManager.IndexTexture, computeAnnotationAtStart);
         }
         else
         {
@@ -179,7 +181,7 @@ public class Main : MonoBehaviour,
                 .GetComponent<MeshRenderer>()
                 .sharedMaterial
                 .GetTexture("_IndexTex");
-            PickPanoModel.Init(m_model,defaultIndexTexture);
+            PickPanoModel.Init(m_model,defaultIndexTexture, computeAnnotationAtStart);
         }
         PickPanoModel.AddListener(this);
 
@@ -353,7 +355,7 @@ public class Main : MonoBehaviour,
         //Issue with the JSON utility of Unity: Need to deserialize once to know what to expect, and a second time to get the other attributes...
         //This adds a subtential overhead, but it does not require installation of a third party library
         CommonMessage commonMsg = CommonMessage.FromJSON(msg);
-
+        //TODO: move method to json parser
         if (commonMsg.action == "highlight")
         {
             ReceivedMessage<HighlightMessage> detailedMsg = ReceivedMessage<HighlightMessage>.FromJSON(msg);
@@ -383,7 +385,7 @@ public class Main : MonoBehaviour,
                 m_model.CurrentHighlightSecond = AnnotationID.INVALID_ID;
             }
         }
-
+        
         else if (commonMsg.action == "finishAnnotation")
         {
             ReceivedMessage<FinishAnnotationMessage> detailedMsg = ReceivedMessage<FinishAnnotationMessage>.FromJSON(msg);
@@ -449,7 +451,8 @@ public class Main : MonoBehaviour,
 
                 //Anchor the annotation in the PickPano object
                 Color32 annotationColor;
-                if (PickPanoModel.AddAnnotation(uvScreenShot, out annotationColor))
+                AnnotationRenderInfo annotationRenderInfo = null;
+                if (PickPanoModel.AddAnnotation(uvScreenShot, out annotationColor,out annotationRenderInfo))
                 {
                     //Retrieve the color of the annotation
                     RenderTexture.active = colorRT;
@@ -470,29 +473,35 @@ public class Main : MonoBehaviour,
                     List<AnnotationJoint> newJoints;
                     lock (this)
                     {
-                        data.AddAnnotationInfo(annot);
-                        annotation = data.FindAnnotationID(annot.ID);
-                        // add joint id to the annotation
-                        foreach (int jointID in detailedMsg.data.selectedJointID)
-                        {
-                            AnnotationJoint selectedJoint = data.FindJointID(jointID);
-                            if (selectedJoint == null)
-                            {
-                                Debug.LogWarning("HandleAnnotationFinishAction: Cannot find selected joint id " + jointID);
-                                continue;
-                            }
-                            selectedJoint.AddAnnotation(annotation);
-                        }
+                        annotation = data.AddAnnotation(annotationRenderInfo,annot);
                         newJoints = new List<AnnotationJoint>();
-                        // create new joint, and add it to the annotation
-                        foreach (string name in detailedMsg.data.createdJointName)
+                        if (annotation!=null)
                         {
-                            AnnotationJoint newJoint = data.AddAnnotationJoint(name);
-                            newJoint.AddAnnotation(annotation);
-                            newJoints.Add(newJoint);
+                            //annotation = data.FindAnnotationID(annot.ID);
+                            // add joint id to the annotation
+                            foreach (int jointID in detailedMsg.data.selectedJointID)
+                            {
+                                AnnotationJoint selectedJoint = data.FindJointID(jointID);
+                                if (selectedJoint == null)
+                                {
+                                    Debug.LogWarning("HandleAnnotationFinishAction: Cannot find selected joint id " + jointID);
+                                    continue;
+                                }
+                                selectedJoint.AddAnnotation(annotation);
+                            }
+                            
+                            // create new joint, and add it to the annotation
+                            foreach (string name in detailedMsg.data.createdJointName)
+                            {
+                                AnnotationJoint newJoint = data.AddAnnotationJoint(name);
+                                newJoint.AddAnnotation(annotation);
+                                newJoints.Add(newJoint);
+                            }
                         }
+                        
                     }
                     //Send the information back to the tablet, if any.
+                    if(annotation!=null)
                     Task.Run(() =>
                     {
                         // send annotation information

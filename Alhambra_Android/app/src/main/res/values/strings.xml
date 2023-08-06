@@ -4,7 +4,7 @@
     <string name="previous">Previous</string>
     <string name="confirm">Confirm</string>
     <string name="cancel">Cancel</string>
-    <string name="quitSelection">Quit Filter</string>
+    <string name="quitSelection">Quit Selection</string>
     <string name="highlightOnHololens">Navigate</string>
     <string name="teleportOnHololens">Teleport</string>
     <string name="startAnnotation">Start Annotation</string>

@@ -843,6 +843,7 @@ MonoBehaviour:
   indexTextureManager: {fileID: 756731259}
   serverParser: {fileID: 1812294293}
   screenText: {fileID: 1253093098}
+  computeAnnotationAtStart: 0
 --- !u!4 &293561424
 Transform:
   m_ObjectHideFlags: 0
@@ -3298,6 +3299,7 @@ MonoBehaviour:
   shrinkAnimationTime: 2
   textMinOffset: 0.1
   textMaxOffset: 0.95
+  defaultOffsetRelativeToOBB: 1
   modelLayer:
     serializedVersion: 2
     m_Bits: 64
@@ -3820,6 +3822,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   RandomText: {fileID: 1896600911}
+  m_randomStr: 
+  displayTime: 0
 --- !u!1 &1295776997
 GameObject:
   m_ObjectHideFlags: 0
@@ -5133,6 +5137,7 @@ GameObject:
   - component: {fileID: 1812294291}
   - component: {fileID: 1812294290}
   - component: {fileID: 1812294294}
+  - component: {fileID: 1812294295}
   m_Layer: 0
   m_Name: Server
   m_TagString: Untagged
@@ -5241,6 +5246,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   server: {fileID: 1812294293}
   screenText: {fileID: 1253093098}
+--- !u!114 &1812294295
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1812294288}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cad864404cf65a840bb3a2ac8b423873, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  server: {fileID: 1812294293}
+  main: {fileID: 293561423}
 --- !u!1 &1844486537
 GameObject:
   m_ObjectHideFlags: 0

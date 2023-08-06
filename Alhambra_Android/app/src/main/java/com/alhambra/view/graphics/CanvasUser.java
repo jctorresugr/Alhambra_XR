@@ -48,7 +48,7 @@ public class CanvasUser extends CanvasInteractiveElement
 
     @Override
     public void draw(Canvas canvas) {
-        float deg = -userData.getRotation().y;
+        float deg = userData.getRotation().y;
         canvas.translate(posX.currentValue,posY.currentValue);
         canvas.rotate(-deg);
         canvas.drawPath(path,pathPaint);

@@ -100,4 +100,9 @@ public class ExperimentTaskInteraction extends IInteraction
         window.updateText();
         taskList.markStart();
     }
+
+    @Override
+    public void onSwitchScene(OverviewFragment frag) {
+
+    }
 }
