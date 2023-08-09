@@ -230,7 +230,7 @@ public class MainActivity
             m_Annotation_dataset.setCurrentSelection(indexArr);
             if(mainEntryIndex != -1)
                 m_Annotation_dataset.setMainEntryIndex(mainEntryIndex);
-            m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
+            //m_viewPager.setCurrentItem(PREVIEW_FRAGMENT_TAB);
             experimentTaskInteraction.onSelection(indexArr);
         });
     }
@@ -583,4 +583,22 @@ public class MainActivity
     public NetworkJsonParser getNetworkJsonParser() {
         return networkJsonParser;
     }
+
+    private long firstPressedTime;
+    private int count=0;
+    @Override
+    public void onBackPressed() {
+        if (System.currentTimeMillis() - firstPressedTime < 500) {
+            count++;
+            if(count>=2){
+                super.onBackPressed();
+            }
+            firstPressedTime = System.currentTimeMillis();
+        } else {
+            Toast.makeText(MainActivity.this, "Press 3 times to exit (0.5s)", Toast.LENGTH_SHORT).show();
+            firstPressedTime = System.currentTimeMillis();
+            count=0;
+        }
+    }
+
 }

@@ -73,16 +73,48 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
     /// </summary>
     public Camera RTCamera;
 
+    /// <summary>
+    /// All generated texture will be divided by this value
+    /// To lower the memory usage,
+    /// But this may introduce inaccuracy annotation generation
+    /// 0 means original setup
+    /// 1 means /2 size
+    /// 2 means /4 size
+    /// n means size>>n
+    /// </summary>
+    public int computeScaleFactor = 2;
+
     private int defaultWidth, defaultHeight;
 
     private Texture2D indexTexture;
 
+    protected float[] RenderDataToTexture(int width, int height, Material shaderCodes)
+    {
+        Texture2D colorScreenShot = new Texture2D(width, height, TextureFormat.RGBAFloat, false);
+        RenderTexture colorRT = new RenderTexture(colorScreenShot.width, colorScreenShot.height, 24, RenderTextureFormat.ARGBFloat);
+        colorRT.Create();
+        CommandBuffer buf = new CommandBuffer();
+        buf.SetRenderTarget(colorRT, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
+        buf.DrawMesh(Mesh, Matrix4x4.identity, shaderCodes, 0, -1); // This shader maps [0,1] to [-1,1]
+        RTCamera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
+        RTCamera.Render();
+        RTCamera.RemoveCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
+        RenderTexture.active = colorRT;
+        colorScreenShot.ReadPixels(new Rect(0, 0, colorScreenShot.width, colorScreenShot.height), 0, 0);
+        float[] result = colorScreenShot.GetRawTextureData<float>().ToArray();
+
+        RTCamera.targetTexture = null;
+        RenderTexture.active = null;
+        Destroy(colorRT);
+
+        return result;
+    }
     /// <summary>
     /// Initialize this GameObject and link it with the other components of the Scene
     /// </summary>
     /// <param name="model">The Model object containing the data of the overall application</param>
     [BurstCompile(FloatPrecision.Medium, FloatMode.Fast)]
-    public void Init(SelectionModelData model, Texture2D indexTexture,bool useIndexTextureInit=true)
+    public void Init(SelectionModelData model, Texture2D indexTexture, bool useIndexTextureInit = true)
     {
         m_model = model;
         model.AddListener(this);
@@ -91,67 +123,22 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         /************First -- Determine the 3D position at each UV************/
         /***(this supposes that not two triangles share the same UV mapping***/
         /*********************************************************************/
-        
-        if(indexTexture==null)
+
+        if (indexTexture == null)
         {
-            defaultWidth = defaultHeight = 4096;
+            defaultWidth = defaultHeight = 2048;
         }
         else
         {
             defaultHeight = indexTexture.height;
             defaultWidth = indexTexture.width;
         }
-        //Create a texture to map UV data to position data
-        Texture2D colorScreenShot = new Texture2D(defaultWidth, defaultHeight, TextureFormat.RGBAFloat, false);
-        RenderTexture colorRT = new RenderTexture(colorScreenShot.width, colorScreenShot.height, 24, RenderTextureFormat.ARGBFloat);
-        colorRT.Create();
+        defaultWidth >>= computeScaleFactor;
+        defaultHeight >>= computeScaleFactor;
 
-        //Render the specific mesh from the camera position in the render texture (and thus in the linked screenShot texture)
-        CommandBuffer buf = new CommandBuffer();
-        buf.SetRenderTarget(colorRT, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
-        buf.DrawMesh(Mesh, Matrix4x4.identity, UVToPosition, 0, -1); // This shader maps [0,1] to [-1,1]
-        RTCamera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
-        RTCamera.Render();
-        RTCamera.RemoveCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
-
-        //Read back the pixels from the render texture to the texture
-        RenderTexture.active = colorRT;
-        colorScreenShot.ReadPixels(new Rect(0, 0, colorScreenShot.width, colorScreenShot.height), 0, 0);
-
-
-        //Save the pixels for later usages
-        m_uvToPositionPixels = colorScreenShot.GetRawTextureData<float>().ToArray();
-
-        //-----
-        // added by Yucheng: generate normal map
-        buf.SetRenderTarget(colorRT, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
-        buf.DrawMesh(Mesh, Matrix4x4.identity, UVToNormal, 0, -1); 
-        RTCamera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
-        RTCamera.Render();
-        RTCamera.RemoveCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
-
-        //Read back the pixels from the render texture to the texture
-        RenderTexture.active = colorRT;
-        colorScreenShot.ReadPixels(new Rect(0, 0, colorScreenShot.width, colorScreenShot.height), 0, 0);
-        m_uvToNormalPixels = colorScreenShot.GetRawTextureData<float>().ToArray();
-
-        //-----
-        // added by Yucheng: generate tangent map
-        buf.SetRenderTarget(colorRT, 0, CubemapFace.Unknown, -1); //-1 == all the color buffers (I guess, this is undocumented)
-        buf.DrawMesh(Mesh, Matrix4x4.identity, UVToTangent, 0, -1);
-        RTCamera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
-        RTCamera.Render();
-        RTCamera.RemoveCommandBuffer(CameraEvent.BeforeForwardOpaque, buf);
-
-        //Read back the pixels from the render texture to the texture
-        RenderTexture.active = colorRT;
-        colorScreenShot.ReadPixels(new Rect(0, 0, colorScreenShot.width, colorScreenShot.height), 0, 0);
-        m_uvToTangentPixels = colorScreenShot.GetRawTextureData<float>().ToArray();
-
-        //Clean up our messes
-        RTCamera.targetTexture = null;
-        RenderTexture.active = null;
-        Destroy(colorRT);
+        m_uvToTangentPixels = RenderDataToTexture(defaultWidth, defaultHeight, UVToTangent);
+        m_uvToPositionPixels = RenderDataToTexture(defaultWidth, defaultHeight, UVToPosition);
+        m_uvToNormalPixels = RenderDataToTexture(defaultWidth, defaultHeight, UVToNormal);
 
         //Debug purposes, to check that annotations are anchored at their correct position.
         //GameObject originGO = GameObject.Find("Origin");
@@ -164,6 +151,15 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
         {
             ExtractAnnotationsFromIndexTexture(indexTexture);
         }
+    }
+
+    protected int ArrayIndexScales(int i)
+    {
+        int w = i % defaultWidth;
+        int h = i / defaultWidth;
+        int sw = w >> computeScaleFactor;
+        int sh = h >> computeScaleFactor;
+        return (sh * (defaultWidth >> computeScaleFactor) + sw) * 4;
     }
     
     public void ExtractAnnotationsFromIndexTexture(Texture2D indexTexture)
@@ -182,13 +178,14 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
             (i, state, partialRes) =>
             {
                 int idx = 4 * i;
-                if (srcRGBA[idx + 3] > 0 && m_uvToPositionPixels[idx + 3] > 0) // if exists annotation in this pixel
+                int sidx = ArrayIndexScales(i);
+                if (srcRGBA[idx + 3] > 0 && m_uvToPositionPixels[sidx + 3] > 0) // if exists annotation in this pixel
                 {
                     AnnotationRenderInfo srcAnnot = partialRes.Find((annot) => annot.Color.r == srcRGBA[idx + 0] &&
                                                                      annot.Color.g == srcRGBA[idx + 1] &&
                                                                      annot.Color.b == srcRGBA[idx + 2]); // find annotation we stored here
 
-                    Vector3 pos = new Vector3(m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2]);
+                    Vector3 pos = new Vector3(m_uvToPositionPixels[sidx + 0], m_uvToPositionPixels[sidx + 1], m_uvToPositionPixels[sidx + 2]);
                     if (srcAnnot == null) // cannot find :(
                         partialRes.Add(new AnnotationRenderInfo() // add the annotation to the record list
                         {
@@ -197,8 +194,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                                                 srcRGBA[idx + 2], 255),
                             BoundingMin = pos,
                             BoundingMax = pos,
-                            Normal = new Vector3(m_uvToNormalPixels[idx + 0], m_uvToNormalPixels[idx + 1], m_uvToNormalPixels[idx + 2]),
-                            Tangent = new Vector3(m_uvToTangentPixels[idx + 0], m_uvToTangentPixels[idx + 1], m_uvToTangentPixels[idx + 2]),
+                            Normal = new Vector3(m_uvToNormalPixels[sidx + 0], m_uvToNormalPixels[sidx + 1], m_uvToNormalPixels[sidx + 2]),
+                            Tangent = new Vector3(m_uvToTangentPixels[sidx + 0], m_uvToTangentPixels[sidx + 1], m_uvToTangentPixels[sidx + 2]),
                             averagePosition = pos,
                             pointCount = 1
                         });
@@ -207,8 +204,8 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                         //lock(srcAnnot)
                         {
                             srcAnnot.Bounds.Encapsulate(pos);
-                            srcAnnot.Normal += new Vector3(m_uvToNormalPixels[idx + 0], m_uvToNormalPixels[idx + 1], m_uvToNormalPixels[idx + 2]);
-                            srcAnnot.Tangent += new Vector3(m_uvToTangentPixels[idx + 0], m_uvToTangentPixels[idx + 1], m_uvToTangentPixels[idx + 2]);
+                            srcAnnot.Normal += new Vector3(m_uvToNormalPixels[sidx + 0], m_uvToNormalPixels[sidx + 1], m_uvToNormalPixels[sidx + 2]);
+                            srcAnnot.Tangent += new Vector3(m_uvToTangentPixels[sidx + 0], m_uvToTangentPixels[sidx + 1], m_uvToTangentPixels[sidx + 2]);
                             srcAnnot.averagePosition += pos;
                             srcAnnot.pointCount++;
                         }
@@ -277,9 +274,10 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
             (i) =>
             {
                 int idx = 4 * i;
-                if (srcRGBA[idx + 3] > 0 && m_uvToPositionPixels[idx + 3] > 0) // if exists annotation in this pixel
+                int sidx = ArrayIndexScales(i);
+                if (srcRGBA[idx + 3] > 0 && m_uvToPositionPixels[sidx + 3] > 0) // if exists annotation in this pixel
                 {
-                    Vector3 pos = new Vector3(m_uvToPositionPixels[idx + 0], m_uvToPositionPixels[idx + 1], m_uvToPositionPixels[idx + 2]);
+                    Vector3 pos = new Vector3(m_uvToPositionPixels[sidx + 0], m_uvToPositionPixels[sidx + 1], m_uvToPositionPixels[sidx + 2]);
 
                     int cr = srcRGBA[idx + 0];
                     int cg = srcRGBA[idx + 1];
@@ -607,19 +605,22 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
                     if (newRGBA[uvIndex].a == 0) //Transparent UV
                         continue;
 
-                    int srcJ   = (int)(newRGBA[uvIndex].g * srcHeight);
-                    int srcI   = (int)(newRGBA[uvIndex].r * srcWidth);
+                    int srcJ   = (int)(newRGBA[uvIndex].g * srcHeight);//y
+                    int srcI   = (int)(newRGBA[uvIndex].r * srcWidth);//x
+                    int srcJS = srcJ >> computeScaleFactor;
+                    int srcIS = srcI >> computeScaleFactor;
+                    int srcSIdx = (srcJS * (srcWidth >> computeScaleFactor) + srcIS)*4;
                     int srcIdx = 4 * (srcJ * srcWidth + srcI);
 
-                    if(m_uvToPositionPixels[srcIdx + 3] == 0) //Unknown 3D position
+                    if(m_uvToPositionPixels[srcSIdx + 3] == 0) //Unknown 3D position
                         continue;
 
                     for(int k = 0; k < 4; k++)
                         srcRGBA[srcIdx + k] = layerColor[k];
 
-                    partialRes.Normal += new Vector3(m_uvToNormalPixels[srcIdx], m_uvToNormalPixels[srcIdx + 1], m_uvToNormalPixels[srcIdx + 2]);
-                    partialRes.Tangent += new Vector3(m_uvToTangentPixels[srcIdx], m_uvToTangentPixels[srcIdx + 1], m_uvToTangentPixels[srcIdx + 2]);
-                    Vector3 pos = new Vector3(m_uvToPositionPixels[srcIdx], m_uvToPositionPixels[srcIdx + 1], m_uvToPositionPixels[srcIdx + 2]);
+                    partialRes.Normal += new Vector3(m_uvToNormalPixels[srcSIdx], m_uvToNormalPixels[srcSIdx + 1], m_uvToNormalPixels[srcSIdx + 2]);
+                    partialRes.Tangent += new Vector3(m_uvToTangentPixels[srcSIdx], m_uvToTangentPixels[srcSIdx + 1], m_uvToTangentPixels[srcSIdx + 2]);
+                    Vector3 pos = new Vector3(m_uvToPositionPixels[srcSIdx], m_uvToPositionPixels[srcSIdx + 1], m_uvToPositionPixels[srcSIdx + 2]);
                     partialRes.averagePosition += pos;
                     partialRes.Bounds.Add(pos);
                     partialRes.pointCount++;
@@ -661,12 +662,15 @@ public class PickPano : MonoBehaviour, IMixedRealityInputActionHandler, Selectio
 
                     int srcJ = (int)(newRGBA[uvIndex].g * srcHeight);
                     int srcI = (int)(newRGBA[uvIndex].r * srcWidth);
+                    int srcJS = srcJ >> computeScaleFactor;
+                    int srcIS = srcI >> computeScaleFactor;
+                    int srcSIdx = (srcJS * (srcWidth >> computeScaleFactor) + srcIS) * 4;
                     int srcIdx = 4 * (srcJ * srcWidth + srcI);
 
-                    if (m_uvToPositionPixels[srcIdx + 3] == 0) //Unknown 3D position
+                    if (m_uvToPositionPixels[srcSIdx + 3] == 0) //Unknown 3D position
                         continue;
 
-                    Vector3 pos = new Vector3(m_uvToPositionPixels[srcIdx], m_uvToPositionPixels[srcIdx + 1], m_uvToPositionPixels[srcIdx + 2]);
+                    Vector3 pos = new Vector3(m_uvToPositionPixels[srcSIdx], m_uvToPositionPixels[srcSIdx + 1], m_uvToPositionPixels[srcSIdx + 2]);
                     Vector3 projections = coord.Projection(pos);
                     partialRes.Add(projections);
 

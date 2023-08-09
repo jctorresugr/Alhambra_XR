@@ -88,7 +88,7 @@ public class GestureAnalyze implements View.OnTouchListener {
         int index = e.getActionIndex();
         int action = e.getActionMasked();
 
-        Log.i("GestureA", "pc:" + pointerCount + "\t ac:" + action + " \tind:" + index);
+        //Log.i("GestureA", "pc:" + pointerCount + "\t ac:" + action + " \tind:" + index);
         int pointerId = e.getPointerId(0);
         int actionState=e.getAction();
         while(true) {
@@ -100,7 +100,7 @@ public class GestureAnalyze implements View.OnTouchListener {
                     fingerState.index = pointerId;
                     states.put(fingerState.index, fingerState);
                     downStates.add(fingerState);
-                    Log.i("GestureA", "Down \t" + fingerState.down);
+                    //Log.i("GestureA", "Down \t" + fingerState.down);
 
                     //judge double tap
                     if (downStates.size() == 2) {
@@ -130,7 +130,7 @@ public class GestureAnalyze implements View.OnTouchListener {
                             if (moveState.move.time - moveState.checkMove.time > 200) {
                                 moveState.checkMove = moveState.lastMove;
                             }
-                            Log.i("GestureA", "<"+pid+">Move \t" + moveState.move);
+                            //Log.i("GestureA", "<"+pid+">Move \t" + moveState.move);
                         }
                     }
 
@@ -159,7 +159,7 @@ public class GestureAnalyze implements View.OnTouchListener {
                     if (upState != null) {
                         moveStates.remove(upState);
                         upState.up = MotionState.getMotionState(e);
-                        Log.i("GestureA", "Up   \t" + upState.up);
+                        //Log.i("GestureA", "Up   \t" + upState.up);
                         states.remove(upState.index);
                         subscriber.invoke(l->l.multipleUp(upState,states.size()));
                     }
@@ -178,13 +178,13 @@ public class GestureAnalyze implements View.OnTouchListener {
 
 
     public void triggerDoubleDown(FingerState f0, FingerState f1){
-        Log.i("GestureA","Down!");
+        //Log.i("GestureA","Down!");
         subscriber.invoke(l->l.doubleDown(f0,f1));
     }
 
     public void triggerDoubleMove(
             FingerState f0, FingerState f1){
-        Log.i("GestureA","Parallel Move!");
+        //Log.i("GestureA","Parallel Move!");
         subscriber.invoke(l->l.doubleParallelMove(f0,f1));
     }
 }

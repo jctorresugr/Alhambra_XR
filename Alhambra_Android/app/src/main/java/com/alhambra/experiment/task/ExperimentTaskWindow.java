@@ -43,7 +43,7 @@ public class ExperimentTaskWindow extends DragViewLayout {
         }else{
             ExperimentTaskData currentTask = experimentTaskList.getCurrentTaskData();
             taskText.setText(
-                    "Task No."+ +experimentTaskList.getCurrentTaskIndex()+"  |  (Total:"+ experimentTaskList.totalTaskCount()+") \n"+
+                    "Task No."+ +(experimentTaskList.getCurrentTaskIndex()+1)+"  |  (Total:"+ experimentTaskList.totalTaskCount()+") \n"+
                             "Require Annotations: ("+ currentTask.getAlreadyFinished()+" / "+currentTask.getRequiredCount()+") \n"
                             +currentTaskData.description
             );

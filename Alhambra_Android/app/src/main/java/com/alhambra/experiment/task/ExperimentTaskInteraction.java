@@ -1,5 +1,7 @@
 package com.alhambra.experiment.task;
 
+import android.widget.Toast;
+
 import com.alhambra.MainActivity;
 import com.alhambra.Utils;
 import com.alhambra.dataset.AnnotationDataset;
@@ -47,7 +49,7 @@ public class ExperimentTaskInteraction extends IInteraction
     }
 
     public void onSelection(int[] indexArr){
-        if(taskList.isFinished()){
+        if(taskList.isFinished() || !taskList.isStarted()){
             return;
         }
         AnnotationDataset annotationDataset = mainActivity.getAnnotationDataset();
@@ -96,9 +98,16 @@ public class ExperimentTaskInteraction extends IInteraction
 
     @Override
     public void onBeginTask(OverviewFragment frag) {
-        window.show();
-        window.updateText();
-        taskList.markStart();
+        if(window.isShown()){
+            taskList.forceNext();
+            Toast.makeText(frag.getContext(),"Force next task "+ taskList.getCurrentTaskIndex(),Toast.LENGTH_SHORT).show();
+            window.updateText();
+        }else{
+            window.show();
+            window.updateText();
+            taskList.markStart();
+        }
+
     }
 
     @Override

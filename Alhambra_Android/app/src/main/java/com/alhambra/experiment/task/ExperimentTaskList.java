@@ -10,6 +10,7 @@ public class ExperimentTaskList {
     public ArrayList<ExperimentTaskData> taskData = new ArrayList<>();
 
     protected transient int currentTaskIndex = 0;
+    protected transient boolean started = false;
 
     public ExperimentTaskData getCurrentTaskData(){
         if(currentTaskIndex <0|| currentTaskIndex >=taskData.size()){
@@ -47,6 +48,7 @@ public class ExperimentTaskList {
             currentTaskIndex++;
             markStart();
             ExperimentDataCollection.add("experiment_middle_save",currentTask);
+            ExperimentDataCollection.save();
         }
     }
 
@@ -55,10 +57,23 @@ public class ExperimentTaskList {
         if(currentTask!=null){
             currentTask.markAsStart();
         }
+        started=true;
+    }
+
+    public void forceNext(){
+        ExperimentTaskData currentTask = getCurrentTaskData();
+        if(currentTask!=null){
+            currentTaskIndex++;
+            markStart();
+            ExperimentDataCollection.add("experiment_force_next",currentTask);
+        }
     }
 
     public boolean isFinished(){
         return currentTaskIndex>=taskData.size();
     }
 
+    public boolean isStarted() {
+        return started;
+    }
 }

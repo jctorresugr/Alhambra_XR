@@ -20,7 +20,6 @@ public class SaveAndLoader : MonoBehaviour
     public string oldPath = "Database/";
     public bool debugSaveAsPng = true;
     public bool useAsset = true;
-    public bool resortRGBA = false;
 
     //????
     //if this is assigned, we will not load from Resources
@@ -135,18 +134,10 @@ public class SaveAndLoader : MonoBehaviour
                 annot.info.SnapshotRGBA = LoadImageBin(imagePath + AnnotationIDSuffix(annot.ID));
             }
             data.PostDeserialize();
+            Texture2D finalTexture = null;
             if(preAssignedIndexTexture!=null)
             {
-                data.IndexTexture = preAssignedIndexTexture;
-                /*
-                byte[] vs = preAssignedIndexTexture.GetPixelData<byte>(0).ToArray();
-                for(int i=0;i<vs.Length;i++)
-                {
-                    if(vs[i]>0)
-                    {
-                        //
-                    }
-                }*/
+                finalTexture = preAssignedIndexTexture;
                 Debug.Log("Load predefined");
             }
             else if(Exists(imagePath + "index.png"))
@@ -167,47 +158,22 @@ public class SaveAndLoader : MonoBehaviour
                 texture2D.filterMode = FilterMode.Point;
                 texture2D.minimumMipmapLevel = 0;
                 texture2D.requestedMipmapLevel = 0;
-                if(resortRGBA)
-                {
-                    //BARG => RGBA, Not clear why it does not read correctly :(
-                    //On my computer (in my unity, even )
-                    byte[] vs = texture2D.GetPixelData<byte>(0).ToArray();
-                    Parallel.For(
-                        0, vs.Length / 4,
-                        (i) =>
-                        {
-                            int ind = i * 4;
-                            byte b = vs[ind];
-                            byte a = vs[ind + 1];
-                            byte r = vs[ind + 2];
-                            byte g = vs[ind + 3];
-                            vs[ind] = r;
-                            vs[ind + 1] = g;
-                            vs[ind + 2] = b;
-                            vs[ind + 3] = a;
-                        });
-                    texture2D.SetPixelData(vs, 0);
-                    texture2D.Apply();
-                }
-                else
-                {
-                    //byte[] vs = texture2D.GetPixelData<byte>(0).ToArray();
-                    /*
-                    
-                    Parallel.For(
-                        0, vs.Length / 4,
-                        (i) => { });
-                    texture2D.SetPixelData(vs, 0);*/
-                    //texture2D.Apply();
-                    
-                }
-                data.IndexTexture = texture2D;
+                finalTexture = texture2D;
 
             }
             else
             {
                 Debug.LogWarning("Cannot find index texture: " + imagePath + "index");
             }
+            data.IndexTexture = finalTexture;
+            /*
+            if (finalTexture != null)
+            {
+                //data.IndexTexture.Resize(2048, 2048);
+                Texture2D resizedTexture = new Texture2D(2048,2048, finalTexture.format,false,false);
+                Graphics.ConvertTexture(finalTexture, resizedTexture);
+                data.IndexTexture = resizedTexture;
+            }*/
             
 
         }

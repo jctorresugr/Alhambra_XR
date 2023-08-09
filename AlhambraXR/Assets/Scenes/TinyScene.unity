@@ -2518,7 +2518,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1184577072
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3956,7 +3956,6 @@ MonoBehaviour:
   oldPath: 
   debugSaveAsPng: 0
   useAsset: 1
-  resortRGBA: 0
   preAssignedIndexTexture: {fileID: 2800000, guid: 2cd5673e93f5f044caecb50a1f00db2e, type: 3}
 --- !u!4 &1965307581
 Transform:
@@ -4167,6 +4166,7 @@ MonoBehaviour:
   UVToNormal: {fileID: 2100000, guid: e95498ecb6d84584c93069c789f2d173, type: 2}
   UVToTangent: {fileID: 2100000, guid: d038a12d38ff24844b0126ddc865da6c, type: 2}
   RTCamera: {fileID: 185189450}
+  computeScaleFactor: 2
 --- !u!64 &7568032346716495950
 MeshCollider:
   m_ObjectHideFlags: 0
